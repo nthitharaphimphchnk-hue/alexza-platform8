@@ -7,8 +7,10 @@ import { fileURLToPath } from "url";
 import { ObjectId } from "mongodb";
 import { authRouter } from "./auth";
 import { getDb, pingDb } from "./db";
+import { keysRouter } from "./keys";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
 import { projectsRouter } from "./projects";
+import { runRouter } from "./run";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,8 +42,19 @@ async function startServer() {
     }
   });
 
+  app.get("/api/health/openai", (_req, res) => {
+    const configured = Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0);
+    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+    if (!configured) {
+      return res.json({ ok: true, configured: false });
+    }
+    return res.json({ ok: true, configured: true, model });
+  });
+
   app.use("/api", authRouter);
   app.use("/api", projectsRouter);
+  app.use("/api", keysRouter);
+  app.use(runRouter);
   console.log("Mounted /api/projects routes OK");
 
   app.get("/api/debug/session", async (req, res) => {

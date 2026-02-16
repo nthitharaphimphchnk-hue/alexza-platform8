@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
  * - Create project modal with validation + toast
  * - Delete project confirmation dialog + toast
  */
-import { Plus, Search, Folder, Clock, AlertCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Plus, Search, Folder, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { containerVariants, itemVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 import { useForm } from "@/hooks/useForm";
@@ -16,6 +16,7 @@ import { validateProjectForm, getFieldError, hasFieldError } from "@/lib/validat
 import Modal from "@/components/Modal";
 import { showErrorToast, showProjectCreatedToast } from "@/lib/toast";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
+import { useLocation } from "wouter";
 
 /**
  * ALEXZA AI Projects Page
@@ -43,6 +44,7 @@ interface Project {
 }
 
 type ProjectsApiResponse = { ok?: boolean; projects?: unknown[] } | unknown[];
+type ProjectCardLike = Project & { _id?: string };
 
 function normalizeObjectId(input: unknown): string {
   if (typeof input === "string") return input;
@@ -90,17 +92,92 @@ function normalizeProject(raw: unknown): Project | null {
   };
 }
 
+function formatDateSafe(dateString: string): string {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString();
+}
+
+function ProjectCard({
+  project,
+  onOpen,
+}: {
+  project: ProjectCardLike;
+  onOpen: (projectId: string) => void;
+}) {
+  const name = project.name || "Untitled";
+  const status = project.status || "active";
+  const description = project.description || "";
+  const createdAt = project.createdAt || new Date().toISOString();
+  const updatedAt = project.updatedAt || createdAt;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest("button, a, [data-no-nav='true']")) {
+          return;
+        }
+        onOpen(project.id || project._id || "");
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(project.id || project._id || "");
+        }
+      }}
+      className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)] transition-all cursor-pointer group"
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-lg bg-[#c0c0c0]/10">
+            <Folder size={20} className="text-[#c0c0c0]" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white group-hover:text-[#c0c0c0] transition">
+              {name}
+            </h3>
+            <p className="text-xs text-gray-500 capitalize">{status}</p>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-400 mb-4">{description}</p>
+
+      <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2 text-gray-400">
+            <Clock size={14} />
+            {formatDateSafe(createdAt)}
+          </div>
+        </div>
+        <div className="text-xs text-gray-500">
+          Updated: <span className="text-gray-300">{formatDateSafe(updatedAt)}</span>
+        </div>
+        <div className="text-xs text-gray-500">
+          Model: <span className="text-gray-300">{project.model || "-"}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Projects() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [debugOpen, setDebugOpen] = useState(false);
   const isDev = import.meta.env.DEV;
+  const [lastProjectsStatus, setLastProjectsStatus] = useState<number | null>(null);
+  const [lastProjectsLength, setLastProjectsLength] = useState(0);
+  const loadRequestIdRef = useRef(0);
 
   const filteredProjects = useMemo(() => {
-    const query = debouncedSearchQuery.trim().toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
     if (!query) return projects;
 
     return projects.filter((project) => {
@@ -108,41 +185,79 @@ export default function Projects() {
       const description = (project.description || "").toLowerCase();
       return name.includes(query) || description.includes(query);
     });
-  }, [projects, debouncedSearchQuery]);
+  }, [projects, searchQuery]);
 
-  const loadProjects = async (): Promise<Project[]> => {
-    try {
-      const data = await apiRequest<ProjectsApiResponse>("/api/projects");
-      const rawProjects = Array.isArray(data) ? data : data.projects ?? data;
-      const nextProjects = (Array.isArray(rawProjects) ? rawProjects : [])
+  const parseProjectsPayload = (data: ProjectsApiResponse): Project[] => {
+    if (Array.isArray(data)) {
+      return data.map(normalizeProject).filter((project): project is Project => Boolean(project));
+    }
+
+    if (data && typeof data === "object" && "projects" in data) {
+      const fromKey = (data as { projects?: unknown }).projects;
+      if (!Array.isArray(fromKey)) {
+        throw new Error("Invalid projects response shape");
+      }
+      return fromKey
         .map(normalizeProject)
         .filter((project): project is Project => Boolean(project));
-      setProjects(nextProjects);
-      console.log("[Projects] projects length:", nextProjects.length, nextProjects);
+    }
+
+    throw new Error("Invalid projects response payload");
+  };
+
+  const loadProjects = useCallback(async (): Promise<Project[]> => {
+    const requestId = ++loadRequestIdRef.current;
+    if (isDev) {
+      console.log("[Projects] load start");
+    }
+    try {
+      const data = await apiRequest<ProjectsApiResponse>("/api/projects");
+      const nextProjects = parseProjectsPayload(data);
+
+      if (requestId === loadRequestIdRef.current) {
+        setProjects(nextProjects);
+        setLastProjectsStatus(200);
+        setLastProjectsLength(nextProjects.length);
+      }
+
+      if (isDev) {
+        console.log("[Projects] load end:", {
+          status: 200,
+          length: nextProjects.length,
+          first: nextProjects[0] ?? null,
+        });
+      }
       return nextProjects;
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
+      const status = error instanceof ApiError ? error.status : null;
+
+      if (requestId === loadRequestIdRef.current) {
+        setLastProjectsStatus(status);
+      }
+
+      if (status === 401) {
+        showErrorToast("Session expired", "Please login again");
         window.location.href = "/login";
         return [];
       }
+
       const message = error instanceof Error ? error.message : "Failed to load projects";
       showErrorToast("Unable to load projects", message);
+      if (isDev) {
+        console.log("[Projects] load end:", { status: status ?? 0, length: "unchanged", first: null });
+      }
       return [];
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestIdRef.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [isDev]);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 200);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    void loadProjects();
+    void (async () => {
+      await loadProjects();
+    })();
   }, []);
 
   const form = useForm<ProjectFormData>({
@@ -171,20 +286,17 @@ export default function Projects() {
             ? (response as { project?: unknown }).project
             : response
         );
-
-        if (createdProject) {
-          setProjects((prev) => [
-            createdProject,
-            ...prev.filter((item) => item.id !== createdProject.id),
-          ]);
+        if (!createdProject) {
+          throw new Error("Invalid create project response");
         }
 
         const refreshed = await loadProjects();
-        if (createdProject && refreshed.length === 0) {
-          setProjects((prev) => [
-            createdProject,
-            ...prev.filter((item) => item.id !== createdProject.id),
-          ]);
+        if (isDev) {
+          console.log("[Projects] create success:", {
+            id: createdProject.id,
+            name: createdProject.name,
+            reloadedLength: refreshed.length,
+          });
         }
         showProjectCreatedToast(values.name);
         setShowCreateModal(false);
@@ -200,14 +312,22 @@ export default function Projects() {
     },
   });
 
-  function formatCreatedAt(dateString: string): string {
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return "-";
-    return date.toLocaleDateString();
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
+      {isDev && (
+        <div className="fixed top-4 right-4 z-50 rounded-lg border border-[rgba(255,255,255,0.16)] bg-[#0b0e12]/95 px-3 py-2 text-xs text-gray-300 backdrop-blur">
+          <div>
+            API: <span className="text-white">{API_BASE_URL}</span>
+          </div>
+          <div>
+            /api/projects: <span className="text-white">{lastProjectsStatus ?? "-"}</span>
+          </div>
+          <div>
+            length: <span className="text-white">{lastProjectsLength}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
         <motion.div
@@ -264,6 +384,18 @@ export default function Projects() {
                 Debug
               </Button>
             )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void loadProjects();
+              }}
+              className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+            >
+              <RefreshCw size={14} className="mr-2" />
+              Reload Projects
+            </Button>
           </motion.div>
 
           {isDev && debugOpen && (
@@ -276,83 +408,48 @@ export default function Projects() {
                   API Base URL: <span className="text-white">{API_BASE_URL || "(same-origin)"}</span>
                 </p>
                 <p>
-                  Projects total: <span className="text-white">{projects.length}</span>
+                  Last /api/projects status:{" "}
+                  <span className="text-white">{lastProjectsStatus ?? "-"}</span>
                 </p>
                 <p>
-                  Projects filtered: <span className="text-white">{filteredProjects.length}</span>
+                  Last projects length: <span className="text-white">{lastProjectsLength}</span>
                 </p>
-                <p className="break-all">
-                  First project: <span className="text-white">{projects[0]?.name || "-"}</span>
-                </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={async () => {
-                    await loadProjects();
-                  }}
-                  className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
-                >
-                  Reload Projects
-                </Button>
               </div>
             </motion.div>
           )}
 
-          {/* Projects Grid */}
-          <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={staggerContainerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            {filteredProjects.map((project) => (
-              <motion.div
-                key={project.id}
-                className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)] transition-all cursor-pointer group"
-                variants={staggerItemVariants}
-                whileHover={{ scale: 1.02 }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-[#c0c0c0]/10">
-                      <Folder size={20} className="text-[#c0c0c0]" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white group-hover:text-[#c0c0c0] transition">
-                        {project.name || "Untitled Project"}
-                      </h3>
-                      <p className="text-xs text-gray-500 capitalize">{project.status || "active"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-400 mb-4">
-                  {project.description || ""}
-                </p>
-
-                <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Clock size={14} />
-                      {formatCreatedAt(project.createdAt)}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Updated: <span className="text-gray-300">{formatCreatedAt(project.updatedAt)}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Model: <span className="text-gray-300">{project.model || "-"}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
           {isLoading && (
-            <motion.div className="text-center py-12" variants={itemVariants}>
-              <p className="text-gray-400">Loading projects...</p>
-            </motion.div>
+            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={`skeleton-${idx}`}
+                  className="h-44 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] animate-pulse"
+                />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && (
+            <>
+              {isDev && (
+                <div className="text-xs text-gray-400">
+                  renderCount: {filteredProjects.length} | first: {filteredProjects[0]?.name || "-"}
+                </div>
+              )}
+
+              <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3 min-h-[120px]">
+                {filteredProjects.map((project) => (
+                  <ProjectCard
+                    key={(project as ProjectCardLike)._id ?? project.id}
+                    project={project as ProjectCardLike}
+                    onOpen={(projectId) => {
+                      if (!projectId) return;
+                      setLocation(`/app/projects/${projectId}`);
+                    }}
+                  />
+                ))}
+              </div>
+            </>
           )}
 
           {!isLoading && projects.length === 0 && (
