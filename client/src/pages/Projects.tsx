@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
  * - Create project modal with validation + toast
  * - Delete project confirmation dialog + toast
  */
-import { Plus, Search, MoreHorizontal, Folder, Clock, Users, AlertCircle, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, Search, Folder, Clock, AlertCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { containerVariants, itemVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 import { useForm } from "@/hooks/useForm";
 import { validateProjectForm, getFieldError, hasFieldError } from "@/lib/validation";
 import Modal from "@/components/Modal";
-import ConfirmDialog from "@/components/ConfirmDialog";
-import { showSuccessToast, showProjectCreatedToast, showProjectDeletedToast } from "@/lib/toast";
+import { showErrorToast, showProjectCreatedToast } from "@/lib/toast";
+import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
 
 /**
  * ALEXZA AI Projects Page
@@ -31,82 +31,180 @@ interface ProjectFormData {
   model: string;
 }
 
+interface Project {
+  id: string;
+  ownerUserId: string;
+  name: string;
+  description: string;
+  model: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type ProjectsApiResponse = { ok?: boolean; projects?: unknown[] } | unknown[];
+
+function normalizeObjectId(input: unknown): string {
+  if (typeof input === "string") return input;
+  if (input && typeof input === "object") {
+    const maybeOid = (input as { $oid?: unknown }).$oid;
+    if (typeof maybeOid === "string") return maybeOid;
+  }
+  return "";
+}
+
+function normalizeProject(raw: unknown): Project | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+
+  const id = normalizeObjectId(obj.id ?? obj._id);
+  if (!id) return null;
+
+  const ownerUserId = normalizeObjectId(obj.ownerUserId);
+  const name = typeof obj.name === "string" ? obj.name : "";
+  const description = typeof obj.description === "string" ? obj.description : "";
+  const model = typeof obj.model === "string" ? obj.model : "";
+  const status = typeof obj.status === "string" ? obj.status : "active";
+  const createdAt =
+    typeof obj.createdAt === "string"
+      ? obj.createdAt
+      : obj.createdAt instanceof Date
+        ? obj.createdAt.toISOString()
+        : "";
+  const updatedAt =
+    typeof obj.updatedAt === "string"
+      ? obj.updatedAt
+      : obj.updatedAt instanceof Date
+        ? obj.updatedAt.toISOString()
+        : createdAt;
+
+  return {
+    id,
+    ownerUserId,
+    name,
+    description,
+    model,
+    status,
+    createdAt,
+    updatedAt,
+  };
+}
+
 export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const isDev = import.meta.env.DEV;
 
-  const mockProjects = [
-    {
-      id: 1,
-      name: "Customer Support Bot",
-      description: "AI-powered customer support automation",
-      status: "Active",
-      members: 3,
-      created: "2 weeks ago",
-      credits: "1,250/month",
-    },
-    {
-      id: 2,
-      name: "Content Generator",
-      description: "Automated content creation pipeline",
-      status: "Active",
-      members: 2,
-      created: "1 month ago",
-      credits: "850/month",
-    },
-    {
-      id: 3,
-      name: "Data Analyzer",
-      description: "Real-time data analysis and insights",
-      status: "Paused",
-      members: 4,
-      created: "3 weeks ago",
-      credits: "0/month",
-    },
-    {
-      id: 4,
-      name: "Email Classifier",
-      description: "Intelligent email categorization",
-      status: "Active",
-      members: 1,
-      created: "5 days ago",
-      credits: "320/month",
-    },
-  ];
+  const filteredProjects = useMemo(() => {
+    const query = debouncedSearchQuery.trim().toLowerCase();
+    if (!query) return projects;
 
-  const filteredProjects = mockProjects.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    return projects.filter((project) => {
+      const name = (project.name || "").toLowerCase();
+      const description = (project.description || "").toLowerCase();
+      return name.includes(query) || description.includes(query);
+    });
+  }, [projects, debouncedSearchQuery]);
 
-  const selectedProject = mockProjects.find((p) => p.id === selectedProjectId);
+  const loadProjects = async (): Promise<Project[]> => {
+    try {
+      const data = await apiRequest<ProjectsApiResponse>("/api/projects");
+      const rawProjects = Array.isArray(data) ? data : data.projects ?? data;
+      const nextProjects = (Array.isArray(rawProjects) ? rawProjects : [])
+        .map(normalizeProject)
+        .filter((project): project is Project => Boolean(project));
+      setProjects(nextProjects);
+      console.log("[Projects] projects length:", nextProjects.length, nextProjects);
+      return nextProjects;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.href = "/login";
+        return [];
+      }
+      const message = error instanceof Error ? error.message : "Failed to load projects";
+      showErrorToast("Unable to load projects", message);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const form = useForm<ProjectFormData>({
-      initialValues: {
-        name: "",
-        description: "",
-        model: "GPT-4",
-      },
-      validate: validateProjectForm,
-      onSubmit: async (values) => {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 800));
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    void loadProjects();
+  }, []);
+
+  const form = useForm<ProjectFormData>({
+    initialValues: {
+      name: "",
+      description: "",
+      model: "GPT-4",
+    },
+    validate: validateProjectForm,
+    onSubmit: async (values) => {
+      try {
+        const response = await apiRequest<{ ok?: boolean; project?: unknown } | unknown>(
+          "/api/projects",
+          {
+          method: "POST",
+          body: {
+            name: values.name,
+            description: values.description,
+            model: values.model,
+          },
+        });
+
+        console.log("[Projects] POST /api/projects response:", response);
+        const createdProject = normalizeProject(
+          typeof response === "object" && response !== null && "project" in response
+            ? (response as { project?: unknown }).project
+            : response
+        );
+
+        if (createdProject) {
+          setProjects((prev) => [
+            createdProject,
+            ...prev.filter((item) => item.id !== createdProject.id),
+          ]);
+        }
+
+        const refreshed = await loadProjects();
+        if (createdProject && refreshed.length === 0) {
+          setProjects((prev) => [
+            createdProject,
+            ...prev.filter((item) => item.id !== createdProject.id),
+          ]);
+        }
         showProjectCreatedToast(values.name);
         setShowCreateModal(false);
         form.reset();
-      },
-    });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        const message = error instanceof Error ? error.message : "Failed to create project";
+        showErrorToast("Project creation failed", message);
+      }
+    },
+  });
 
-  const handleDeleteProject = async () => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    if (selectedProject) {
-      showProjectDeletedToast(selectedProject.name);
-    }
-    setShowDeleteConfirm(false);
-    setSelectedProjectId(null);
-  };
+  function formatCreatedAt(dateString: string): string {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString();
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
@@ -144,16 +242,61 @@ export default function Projects() {
           viewport={{ once: true }}
         >
           {/* Search */}
-          <motion.div className="relative" variants={itemVariants}>
-            <Search size={18} className="absolute left-3 top-3 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600 focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition"
-            />
+          <motion.div className="flex items-center gap-3" variants={itemVariants}>
+            <div className="relative flex-1">
+              <Search size={18} className="absolute left-3 top-3 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600 focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition"
+              />
+            </div>
+            {isDev && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDebugOpen((prev) => !prev)}
+                className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+              >
+                Debug
+              </Button>
+            )}
           </motion.div>
+
+          {isDev && debugOpen && (
+            <motion.div
+              className="rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.08)] p-4 space-y-3"
+              variants={itemVariants}
+            >
+              <div className="space-y-3 text-sm text-gray-300">
+                <p>
+                  API Base URL: <span className="text-white">{API_BASE_URL || "(same-origin)"}</span>
+                </p>
+                <p>
+                  Projects total: <span className="text-white">{projects.length}</span>
+                </p>
+                <p>
+                  Projects filtered: <span className="text-white">{filteredProjects.length}</span>
+                </p>
+                <p className="break-all">
+                  First project: <span className="text-white">{projects[0]?.name || "-"}</span>
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={async () => {
+                    await loadProjects();
+                  }}
+                  className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
+                >
+                  Reload Projects
+                </Button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Projects Grid */}
           <motion.div
@@ -177,49 +320,61 @@ export default function Projects() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-white group-hover:text-[#c0c0c0] transition">
-                        {project.name}
+                        {project.name || "Untitled Project"}
                       </h3>
-                      <p className="text-xs text-gray-500">{project.status}</p>
+                      <p className="text-xs text-gray-500 capitalize">{project.status || "active"}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setSelectedProjectId(project.id);
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={18} className="text-gray-400 hover:text-red-500" />
-                  </button>
                 </div>
 
-                <p className="text-sm text-gray-400 mb-4">{project.description}</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  {project.description || ""}
+                </p>
 
                 <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2 text-gray-400">
-                      <Users size={14} />
-                      {project.members} members
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400">
                       <Clock size={14} />
-                      {project.created}
+                      {formatCreatedAt(project.createdAt)}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Monthly usage</span>
-                    <span className="text-sm font-semibold text-[#c0c0c0]">{project.credits}</span>
+                  <div className="text-xs text-gray-500">
+                    Updated: <span className="text-gray-300">{formatCreatedAt(project.updatedAt)}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Model: <span className="text-gray-300">{project.model || "-"}</span>
                   </div>
                 </div>
               </motion.div>
             ))}
           </motion.div>
 
-          {filteredProjects.length === 0 && (
+          {isLoading && (
             <motion.div className="text-center py-12" variants={itemVariants}>
-              <p className="text-gray-400">No projects found</p>
+              <p className="text-gray-400">Loading projects...</p>
             </motion.div>
           )}
+
+          {!isLoading && projects.length === 0 && (
+            <motion.div className="text-center py-12" variants={itemVariants}>
+              <p className="text-gray-300 text-lg font-medium">No projects yet</p>
+              <p className="text-gray-500 mt-2">Create your first project to get started.</p>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="mt-6 bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold"
+              >
+                <Plus size={16} className="mr-2" />
+                Create Project
+              </Button>
+            </motion.div>
+          )}
+
+          {!isLoading && projects.length > 0 && filteredProjects.length === 0 && (
+            <motion.div className="text-center py-12" variants={itemVariants}>
+              <p className="text-gray-400">No projects match your search</p>
+            </motion.div>
+          )}
+
         </motion.div>
       </div>
 
@@ -307,18 +462,6 @@ export default function Projects() {
           </div>
         </form>
       </Modal>
-
-      {/* Delete Project Confirmation */}
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="Delete Project"
-        description={`Are you sure you want to delete "${selectedProject?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        isDangerous={true}
-        onConfirm={handleDeleteProject}
-      />
     </div>
   );
 }

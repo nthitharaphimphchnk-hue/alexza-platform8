@@ -22,6 +22,8 @@ import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import Settings from "./pages/Settings";
+import { useEffect } from "react";
+import { logApiBaseUrlOnce } from "./lib/api";
 
 
 function Router() {
@@ -65,6 +67,10 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  useEffect(() => {
+    logApiBaseUrlOnce();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider
