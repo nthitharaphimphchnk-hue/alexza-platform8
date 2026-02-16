@@ -1,0 +1,276 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  /* Primary brand colors - Metallic Silver */
+  --primary: #c0c0c0;
+  --primary-foreground: #000000;
+  --sidebar-primary: #a8a8a8;
+  --sidebar-primary-foreground: #ffffff;
+  
+  /* Chart colors - Monochrome metallic gradient */
+  --chart-1: #e8e8e8;
+  --chart-2: #c0c0c0;
+  --chart-3: #a8a8a8;
+  --chart-4: #808080;
+  --chart-5: #606060;
+  
+  /* Spacing and radius */
+  --radius: 0.65rem;
+  
+  /* Dark theme - Pure black to charcoal gradient */
+  --background: #050607;
+  --foreground: #ebebeb;
+  --card: #0b0e12;
+  --card-foreground: #ebebeb;
+  --popover: #0b0e12;
+  --popover-foreground: #ebebeb;
+  
+  /* Secondary colors - Soft metallic gray */
+  --secondary: #a8a8a8;
+  --secondary-foreground: #ffffff;
+  --muted: #3a3f47;
+  --muted-foreground: #808080;
+  
+  /* Accent - Metallic silver */
+  --accent: #c0c0c0;
+  --accent-foreground: #000000;
+  
+  /* Destructive */
+  --destructive: #ff3333;
+  --destructive-foreground: #ffffff;
+  
+  /* Borders and inputs - Subtle metallic borders */
+  --border: rgba(255, 255, 255, 0.06);
+  --input: #0b0e12;
+  --ring: #c0c0c0;
+  
+  /* Sidebar - Dark glass */
+  --sidebar: #0b0e12;
+  --sidebar-foreground: #ebebeb;
+  --sidebar-accent: #c0c0c0;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #c0c0c0;
+}
+
+.dark {
+  /* Dark theme is the default for ALEXZA AI */
+  --primary: #c0c0c0;
+  --primary-foreground: #000000;
+  --sidebar-primary: #a8a8a8;
+  --sidebar-primary-foreground: #ffffff;
+  --background: #050607;
+  --foreground: #ebebeb;
+  --card: #0b0e12;
+  --card-foreground: #ebebeb;
+  --popover: #0b0e12;
+  --popover-foreground: #ebebeb;
+  --secondary: #a8a8a8;
+  --secondary-foreground: #ffffff;
+  --muted: #3a3f47;
+  --muted-foreground: #808080;
+  --accent: #c0c0c0;
+  --accent-foreground: #000000;
+  --destructive: #ff3333;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.06);
+  --input: #0b0e12;
+  --ring: #c0c0c0;
+  --chart-1: #e8e8e8;
+  --chart-2: #c0c0c0;
+  --chart-3: #a8a8a8;
+  --chart-4: #808080;
+  --chart-5: #606060;
+  --sidebar: #0b0e12;
+  --sidebar-foreground: #ebebeb;
+  --sidebar-accent: #c0c0c0;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #c0c0c0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #050607 0%, #0b0e12 50%, #050607 100%);
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  /**
+   * Custom container utility that centers content and adds responsive padding.
+   *
+   * This overrides Tailwind's default container behavior to:
+   * - Auto-center content (mx-auto)
+   * - Add responsive horizontal padding
+   * - Set max-width for large screens
+   *
+   * Usage: <div className="container">...</div>
+   *
+   * For custom widths, use max-w-* utilities directly:
+   * <div className="max-w-6xl mx-auto px-4">...</div>
+   */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem; /* 16px - mobile padding */
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* Metallic dark glass card with soft white glow */
+  .glass-card {
+    @apply bg-[#0b0e12]/60 backdrop-blur-xl border border-[rgba(255,255,255,0.06)] rounded-xl;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Metallic silver glow button */
+  .glow-button {
+    @apply bg-gradient-to-r from-[#c0c0c0] to-[#a8a8a8] text-black font-semibold;
+    box-shadow: 0 0 20px rgba(192, 192, 192, 0.3), 0 0 40px rgba(192, 192, 192, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .glow-button:hover {
+    box-shadow: 0 0 30px rgba(192, 192, 192, 0.5), 0 0 60px rgba(192, 192, 192, 0.25);
+  }
+
+  /* Dark glass input with metallic focus */
+  .glow-input {
+    @apply bg-[#0b0e12]/80 border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glow-input:focus {
+    @apply border-[rgba(255,255,255,0.15)];
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 15px rgba(192, 192, 192, 0.2);
+  }
+
+  /* Metallic border with soft white glow */
+  .glow-border {
+    @apply border border-[rgba(255,255,255,0.06)];
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+  }
+
+  .glow-border:hover {
+    @apply border-[rgba(255,255,255,0.12)];
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.08), 0 0 10px rgba(192, 192, 192, 0.1);
+  }
+
+  /* Ambient glow background */
+  .ambient-glow {
+    position: relative;
+  }
+
+  .ambient-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(192, 192, 192, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem; /* 32px - desktop padding */
+      padding-right: 2rem;
+      max-width: 1280px; /* Standard content width */
+    }
+  }
+}
+
+/* Monochrome metallic glow utilities */
+@layer utilities {
+  .neon-glow {
+    box-shadow: 0 0 20px rgba(192, 192, 192, 0.2), 0 0 40px rgba(192, 192, 192, 0.1);
+  }
+
+  .neon-glow-lg {
+    box-shadow: 0 0 30px rgba(192, 192, 192, 0.3), 0 0 60px rgba(192, 192, 192, 0.15);
+  }
+
+  .neon-glow-purple {
+    box-shadow: 0 0 20px rgba(192, 192, 192, 0.15), 0 0 40px rgba(192, 192, 192, 0.08);
+  }
+
+  .glow-edge {
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1), 0 0 15px rgba(192, 192, 192, 0.1);
+  }
+
+  .dark-glass {
+    @apply bg-[#0b0e12]/50 backdrop-blur-lg border border-[rgba(255,255,255,0.06)];
+  }
+
+  .dark-glass-strong {
+    @apply bg-[#0b0e12]/70 backdrop-blur-xl border border-[rgba(255,255,255,0.08)];
+  }
+}

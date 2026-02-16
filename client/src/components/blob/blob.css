@@ -1,0 +1,165 @@
+/**
+ * Interactive Morphing Liquid Blob Styles
+ * Premium AI SaaS blob visualization styling
+ */
+
+/* Blob container base styles */
+.blob-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* WebGL canvas styles */
+.blob-canvas {
+  display: block;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 20px rgba(0, 128, 255, 0.3));
+}
+
+.blob-canvas:hover {
+  filter: drop-shadow(0 0 30px rgba(0, 128, 255, 0.5));
+}
+
+/* SVG blob styles */
+.blob-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 20px rgba(0, 128, 255, 0.3));
+}
+
+.blob-svg:hover {
+  filter: drop-shadow(0 0 30px rgba(0, 128, 255, 0.5));
+}
+
+/* Glow effect background */
+.blob-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 128, 255, 0.2), transparent);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.blob-glow.active {
+  background: radial-gradient(circle, rgba(0, 128, 255, 0.4), transparent);
+}
+
+/* Breathing animation */
+@keyframes breathing {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.blob-breathing {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.blob-floating {
+  animation: floating 4s ease-in-out infinite;
+}
+
+/* Pulse glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(0, 128, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 30px rgba(0, 128, 255, 0.6));
+  }
+}
+
+.blob-pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Hover state animations */
+.blob-hover:hover {
+  animation: breathing 1.5s ease-in-out infinite;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .blob-canvas,
+  .blob-svg {
+    filter: drop-shadow(0 0 15px rgba(0, 128, 255, 0.25));
+  }
+
+  .blob-canvas:hover,
+  .blob-svg:hover {
+    filter: drop-shadow(0 0 20px rgba(0, 128, 255, 0.4));
+  }
+
+  .blob-glow {
+    filter: blur(30px);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .blob-breathing,
+  .blob-floating,
+  .blob-pulse,
+  .blob-hover:hover {
+    animation: none;
+  }
+
+  .blob-canvas,
+  .blob-svg {
+    transition: filter 0.3s ease-out;
+  }
+}
+
+/* Dark theme support */
+.dark .blob-canvas,
+.dark .blob-svg {
+  filter: drop-shadow(0 0 20px rgba(0, 128, 255, 0.4));
+}
+
+.dark .blob-canvas:hover,
+.dark .blob-svg:hover {
+  filter: drop-shadow(0 0 30px rgba(0, 128, 255, 0.6));
+}
+
+.dark .blob-glow {
+  background: radial-gradient(circle, rgba(0, 128, 255, 0.3), transparent);
+}
+
+.dark .blob-glow.active {
+  background: radial-gradient(circle, rgba(0, 128, 255, 0.5), transparent);
+}
+
+/* Accessibility */
+.blob-container:focus-visible {
+  outline: 2px solid rgba(0, 128, 255, 0.5);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+/* Print styles */
+@media print {
+  .blob-container {
+    display: none;
+  }
+}

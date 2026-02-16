@@ -1,0 +1,149 @@
+{
+  "common": {
+    "language": "Language",
+    "english": "English",
+    "thai": "ไทย",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "create": "Create",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search"
+  },
+  "navigation": {
+    "product": "Product",
+    "docs": "Docs",
+    "pricing": "Pricing",
+    "company": "Company",
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "apiKeys": "API Keys",
+    "playground": "Playground",
+    "usage": "Usage",
+    "credits": "Credits",
+    "billing": "Billing",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "ALEXZA AI — Solution Orchestration Platform",
+    "subtitle": "Build, Orchestrate, and Optimize AI Systems Automatically",
+    "cta1": "Get Started",
+    "cta2": "View Docs",
+    "features": {
+      "title": "Powerful Features",
+      "feature1": "Build complex AI workflows without code",
+      "feature2": "Orchestrate multiple AI models seamlessly",
+      "feature3": "Monitor and optimize in real-time"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "email": "Email Address",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "orContinueWith": "Or continue with",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "signup": {
+      "title": "Create your account",
+      "email": "Email Address",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "company": "Company (Optional)",
+      "agreeToTerms": "I agree to the Terms of Service and Privacy Policy",
+      "createAccount": "Create Account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    }
+  },
+  "pricing": {
+    "title": "Pricing Plans",
+    "subtitle": "Choose the perfect plan for your needs",
+    "trial": "Free Trial",
+    "payAsYouGo": "Pay as You Go",
+    "credits": "credits/month",
+    "getStarted": "Get Started",
+    "chooseplan": "Choose Plan"
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage all your AI projects",
+    "newProject": "New Project",
+    "search": "Search projects...",
+    "noProjects": "No projects found",
+    "createModal": {
+      "title": "Create Project",
+      "name": "Project Name",
+      "description": "Description (Optional)",
+      "model": "AI Model",
+      "create": "Create",
+      "cancel": "Cancel"
+    }
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "subtitle": "Manage your API keys and authentication",
+    "createKey": "Create Key",
+    "security": "Keep your API keys secure. Never share them publicly or commit them to version control. Rotate keys regularly for security.",
+    "lastUsed": "Last Used",
+    "rotate": "Rotate",
+    "createModal": {
+      "title": "Create API Key",
+      "name": "Key Name",
+      "info": "Your API key will be displayed only once. Make sure to copy and save it in a secure location.",
+      "create": "Create",
+      "cancel": "Cancel"
+    }
+  },
+  "playground": {
+    "title": "Playground",
+    "subtitle": "Test and experiment with your AI model",
+    "typeMessage": "Type your message...",
+    "settings": "Settings",
+    "model": "Model",
+    "temperature": "Temperature",
+    "maxTokens": "Max Tokens",
+    "systemPrompt": "System Prompt"
+  },
+  "wallet": {
+    "title": "Credits & Wallet",
+    "subtitle": "Manage your credits and billing",
+    "availableCredits": "Available Credits",
+    "monthlyLimit": "Monthly Limit",
+    "usedThisMonth": "Used This Month",
+    "remaining": "Remaining",
+    "addCredits": "Add Credits",
+    "setBudgetAlert": "Set Budget Alert",
+    "monthlyUsage": "Monthly Usage",
+    "transactionHistory": "Transaction History",
+    "viewAll": "View All Transactions"
+  },
+  "billingPlans": {
+    "title": "Billing Plans",
+    "subtitle": "Choose the perfect plan for your needs",
+    "starter": "Starter",
+    "professional": "Professional",
+    "enterprise": "Enterprise",
+    "popular": "Popular",
+    "faq": "Frequently Asked Questions"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordStrength": "Password must have 1 uppercase letter and 1 number",
+    "passwordMismatch": "Passwords do not match",
+    "nameTooShort": "Name must be at least 3 characters",
+    "nameTooLong": "Name must not exceed 50 characters"
+  }
+}
