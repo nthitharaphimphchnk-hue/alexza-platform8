@@ -43,7 +43,7 @@ export default function Docs() {
       language: "python",
       code: `import alexza
 
-client = alexza.Client(api_key="sk_live_...")
+client = alexza.Client(api_key="axza_live_demo_...")
 
 # Create a project
 project = client.projects.create(

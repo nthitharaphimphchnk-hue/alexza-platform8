@@ -39,7 +39,7 @@ export default function ApiKeys() {
     {
       id: "key_1",
       name: "Production Key",
-      key: "sk_live_51234567890abcdefghijklmnop",
+      key: "axza_live_demo_51234567890abcdefghijklmnop",
       created: "2 weeks ago",
       lastUsed: "2 hours ago",
       status: "Active",
@@ -47,7 +47,7 @@ export default function ApiKeys() {
     {
       id: "key_2",
       name: "Development Key",
-      key: "sk_test_87654321abcdefghijklmnopqrs",
+      key: "axza_test_demo_87654321abcdefghijklmnopqrs",
       created: "1 month ago",
       lastUsed: "5 minutes ago",
       status: "Active",
@@ -55,7 +55,7 @@ export default function ApiKeys() {
     {
       id: "key_3",
       name: "Testing Key",
-      key: "sk_test_abcdefghijklmnopqrstuvwxyz",
+      key: "axza_test_demo_abcdefghijklmnopqrstuvwxyz",
       created: "2 months ago",
       lastUsed: "Never",
       status: "Inactive",
