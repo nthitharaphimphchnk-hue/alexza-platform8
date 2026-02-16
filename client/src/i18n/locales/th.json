@@ -1,0 +1,149 @@
+{
+  "common": {
+    "language": "ภาษา",
+    "english": "English",
+    "thai": "ไทย",
+    "loading": "กำลังโหลด...",
+    "error": "ข้อผิดพลาด",
+    "success": "สำเร็จ",
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "delete": "ลบ",
+    "create": "สร้าง",
+    "edit": "แก้ไข",
+    "close": "ปิด",
+    "search": "ค้นหา"
+  },
+  "navigation": {
+    "product": "สินค้า",
+    "docs": "เอกสาร",
+    "pricing": "ราคา",
+    "company": "บริษัท",
+    "signIn": "เข้าสู่ระบบ",
+    "getStarted": "เริ่มต้นใช้งาน",
+    "dashboard": "แดชบอร์ด",
+    "projects": "โปรเจกต์",
+    "apiKeys": "API Keys",
+    "playground": "Playground",
+    "usage": "การใช้งาน",
+    "credits": "เครดิต",
+    "billing": "การเรียกเก็บเงิน",
+    "settings": "ตั้งค่า"
+  },
+  "home": {
+    "title": "ALEXZA AI — แพลตฟอร์มการจัดการโซลูชัน AI",
+    "subtitle": "สร้าง จัดการ และปรับปรุงระบบ AI โดยอัตโนมัติ",
+    "cta1": "เริ่มต้นใช้งาน",
+    "cta2": "ดูเอกสาร",
+    "features": {
+      "title": "คุณสมบัติที่ทรงพลัง",
+      "feature1": "สร้างเวิร์กโฟลว์ AI ที่ซับซ้อนโดยไม่ต้องเขียนโค้ด",
+      "feature2": "จัดการโมเดล AI หลายตัวได้อย่างราบรื่น",
+      "feature3": "ตรวจสอบและปรับปรุงประสิทธิภาพแบบเรียลไทม์"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "เข้าสู่ระบบบัญชีของคุณ",
+      "email": "ที่อยู่อีเมล",
+      "password": "รหัสผ่าน",
+      "rememberMe": "จำฉันไว้",
+      "forgotPassword": "ลืมรหัสผ่าน?",
+      "signIn": "เข้าสู่ระบบ",
+      "orContinueWith": "หรือดำเนินการต่อด้วย",
+      "noAccount": "ยังไม่มีบัญชี?",
+      "signUp": "สมัครสมาชิก"
+    },
+    "signup": {
+      "title": "สร้างบัญชีของคุณ",
+      "email": "ที่อยู่อีเมล",
+      "password": "รหัสผ่าน",
+      "confirmPassword": "ยืนยันรหัสผ่าน",
+      "company": "บริษัท (ไม่จำเป็น)",
+      "agreeToTerms": "ฉันยอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว",
+      "createAccount": "สร้างบัญชี",
+      "haveAccount": "มีบัญชีอยู่แล้ว?",
+      "signIn": "เข้าสู่ระบบ"
+    }
+  },
+  "pricing": {
+    "title": "แผนราคา",
+    "subtitle": "เลือกแผนที่เหมาะสมที่สุดสำหรับความต้องการของคุณ",
+    "trial": "ทดลองใช้ฟรี",
+    "payAsYouGo": "จ่ายตามการใช้งาน",
+    "credits": "เครดิต/เดือน",
+    "getStarted": "เริ่มต้นใช้งาน",
+    "chooseplan": "เลือกแผน"
+  },
+  "projects": {
+    "title": "โปรเจกต์",
+    "subtitle": "จัดการโปรเจกต์ AI ทั้งหมดของคุณ",
+    "newProject": "โปรเจกต์ใหม่",
+    "search": "ค้นหาโปรเจกต์...",
+    "noProjects": "ไม่พบโปรเจกต์",
+    "createModal": {
+      "title": "สร้างโปรเจกต์",
+      "name": "ชื่อโปรเจกต์",
+      "description": "คำอธิบาย (ไม่จำเป็น)",
+      "model": "โมเดล AI",
+      "create": "สร้าง",
+      "cancel": "ยกเลิก"
+    }
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "subtitle": "จัดการ API keys และการตรวจสอบสิทธิ์ของคุณ",
+    "createKey": "สร้าง Key",
+    "security": "เก็บ API keys ของคุณให้ปลอดภัย อย่าแชร์แบบสาธารณะหรือคอมมิตไปยัง version control หมุนเวียน keys เป็นประจำเพื่อความปลอดภัย",
+    "lastUsed": "ใช้ครั้งล่าสุด",
+    "rotate": "หมุนเวียน",
+    "createModal": {
+      "title": "สร้าง API Key",
+      "name": "ชื่อ Key",
+      "info": "API key ของคุณจะแสดงเพียงครั้งเดียวเท่านั้น ตรวจสอบให้แน่ใจว่าคัดลอกและบันทึกไว้ในที่ที่ปลอดภัย",
+      "create": "สร้าง",
+      "cancel": "ยกเลิก"
+    }
+  },
+  "playground": {
+    "title": "Playground",
+    "subtitle": "ทดสอบและทดลองกับโมเดล AI ของคุณ",
+    "typeMessage": "พิมพ์ข้อความของคุณ...",
+    "settings": "ตั้งค่า",
+    "model": "โมเดล",
+    "temperature": "Temperature",
+    "maxTokens": "Max Tokens",
+    "systemPrompt": "System Prompt"
+  },
+  "wallet": {
+    "title": "เครดิต & กระเป๋าเงิน",
+    "subtitle": "จัดการเครดิตและการเรียกเก็บเงินของคุณ",
+    "availableCredits": "เครดิตที่มีอยู่",
+    "monthlyLimit": "ขีดจำกัดรายเดือน",
+    "usedThisMonth": "ใช้ไปแล้วในเดือนนี้",
+    "remaining": "เหลือ",
+    "addCredits": "เพิ่มเครดิต",
+    "setBudgetAlert": "ตั้งค่าการแจ้งเตือนงบประมาณ",
+    "monthlyUsage": "การใช้งานรายเดือน",
+    "transactionHistory": "ประวัติการทำธุรกรรม",
+    "viewAll": "ดูธุรกรรมทั้งหมด"
+  },
+  "billingPlans": {
+    "title": "แผนการเรียกเก็บเงิน",
+    "subtitle": "เลือกแผนที่เหมาะสมที่สุดสำหรับความต้องการของคุณ",
+    "starter": "Starter",
+    "professional": "Professional",
+    "enterprise": "Enterprise",
+    "popular": "ยอดนิยม",
+    "faq": "คำถามที่พบบ่อย"
+  },
+  "validation": {
+    "required": "ต้องกรอกข้อมูลนี้",
+    "invalidEmail": "กรุณาใส่ที่อยู่อีเมลที่ถูกต้อง",
+    "passwordTooShort": "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร",
+    "passwordStrength": "รหัสผ่านต้องมีตัวอักษรตัวใหญ่ 1 ตัวและตัวเลข 1 ตัว",
+    "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
+    "nameTooShort": "ชื่อต้องมีอย่างน้อย 3 ตัวอักษร",
+    "nameTooLong": "ชื่อต้องไม่เกิน 50 ตัวอักษร"
+  }
+}
