@@ -7,15 +7,15 @@ const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const BCRYPT_ROUNDS = 12;
 
 function getSessionSecret(): string {
-  const secret = process.env.SESSION_SECRET;
+  const secret = process.env.SESSION_SECRET || process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error("Missing SESSION_SECRET");
+    throw new Error("Missing SESSION_SECRET (or legacy JWT_SECRET)");
   }
   return secret;
 }
 
 export function getSessionCookieName(): string {
-  return process.env.SESSION_COOKIE_NAME || DEFAULT_COOKIE_NAME;
+  return process.env.SESSION_COOKIE_NAME || process.env.COOKIE_NAME || DEFAULT_COOKIE_NAME;
 }
 
 export function getSessionTtlMs(): number {

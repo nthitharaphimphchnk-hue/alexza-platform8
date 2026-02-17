@@ -11,24 +11,31 @@ let cachedDb: Db | null = null;
 
 function getDbConfig() {
   const uri = process.env.MONGODB_URI;
-  const dbName = process.env.MONGODB_DB;
+  const dbName = process.env.MONGODB_DB || process.env.DB_NAME;
 
   if (!uri) throw new Error("Missing MONGODB_URI");
-  if (!dbName) throw new Error("Missing MONGODB_DB");
+  if (!dbName) throw new Error("Missing MONGODB_DB (or legacy DB_NAME)");
 
   return { uri, dbName };
 }
 
 export async function getDb(): Promise<Db> {
-  if (cachedDb) return cachedDb;
-
   const { uri, dbName } = getDbConfig();
+
+  if (cachedClient && cachedDb) {
+    try {
+      await cachedDb.command({ ping: 1 });
+      return cachedDb;
+    } catch {
+      cachedClient = null;
+      cachedDb = null;
+    }
+  }
 
   if (!cachedClient) {
     cachedClient = new MongoClient(uri, { maxPoolSize: 10 });
-    await cachedClient.connect();
   }
-
+  await cachedClient.connect();
   cachedDb = cachedClient.db(dbName);
   return cachedDb;
 }

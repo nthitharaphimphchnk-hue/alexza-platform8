@@ -224,3 +224,18 @@ Networking/cookies:
 ```
 
 4. Test signup/login flow to confirm cookies and CORS are correct on your real domain.
+
+## Production smoke test
+
+Run the automated production smoke test against Render:
+
+```bash
+pnpm tsx scripts/smoke-prod.ts
+```
+
+Optional overrides:
+
+```bash
+PROD_BASE_URL="https://alexza-platform8.onrender.com" pnpm tsx scripts/smoke-prod.ts
+PROD_SMOKE_PASSWORD="your_password" pnpm tsx scripts/smoke-prod.ts
+```
