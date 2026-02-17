@@ -8,7 +8,7 @@ interface ProjectDoc {
   name: string;
   description?: string;
   model?: string;
-  status: "active";
+  status: "active" | "paused";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,12 +19,21 @@ interface CreateProjectBody {
   model?: unknown;
 }
 
+interface UpdateProjectBody {
+  name?: unknown;
+  description?: unknown;
+  model?: unknown;
+  status?: unknown;
+}
+
 const router = Router();
 let projectsIndexesReady: Promise<void> | null = null;
 
 function toProjectResponse(project: WithId<ProjectDoc>) {
+  const id = project._id.toString();
   return {
-    id: project._id.toString(),
+    id,
+    _id: id,
     ownerUserId: project.ownerUserId.toString(),
     name: project.name,
     description: project.description ?? "",
@@ -37,6 +46,11 @@ function toProjectResponse(project: WithId<ProjectDoc>) {
 
 function validationError(message: string) {
   return { ok: false, error: "VALIDATION_ERROR", message } as const;
+}
+
+function parseProjectId(rawId: string): ObjectId | null {
+  if (!ObjectId.isValid(rawId)) return null;
+  return new ObjectId(rawId);
 }
 
 async function ensureProjectsIndexes() {
@@ -143,15 +157,15 @@ router.get("/projects/:id", requireAuth, async (req, res, next) => {
       return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     }
 
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
+    const projectId = parseProjectId(req.params.id);
+    if (!projectId) {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
 
     const db = await getDb();
     const projects = db.collection<ProjectDoc>("projects");
     const project = await projects.findOne({
-      _id: new ObjectId(id),
+      _id: projectId,
       ownerUserId: req.user._id,
     });
 
@@ -160,6 +174,123 @@ router.get("/projects/:id", requireAuth, async (req, res, next) => {
     }
 
     return res.json({ ok: true, project: toProjectResponse(project) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/projects/:id", requireAuth, async (req, res, next) => {
+  try {
+    await ensureProjectsIndexes();
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+
+    const projectId = parseProjectId(req.params.id);
+    if (!projectId) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    const db = await getDb();
+    const projects = db.collection<ProjectDoc>("projects");
+    const deletedProject = await projects.findOneAndDelete({
+      _id: projectId,
+      ownerUserId: req.user._id,
+    });
+
+    if (!deletedProject) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    await Promise.all([
+      db.collection("api_keys").deleteMany({ projectId }),
+      db.collection("usage_logs").deleteMany({ projectId }),
+    ]);
+
+    return res.json({ ok: true });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.patch("/projects/:id", requireAuth, async (req, res, next) => {
+  try {
+    await ensureProjectsIndexes();
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+
+    const projectId = parseProjectId(req.params.id);
+    if (!projectId) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    const body = req.body as UpdateProjectBody;
+    const updateSet: Partial<ProjectDoc> = {};
+    let hasAtLeastOneField = false;
+
+    if (body.name !== undefined) {
+      if (typeof body.name !== "string") {
+        return res.status(400).json(validationError("name must be a string"));
+      }
+      const name = body.name.trim();
+      if (name.length < 2) {
+        return res.status(400).json(validationError("Project name must be at least 2 characters"));
+      }
+      updateSet.name = name;
+      hasAtLeastOneField = true;
+    }
+
+    if (body.description !== undefined) {
+      if (typeof body.description !== "string") {
+        return res.status(400).json(validationError("description must be a string"));
+      }
+      updateSet.description = body.description.trim();
+      hasAtLeastOneField = true;
+    }
+
+    if (body.model !== undefined) {
+      if (typeof body.model !== "string") {
+        return res.status(400).json(validationError("model must be a string"));
+      }
+      updateSet.model = body.model.trim();
+      hasAtLeastOneField = true;
+    }
+
+    if (body.status !== undefined) {
+      if (body.status !== "active" && body.status !== "paused") {
+        return res.status(400).json(validationError('status must be "active" or "paused"'));
+      }
+      updateSet.status = body.status;
+      hasAtLeastOneField = true;
+    }
+
+    if (!hasAtLeastOneField) {
+      return res.status(400).json(validationError("No valid fields to update"));
+    }
+
+    updateSet.updatedAt = new Date();
+
+    const db = await getDb();
+    const projects = db.collection<ProjectDoc>("projects");
+    const updated = await projects.findOneAndUpdate(
+      {
+        _id: projectId,
+        ownerUserId: req.user._id,
+      },
+      {
+        $set: updateSet,
+      },
+      {
+        returnDocument: "after",
+      }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    return res.json({ ok: true, project: toProjectResponse(updated) });
   } catch (error) {
     return next(error);
   }

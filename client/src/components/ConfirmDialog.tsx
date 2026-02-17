@@ -20,6 +20,7 @@ interface ConfirmDialogProps {
   cancelText?: string;
   isDangerous?: boolean;
   isLoading?: boolean;
+  confirmDisabled?: boolean;
   onConfirm: () => void | Promise<void>;
   children?: ReactNode;
 }
@@ -33,6 +34,7 @@ export default function ConfirmDialog({
   cancelText = 'Cancel',
   isDangerous = false,
   isLoading = false,
+  confirmDisabled = false,
   onConfirm,
   children,
 }: ConfirmDialogProps) {
@@ -60,7 +62,7 @@ export default function ConfirmDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={isLoading}
+            disabled={isLoading || confirmDisabled}
             className={`font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
               isDangerous
                 ? 'bg-red-600/80 hover:bg-red-700 text-white'
