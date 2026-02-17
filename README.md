@@ -34,7 +34,7 @@ OPENAI_MODEL="gpt-4o-mini"
 
 - Backend API is forced to run on `http://localhost:3002` via `dev:server` script.
 - Frontend (Vite dev server) runs on `http://localhost:3000` by default and may move to another port if busy.
-- Frontend API base uses `VITE_API_BASE_URL` and falls back to `http://localhost:3002`.
+- Frontend API base uses `VITE_API_BASE_URL` and falls back to same-origin when not set.
 
 ## Dev Smoke Test (Connection Refused Guard)
 
@@ -177,3 +177,50 @@ curl -i -b cookies.txt http://localhost:3002/api/usage/summary?days=7
 # 6) Project usage summary
 curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/usage/summary?days=7
 ```
+
+## Deploy to Render
+
+This project is set up for a single Render Web Service that builds client + server and runs the server in production.
+
+### Build and start commands
+
+Use these in Render:
+
+- Build command: `pnpm install && pnpm build`
+- Start command: `pnpm start`
+
+### Required environment variables (Render)
+
+Backend/runtime:
+
+- `NODE_ENV=production`
+- `PORT` (Render injects this automatically)
+- `MONGODB_URI`
+- `MONGODB_DB`
+- `SESSION_SECRET`
+- `SESSION_COOKIE_NAME` (optional, defaults to `alexza_session`)
+- `OPENAI_API_KEY` (if using `/v1/run`)
+- `OPENAI_MODEL` (optional)
+
+Frontend build-time:
+
+- `VITE_API_BASE_URL` (optional when serving frontend + backend from same domain; can be left empty)
+- `VITE_ANALYTICS_ENDPOINT` (optional)
+- `VITE_ANALYTICS_WEBSITE_ID` (optional)
+
+Networking/cookies:
+
+- `CORS_ORIGIN` (recommended in production; comma-separated allowlist, e.g. `https://your-app.onrender.com`)
+- `TRUST_PROXY=1` (recommended on Render so secure cookies work behind proxy)
+
+### Deployment checklist
+
+1. Set all required ENV values in Render.
+2. Deploy with `pnpm build` and `pnpm start`.
+3. Open `https://<your-render-domain>/api/health` and verify:
+
+```json
+{"ok":true}
+```
+
+4. Test signup/login flow to confirm cookies and CORS are correct on your real domain.

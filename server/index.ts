@@ -1,7 +1,9 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import type { CorsOptions } from "cors";
 import { createServer } from "http";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ObjectId } from "mongodb";
@@ -19,10 +21,33 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  const trustProxyRaw = process.env.TRUST_PROXY;
+  if (trustProxyRaw !== undefined) {
+    const parsedTrustProxy = Number.parseInt(trustProxyRaw, 10);
+    app.set("trust proxy", Number.isNaN(parsedTrustProxy) ? trustProxyRaw : parsedTrustProxy);
+  } else if (process.env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
+  }
+
+  const allowedOrigins = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const corsOrigin: CorsOptions["origin"] =
+    allowedOrigins.length === 0
+      ? true
+      : (origin, callback) => {
+          // Allow requests without Origin (curl/health checks) and explicitly allow configured origins.
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+          }
+          callback(new Error("Not allowed by CORS"));
+        };
 
   app.use(
     cors({
-      origin: true,
+      origin: corsOrigin,
       credentials: true,
     })
   );
@@ -142,11 +167,10 @@ async function startServer() {
     });
   }
 
-  // Serve static files from dist/public in production
-  const staticPath =
-    process.env.NODE_ENV === "production"
-      ? path.resolve(__dirname, "public")
-      : path.resolve(__dirname, "..", "dist", "public");
+  const rootFromSource = path.resolve(__dirname, "..");
+  const rootFromBuild = path.resolve(__dirname, "..", "..");
+  const projectRoot = fs.existsSync(path.resolve(rootFromSource, "client")) ? rootFromSource : rootFromBuild;
+  const staticPath = path.resolve(projectRoot, "client", "dist");
 
   app.use(express.static(staticPath));
 

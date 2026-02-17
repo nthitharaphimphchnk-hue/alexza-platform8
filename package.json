@@ -7,8 +7,10 @@
     "dev": "concurrently -k -n server,client -c cyan,magenta \"pnpm run dev:server\" \"pnpm run dev:client\"",
     "dev:server": "cross-env NODE_ENV=development PORT=3002 tsx server/index.ts",
     "dev:client": "vite --host",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "node dist/index.js",
+    "build": "pnpm run build:client && pnpm run build:server",
+    "build:client": "vite build",
+    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=server/dist",
+    "start": "node server/dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "format": "prettier --write ."

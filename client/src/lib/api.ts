@@ -1,4 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3002";
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() || "";
+export const API_BASE_URL = configuredApiBaseUrl.replace(/\/+$/, "");
 let hasLoggedApiBase = false;
 
 export function logApiBaseUrlOnce() {
