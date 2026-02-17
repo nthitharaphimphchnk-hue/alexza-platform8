@@ -7,6 +7,7 @@ import { useForm } from "@/hooks/useForm";
 import { validateSignupForm, getFieldError, hasFieldError } from "@/lib/validation";
 import { useState } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
+import { ApiError, apiRequest } from "@/lib/api";
 
 /**
  * ALEXZA AI Signup Page
@@ -37,14 +38,40 @@ export default function Signup() {
     validate: validateSignupForm,
     onSubmit: async (values) => {
       try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const fallbackName = values.email.split("@")[0] || "user";
+        const nameFromForm = values.company?.trim();
+        const signupName =
+          nameFromForm && nameFromForm.length >= 2
+            ? nameFromForm
+            : fallbackName.length >= 2
+              ? fallbackName
+              : "User";
+
+        await apiRequest<{ ok: true; user: { id: string; email: string; name: string } }>(
+          "/api/auth/signup",
+          {
+            method: "POST",
+            body: {
+              email: values.email,
+              password: values.password,
+              name: signupName,
+            },
+          }
+        );
         showSuccessToast("Account created!", "Welcome to ALEXZA AI");
         setSubmitSuccess(true);
         setTimeout(() => {
           setLocation("/app/dashboard");
         }, 500);
       } catch (error) {
+        if (error instanceof ApiError) {
+          if (error.code === "EMAIL_EXISTS" || error.status === 409) {
+            showFormSubmitErrorToast("This email is already registered");
+            return;
+          }
+          showFormSubmitErrorToast(error.message);
+          return;
+        }
         showFormSubmitErrorToast("Failed to create account");
       }
     },

@@ -7,6 +7,7 @@ import { useForm } from "@/hooks/useForm";
 import { validateLoginForm, getFieldError, hasFieldError } from "@/lib/validation";
 import { useState } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
+import { ApiError, apiRequest } from "@/lib/api";
 
 /**
  * ALEXZA AI Login Page
@@ -33,15 +34,31 @@ export default function Login() {
     validate: validateLoginForm,
     onSubmit: async (values) => {
       try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await apiRequest<{ ok: true; user: { id: string; email: string; name: string } }>(
+          "/api/auth/login",
+          {
+            method: "POST",
+            body: {
+              email: values.email,
+              password: values.password,
+            },
+          }
+        );
         showSuccessToast("Welcome back!", "You have been logged in successfully");
         setSubmitSuccess(true);
         setTimeout(() => {
           setLocation("/app/dashboard");
         }, 500);
       } catch (error) {
-        showFormSubmitErrorToast("Invalid credentials");
+        if (error instanceof ApiError) {
+          if (error.status === 401) {
+            showFormSubmitErrorToast("Invalid credentials");
+            return;
+          }
+          showFormSubmitErrorToast(error.message);
+          return;
+        }
+        showFormSubmitErrorToast("Unable to sign in");
       }
     },
   });

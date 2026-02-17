@@ -3,6 +3,7 @@ import { BarChart3, Bell, ChevronDown, Home, MessageSquare, Settings, Zap, Plus,
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { containerVariants, itemVariants } from "@/lib/animations";
+import { useLocation } from "wouter";
 
 /**
  * ALEXZA AI Dashboard
@@ -13,10 +14,19 @@ import { containerVariants, itemVariants } from "@/lib/animations";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [location] = useLocation();
+
+  const isActivePath = (path: string) => {
+    if (path === "/app/dashboard") {
+      return location === "/app" || location.startsWith("/app/dashboard");
+    }
+    return location.startsWith(path);
+  };
 
   const navItems = [
-    { icon: <Home size={20} />, label: "Dashboard", path: "/app/dashboard", active: true },
+    { icon: <Home size={20} />, label: "Dashboard", path: "/app/dashboard" },
     { icon: <FileText size={20} />, label: "Projects", path: "/app/projects" },
+    { icon: <BarChart3 size={20} />, label: "Usage", path: "/app/usage" },
     { icon: <Zap size={20} />, label: "Credits", path: "/app/billing/credits" },
     { icon: <CreditCard size={20} />, label: "Billing", path: "/app/billing/plans" },
     { icon: <Settings size={20} />, label: "Settings", path: "/app/settings" },
@@ -41,7 +51,7 @@ export default function Dashboard() {
               key={i}
               href={item.path}
               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${
-                item.active
+                isActivePath(item.path)
                   ? "bg-[#c0c0c0] text-black"
                   : "text-gray-400 hover:bg-[rgba(255,255,255,0.06)] hover:text-white"
               }`}

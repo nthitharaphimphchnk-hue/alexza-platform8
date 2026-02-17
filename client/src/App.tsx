@@ -12,17 +12,22 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
-import ProjectOverview from "./pages/ProjectOverview";
+import ProjectDetail from "./pages/ProjectDetail";
 import ChatBuilder from "./pages/ChatBuilder";
 import ApiKeys from "./pages/ApiKeys";
 import Playground from "./pages/Playground";
-import UsageAnalytics from "./pages/UsageAnalytics";
+import Usage from "./pages/Usage";
 import Credits from "./pages/Credits";
 import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import Settings from "./pages/Settings";
+import { useEffect } from "react";
+import { logApiBaseUrlOnce } from "./lib/api";
 
+function ApiKeysRoute() {
+  return <ApiKeys />;
+}
 
 function Router() {
   return (
@@ -38,11 +43,12 @@ function Router() {
       <Route path={"/app"} component={Dashboard} />
       <Route path={"/app/dashboard"} component={Dashboard} />
       <Route path={"/app/projects"} component={Projects} />
-      <Route path={"/app/projects/:id"} component={ProjectOverview} />
+      <Route path={"/app/projects/:id"} component={ProjectDetail} />
       <Route path={"/app/projects/:id/ai"} component={ChatBuilder} />
-      <Route path={"/app/projects/:id/keys"} component={ApiKeys} />
+      <Route path={"/app/projects/:id/keys"} component={ApiKeysRoute} />
       <Route path={"/app/projects/:id/playground"} component={Playground} />
-      <Route path={"/app/projects/:id/usage"} component={UsageAnalytics} />
+      <Route path={"/app/playground"} component={Playground} />
+      <Route path={"/app/usage"} component={Usage} />
       <Route path={"/app/billing/credits"} component={Wallet} />
       <Route path={"/app/billing/plans"} component={BillingPlans} />
       <Route path={"/app/settings"} component={Settings} />
@@ -65,6 +71,10 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  useEffect(() => {
+    logApiBaseUrlOnce();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider
