@@ -22,7 +22,7 @@ interface LogUsageParams {
 
 let usageIndexesReady: Promise<void> | null = null;
 
-async function ensureUsageIndexes() {
+export async function ensureUsageIndexes() {
   if (!usageIndexesReady) {
     usageIndexesReady = (async () => {
       const db = await getDb();

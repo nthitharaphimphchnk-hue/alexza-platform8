@@ -107,3 +107,8 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Local test artifacts
+box6_cookie*.txt
+test-signup*.mjs
+signup-page-initial.png

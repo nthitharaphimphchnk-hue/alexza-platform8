@@ -280,7 +280,9 @@ export default function Projects() {
           },
         });
 
-        console.log("[Projects] POST /api/projects response:", response);
+        if (isDev) {
+          console.log("[Projects] POST /api/projects response:", response);
+        }
         const createdProject = normalizeProject(
           typeof response === "object" && response !== null && "project" in response
             ? (response as { project?: unknown }).project

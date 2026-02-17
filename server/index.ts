@@ -11,6 +11,7 @@ import { keysRouter } from "./keys";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
 import { projectsRouter } from "./projects";
 import { runRouter } from "./run";
+import { usageRouter } from "./usageRoutes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,41 +55,53 @@ async function startServer() {
   app.use("/api", authRouter);
   app.use("/api", projectsRouter);
   app.use("/api", keysRouter);
+  app.use("/api", usageRouter);
   app.use(runRouter);
-  console.log("Mounted /api/projects routes OK");
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Mounted /api/projects routes OK");
+  }
 
-  app.get("/api/debug/session", async (req, res) => {
-    const token = req.cookies?.[getSessionCookieName()];
-    if (!token || typeof token !== "string") {
-      res.json({
-        hasUser: false,
-        userId: null,
-        cookies: req.cookies,
-      });
-      return;
-    }
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/api/debug/session", async (req, res) => {
+      const token = req.cookies?.[getSessionCookieName()];
+      if (!token || typeof token !== "string") {
+        res.json({
+          hasUser: false,
+          userId: null,
+          cookies: req.cookies,
+        });
+        return;
+      }
 
-    try {
-      const db = await getDb();
-      const sessions = db.collection<{ userId: ObjectId; tokenHash: string; expiresAt: Date }>("sessions");
-      const session = await sessions.findOne({
-        tokenHash: hashSessionToken(token),
-        expiresAt: { $gt: new Date() },
-      });
+      try {
+        const db = await getDb();
+        const sessions = db.collection<{ userId: ObjectId; tokenHash: string; expiresAt: Date }>("sessions");
+        const session = await sessions.findOne({
+          tokenHash: hashSessionToken(token),
+          expiresAt: { $gt: new Date() },
+        });
 
-      res.json({
-        hasUser: Boolean(session),
-        userId: session?.userId?.toString?.() ?? null,
-        cookies: req.cookies,
-      });
-    } catch {
-      res.json({
-        hasUser: false,
-        userId: null,
-        cookies: req.cookies,
-      });
-    }
-  });
+        res.json({
+          hasUser: Boolean(session),
+          userId: session?.userId?.toString?.() ?? null,
+          cookies: req.cookies,
+        });
+      } catch {
+        res.json({
+          hasUser: false,
+          userId: null,
+          cookies: req.cookies,
+        });
+      }
+    });
+  } else {
+    app.get("/api/debug/session", (_req, res) => {
+      res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    });
+    app.use("/api/debug", (_req, res) => {
+      res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    });
+  }
 
   if (process.env.NODE_ENV !== "production") {
     app.get("/api/debug/projects", async (_req, res, next) => {
@@ -158,7 +171,8 @@ async function startServer() {
     }
   );
 
-  const port = process.env.PORT || 3000;
+  const configuredPort = Number.parseInt(process.env.PORT ?? "3002", 10);
+  const port = Number.isNaN(configuredPort) ? 3002 : configuredPort;
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);

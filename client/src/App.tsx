@@ -16,7 +16,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import ChatBuilder from "./pages/ChatBuilder";
 import ApiKeys from "./pages/ApiKeys";
 import Playground from "./pages/Playground";
-import UsageAnalytics from "./pages/UsageAnalytics";
+import Usage from "./pages/Usage";
 import Credits from "./pages/Credits";
 import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
@@ -48,7 +48,7 @@ function Router() {
       <Route path={"/app/projects/:id/keys"} component={ApiKeysRoute} />
       <Route path={"/app/projects/:id/playground"} component={Playground} />
       <Route path={"/app/playground"} component={Playground} />
-      <Route path={"/app/projects/:id/usage"} component={UsageAnalytics} />
+      <Route path={"/app/usage"} component={Usage} />
       <Route path={"/app/billing/credits"} component={Wallet} />
       <Route path={"/app/billing/plans"} component={BillingPlans} />
       <Route path={"/app/settings"} component={Settings} />

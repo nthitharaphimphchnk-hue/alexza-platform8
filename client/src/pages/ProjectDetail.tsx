@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ApiKeys from "@/pages/ApiKeys";
+import UsageSummaryPanel from "@/components/usage/UsageSummaryPanel";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Modal from "@/components/Modal";
 import { ArrowLeft, AlertCircle, Pencil, Play, Trash2 } from "lucide-react";
@@ -242,6 +243,7 @@ export default function ProjectDetail() {
               <TabsList className="bg-[#0b0e12] border border-[rgba(255,255,255,0.08)]">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="keys">API Keys</TabsTrigger>
+                <TabsTrigger value="usage">Usage</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview">
@@ -287,6 +289,20 @@ export default function ProjectDetail() {
               <TabsContent value="keys">
                 <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#050607] p-6">
                   <ApiKeys projectId={project.id} embedded />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="usage">
+                <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#050607] p-6">
+                  <UsageSummaryPanel
+                    projectId={project.id}
+                    onUnauthorized={() => {
+                      setLocation("/login");
+                    }}
+                    onProjectNotFound={() => {
+                      setLocation("/app/projects");
+                    }}
+                  />
                 </div>
               </TabsContent>
             </Tabs>
