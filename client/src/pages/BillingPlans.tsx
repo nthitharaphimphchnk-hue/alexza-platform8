@@ -1,160 +1,185 @@
+import AppShell from "@/components/app/AppShell";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
+import { showSuccessToast } from "@/lib/toast";
 import { Check } from "lucide-react";
-import { motion } from "framer-motion";
-import { containerVariants, itemVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
+import { useMemo, useState } from "react";
+
+type BillingCycle = "monthly" | "yearly";
+
+type Plan = {
+  name: string;
+  description: string;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  credits: string;
+  tier: number;
+  features: string[];
+  popular?: boolean;
+};
+
+const plans: Plan[] = [
+  {
+    name: "Starter",
+    description: "Perfect for getting started",
+    monthlyPrice: "Free",
+    yearlyPrice: "Free",
+    credits: "1,000 credits/month",
+    tier: 1,
+    features: ["Up to 1,000 API calls/month", "Basic support", "Single project", "Community access"],
+  },
+  {
+    name: "Professional",
+    description: "For growing projects",
+    monthlyPrice: "$50",
+    yearlyPrice: "$40",
+    credits: "50,000 credits/month",
+    tier: 2,
+    popular: true,
+    features: ["Up to 50,000 API calls/month", "Priority support", "Unlimited projects", "Advanced analytics", "Custom integrations"],
+  },
+  {
+    name: "Enterprise",
+    description: "For large-scale operations",
+    monthlyPrice: "Custom",
+    yearlyPrice: "Custom",
+    credits: "Custom credits",
+    tier: 3,
+    features: ["Unlimited API calls", "24/7 dedicated support", "Unlimited projects", "Advanced security", "SLA guarantee", "Custom integrations"],
+  },
+];
 
 export default function BillingPlans() {
-  const plans = [
-    {
-      name: "Starter",
-      description: "Perfect for getting started",
-      price: "Free",
-      credits: "1,000 credits/month",
-      features: [
-        "Up to 1,000 API calls/month",
-        "Basic support",
-        "Single project",
-        "Community access",
-      ],
-    },
-    {
-      name: "Professional",
-      description: "For growing projects",
-      price: "$50",
-      period: "/month",
-      credits: "50,000 credits/month",
-      features: [
-        "Up to 50,000 API calls/month",
-        "Priority support",
-        "Unlimited projects",
-        "Advanced analytics",
-        "Custom integrations",
-      ],
-      popular: true,
-    },
-    {
-      name: "Enterprise",
-      description: "For large-scale operations",
-      price: "Custom",
-      credits: "Custom credits",
-      features: [
-        "Unlimited API calls",
-        "24/7 dedicated support",
-        "Unlimited projects",
-        "Advanced security",
-        "SLA guarantee",
-        "Custom integrations",
-      ],
-    },
-  ];
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [currentPlan, setCurrentPlan] = useState("Professional");
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+
+  const currentTier = useMemo(() => plans.find((p) => p.name === currentPlan)?.tier ?? 2, [currentPlan]);
+  const pendingTier = useMemo(() => plans.find((p) => p.name === pendingPlan)?.tier ?? currentTier, [pendingPlan, currentTier]);
+
+  const changeType =
+    pendingTier > currentTier ? "Upgrade" : pendingTier < currentTier ? "Downgrade" : "Current plan";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
-      {/* Header */}
-      <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
-        <motion.div
-          className="max-w-7xl mx-auto text-center"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          <motion.div variants={itemVariants}>
-            <h1 className="text-3xl font-bold text-white">Billing Plans</h1>
-            <p className="text-gray-400 mt-2">Choose the perfect plan for your needs</p>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Content */}
-      <div className="p-8">
-        <motion.div
-          className="max-w-7xl mx-auto"
-          variants={staggerContainerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          {/* Plans Grid */}
-          <motion.div className="grid md:grid-cols-3 gap-8" variants={staggerItemVariants}>
-            {plans.map((plan, idx) => (
-              <motion.div
-                key={idx}
-                className={`p-8 rounded-xl border transition ${
-                  plan.popular
-                    ? "bg-gradient-to-br from-[#0b0e12] to-[#050607] border-[#c0c0c0]/30 ring-2 ring-[#c0c0c0]/20"
-                    : "bg-gradient-to-br from-[#0b0e12] to-[#050607] border-[rgba(255,255,255,0.06)]"
+    <>
+      <AppShell
+        title="Billing Plans"
+        subtitle="Choose a plan for your orchestration workloads"
+        backHref="/dashboard"
+        backLabel="Back to Dashboard"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Billing Plans" },
+        ]}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-3 py-1 text-xs text-white">
+              Current Plan: {currentPlan}
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 text-xs ${
+                changeType === "Upgrade"
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : changeType === "Downgrade"
+                    ? "bg-amber-500/20 text-amber-300"
+                    : "bg-slate-500/20 text-slate-300"
+              }`}
+            >
+              {changeType}
+            </span>
+            <div className="flex rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-1">
+              <button
+                onClick={() => setCycle("monthly")}
+                className={`ripple-btn rounded-md px-3 py-1 text-xs transition ${
+                  cycle === "monthly" ? "bg-[rgba(192,192,192,0.18)] text-white" : "text-gray-400 hover:text-white"
                 }`}
-                variants={staggerItemVariants}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setCycle("yearly")}
+                className={`ripple-btn rounded-md px-3 py-1 text-xs transition ${
+                  cycle === "yearly" ? "bg-[rgba(192,192,192,0.18)] text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
+          </div>
+        }
+      >
+        <div className="grid gap-6 md:grid-cols-3">
+          {plans.map((plan) => {
+            const isCurrent = currentPlan === plan.name;
+            const isSelected = pendingPlan === plan.name;
+            const price = cycle === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
+            return (
+              <div
+                key={plan.name}
+                className={`card-hover rounded-xl border bg-gradient-to-br from-[#0b0e12] to-[#050607] p-6 transition-all duration-200 ${
+                  isSelected
+                    ? "border-[rgba(192,192,192,0.55)] ring-2 ring-[rgba(192,192,192,0.28)]"
+                    : isCurrent
+                      ? "border-[rgba(192,192,192,0.35)]"
+                      : "border-[rgba(255,255,255,0.07)]"
+                }`}
               >
                 {plan.popular && (
-                  <div className="mb-4 inline-block px-3 py-1 rounded-full bg-[#c0c0c0]/20 text-[#c0c0c0] text-xs font-semibold">
+                  <span className="mb-4 inline-block rounded-full bg-[#c0c0c0]/20 px-3 py-1 text-xs font-semibold text-[#c0c0c0]">
                     Popular
-                  </div>
+                  </span>
                 )}
-
-                <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                <p className="text-gray-500 text-sm mt-2">{plan.description}</p>
-
-                <div className="mt-6 mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-white">{plan.price}</span>
-                    {plan.period && <span className="text-gray-500">{plan.period}</span>}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-2">{plan.credits}</p>
+                <h3 className="text-xl font-semibold text-white">{plan.name}</h3>
+                <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
+                <div className="my-5">
+                  <p className="text-4xl font-bold text-white">{price}</p>
+                  <p className="mt-2 text-sm text-gray-500">{plan.credits}</p>
                 </div>
-
                 <Button
-                  className={`w-full mb-8 font-semibold ${
-                    plan.popular
-                      ? "bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
-                      : "border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                  onClick={() => setPendingPlan(plan.name)}
+                  variant={isCurrent ? "outline" : "default"}
+                  className={`mb-6 w-full ${
+                    isCurrent
+                      ? "border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                      : "bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
                   }`}
-                  variant={plan.popular ? "default" : "outline"}
                 >
-                  {plan.popular ? "Get Started" : "Choose Plan"}
+                  {isCurrent ? "Current Plan" : `Switch to ${plan.name}`}
                 </Button>
-
-                <div className="space-y-4">
-                  {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <Check size={18} className="text-[#c0c0c0] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300 text-sm">{feature}</span>
+                <div className="space-y-3">
+                  {plan.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-2 text-sm text-gray-300">
+                      <Check size={16} className="mt-0.5 text-[#c0c0c0]" />
+                      <span>{feature}</span>
                     </div>
                   ))}
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
+              </div>
+            );
+          })}
+        </div>
+      </AppShell>
 
-          {/* FAQ */}
-          <motion.div className="mt-16 max-w-3xl mx-auto" variants={staggerItemVariants}>
-            <h2 className="text-2xl font-bold text-white mb-8">Frequently Asked Questions</h2>
-            
-            <div className="space-y-6">
-              {[
-                {
-                  q: "Can I change plans anytime?",
-                  a: "Yes, you can upgrade or downgrade your plan at any time. Changes take effect at the start of your next billing cycle.",
-                },
-                {
-                  q: "What happens if I exceed my credits?",
-                  a: "We'll notify you when you're approaching your limit. You can upgrade anytime or purchase additional credits.",
-                },
-                {
-                  q: "Do you offer annual billing?",
-                  a: "Yes, annual billing is available for all paid plans with a 20% discount.",
-                },
-              ].map((faq, i) => (
-                <div key={i} className="p-6 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)]">
-                  <h4 className="font-semibold text-white">{faq.q}</h4>
-                  <p className="text-gray-400 text-sm mt-2">{faq.a}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
-      </div>
-    </div>
+      <ConfirmDialog
+        open={Boolean(pendingPlan)}
+        onOpenChange={(open) => {
+          if (!open) setPendingPlan(null);
+        }}
+        title="Confirm Plan Switch"
+        description={
+          pendingPlan
+            ? `${changeType} to ${pendingPlan} (${cycle === "monthly" ? "Monthly" : "Yearly"} billing)?`
+            : "Switch plan?"
+        }
+        confirmText="Confirm Switch"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (!pendingPlan) return;
+          setCurrentPlan(pendingPlan);
+          showSuccessToast(`Plan switched to ${pendingPlan}`, "Billing settings have been updated.");
+          setPendingPlan(null);
+        }}
+      />
+    </>
   );
 }
