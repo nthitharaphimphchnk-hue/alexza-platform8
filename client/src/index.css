@@ -273,4 +273,63 @@
   .dark-glass-strong {
     @apply bg-[#0b0e12]/70 backdrop-blur-xl border border-[rgba(255,255,255,0.08)];
   }
+
+  .card-hover {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-3px) scale(1.01);
+    border-color: rgba(192, 192, 192, 0.38);
+    box-shadow: 0 0 28px rgba(192, 192, 192, 0.16);
+  }
+
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 45%,
+      rgba(255, 255, 255, 0.14) 50%,
+      rgba(255, 255, 255, 0.08) 55%,
+      transparent 100%
+    );
+    animation: skeleton-slide 1.35s infinite;
+  }
+
+  .ripple-btn {
+    position: relative;
+  }
+
+  .ripple-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.24) 10%, transparent 40%);
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ripple-btn:active::after {
+    transform: scale(2.2);
+    opacity: 1;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+  }
+}
+
+@keyframes skeleton-slide {
+  to {
+    transform: translateX(100%);
+  }
 }

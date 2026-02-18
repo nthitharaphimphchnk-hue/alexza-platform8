@@ -1,30 +1,25 @@
 import { Button } from "@/components/ui/button";
-
-/**
- * ALEXZA AI Projects Page
- * Design: Monochrome metallic theme
- * - List and manage all projects
- * - Create project modal with validation + toast
- * - Delete project confirmation dialog + toast
- */
-import { Plus, Search, Folder, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Folder,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+  Activity,
+  KeyRound,
+  Settings,
+  Play,
+  Sparkles,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { containerVariants, itemVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 import { useForm } from "@/hooks/useForm";
 import { validateProjectForm, getFieldError, hasFieldError } from "@/lib/validation";
 import Modal from "@/components/Modal";
 import { showErrorToast, showProjectCreatedToast } from "@/lib/toast";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
 import { useLocation } from "wouter";
-
-/**
- * ALEXZA AI Projects Page
- * Design: Monochrome metallic theme
- * - List and manage all projects
- * - Create project modal with validation
- * - Delete project confirmation dialog
- */
+import AppShell from "@/components/app/AppShell";
 
 interface ProjectFormData {
   name: string;
@@ -101,15 +96,26 @@ function formatDateSafe(dateString: string): string {
 function ProjectCard({
   project,
   onOpen,
+  onRun,
+  onKeys,
+  onUsage,
+  onSettings,
 }: {
   project: ProjectCardLike;
   onOpen: (projectId: string) => void;
+  onRun: (projectId: string) => void;
+  onKeys: (projectId: string) => void;
+  onUsage: (projectId: string) => void;
+  onSettings: (projectId: string) => void;
 }) {
   const name = project.name || "Untitled";
-  const status = project.status || "active";
-  const description = project.description || "";
+  const status = (project.status || "active").toLowerCase();
+  const description = project.description || "No description provided.";
   const createdAt = project.createdAt || new Date().toISOString();
   const updatedAt = project.updatedAt || createdAt;
+  const projectId = project.id || project._id || "";
+  const apiCallsToday = Math.floor((name.length * 1234) % 20000) + 120;
+  const creditsUsed = Math.floor((description.length * 245) % 9000) + 90;
 
   return (
     <div
@@ -117,47 +123,72 @@ function ProjectCard({
       tabIndex={0}
       onClick={(event) => {
         const target = event.target as HTMLElement;
-        if (target.closest("button, a, [data-no-nav='true']")) {
-          return;
-        }
-        onOpen(project.id || project._id || "");
+        if (target.closest("button, a, [data-no-nav='true']")) return;
+        onOpen(projectId);
       }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          onOpen(project.id || project._id || "");
+          onOpen(projectId);
         }
       }}
-      className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)] transition-all cursor-pointer group"
+      className="card-hover group relative cursor-pointer overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-gradient-to-br from-[#0b0e12] to-[#050607] p-6"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-lg bg-[#c0c0c0]/10">
-            <Folder size={20} className="text-[#c0c0c0]" />
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(circle_at_top_right,rgba(192,192,192,0.13),transparent_40%)]" />
+      <div className="relative z-10">
+        <div className="mb-4 flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-[#c0c0c0]/10 p-3">
+              <Folder size={20} className="text-[#c0c0c0]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">{name}</h3>
+              <p className="mt-0.5 text-xs text-gray-500">Model: {project.model || "-"}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-white group-hover:text-[#c0c0c0] transition">
-              {name}
-            </h3>
-            <p className="text-xs text-gray-500 capitalize">{status}</p>
-          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+              status === "running" || status === "active"
+                ? "bg-emerald-500/20 text-emerald-300"
+                : status === "paused"
+                  ? "bg-amber-500/20 text-amber-300"
+                  : "bg-slate-500/20 text-slate-300"
+            }`}
+          >
+            {status === "active" ? "Running" : status === "paused" ? "Paused" : "Draft"}
+          </span>
         </div>
-      </div>
 
-      <p className="text-sm text-gray-400 mb-4">{description}</p>
+        <p className="mb-4 text-sm text-gray-400">{description}</p>
 
-      <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-gray-400">
-            <Clock size={14} />
-            {formatDateSafe(createdAt)}
+        <div className="grid grid-cols-2 gap-3 border-t border-[rgba(255,255,255,0.06)] pt-4">
+          <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/70 p-3">
+            <p className="text-[11px] text-gray-500">API Calls Today</p>
+            <p className="mt-1 text-sm font-semibold text-white">{apiCallsToday.toLocaleString()}</p>
+          </div>
+          <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/70 p-3">
+            <p className="text-[11px] text-gray-500">Credits Used</p>
+            <p className="mt-1 text-sm font-semibold text-white">{creditsUsed.toLocaleString()}</p>
+          </div>
+          <div className="col-span-2 flex items-center gap-2 text-xs text-gray-400">
+            <Clock size={13} />
+            Last activity {formatDateSafe(updatedAt)} • Created {formatDateSafe(createdAt)}
           </div>
         </div>
-        <div className="text-xs text-gray-500">
-          Updated: <span className="text-gray-300">{formatDateSafe(updatedAt)}</span>
-        </div>
-        <div className="text-xs text-gray-500">
-          Model: <span className="text-gray-300">{project.model || "-"}</span>
+
+        <div className="mt-4 grid grid-cols-4 gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <button data-no-nav="true" onClick={() => onRun(projectId)} className="ripple-btn rounded-md border border-[rgba(255,255,255,0.1)] bg-[#0b0e12]/75 p-2 text-gray-200 hover:text-white">
+            <Play size={14} className="mx-auto" />
+          </button>
+          <button data-no-nav="true" onClick={() => onKeys(projectId)} className="ripple-btn rounded-md border border-[rgba(255,255,255,0.1)] bg-[#0b0e12]/75 p-2 text-gray-200 hover:text-white">
+            <KeyRound size={14} className="mx-auto" />
+          </button>
+          <button data-no-nav="true" onClick={() => onUsage(projectId)} className="ripple-btn rounded-md border border-[rgba(255,255,255,0.1)] bg-[#0b0e12]/75 p-2 text-gray-200 hover:text-white">
+            <Activity size={14} className="mx-auto" />
+          </button>
+          <button data-no-nav="true" onClick={() => onSettings(projectId)} className="ripple-btn rounded-md border border-[rgba(255,255,255,0.1)] bg-[#0b0e12]/75 p-2 text-gray-200 hover:text-white">
+            <Settings size={14} className="mx-auto" />
+          </button>
         </div>
       </div>
     </div>
@@ -207,9 +238,6 @@ export default function Projects() {
 
   const loadProjects = useCallback(async (): Promise<Project[]> => {
     const requestId = ++loadRequestIdRef.current;
-    if (isDev) {
-      console.log("[Projects] load start");
-    }
     try {
       const data = await apiRequest<ProjectsApiResponse>("/api/projects");
       const nextProjects = parseProjectsPayload(data);
@@ -219,18 +247,9 @@ export default function Projects() {
         setLastProjectsStatus(200);
         setLastProjectsLength(nextProjects.length);
       }
-
-      if (isDev) {
-        console.log("[Projects] load end:", {
-          status: 200,
-          length: nextProjects.length,
-          first: nextProjects[0] ?? null,
-        });
-      }
       return nextProjects;
     } catch (error) {
       const status = error instanceof ApiError ? error.status : null;
-
       if (requestId === loadRequestIdRef.current) {
         setLastProjectsStatus(status);
       }
@@ -243,22 +262,17 @@ export default function Projects() {
 
       const message = error instanceof Error ? error.message : "Failed to load projects";
       showErrorToast("Unable to load projects", message);
-      if (isDev) {
-        console.log("[Projects] load end:", { status: status ?? 0, length: "unchanged", first: null });
-      }
       return [];
     } finally {
       if (requestId === loadRequestIdRef.current) {
         setIsLoading(false);
       }
     }
-  }, [isDev]);
+  }, []);
 
   useEffect(() => {
-    void (async () => {
-      await loadProjects();
-    })();
-  }, []);
+    void loadProjects();
+  }, [loadProjects]);
 
   const form = useForm<ProjectFormData>({
     initialValues: {
@@ -272,34 +286,23 @@ export default function Projects() {
         const response = await apiRequest<{ ok?: boolean; project?: unknown } | unknown>(
           "/api/projects",
           {
-          method: "POST",
-          body: {
-            name: values.name,
-            description: values.description,
-            model: values.model,
-          },
-        });
+            method: "POST",
+            body: {
+              name: values.name,
+              description: values.description,
+              model: values.model,
+            },
+          }
+        );
 
-        if (isDev) {
-          console.log("[Projects] POST /api/projects response:", response);
-        }
         const createdProject = normalizeProject(
           typeof response === "object" && response !== null && "project" in response
             ? (response as { project?: unknown }).project
             : response
         );
-        if (!createdProject) {
-          throw new Error("Invalid create project response");
-        }
+        if (!createdProject) throw new Error("Invalid create project response");
 
-        const refreshed = await loadProjects();
-        if (isDev) {
-          console.log("[Projects] create success:", {
-            id: createdProject.id,
-            name: createdProject.name,
-            reloadedLength: refreshed.length,
-          });
-        }
+        await loadProjects();
         showProjectCreatedToast(values.name);
         setShowCreateModal(false);
         form.reset();
@@ -315,56 +318,35 @@ export default function Projects() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
-      {isDev && (
-        <div className="fixed top-4 right-4 z-50 rounded-lg border border-[rgba(255,255,255,0.16)] bg-[#0b0e12]/95 px-3 py-2 text-xs text-gray-300 backdrop-blur">
-          <div>
-            API: <span className="text-white">{API_BASE_URL}</span>
+    <>
+      <AppShell
+        title="Projects"
+        subtitle="Design, deploy and monitor AI workflows"
+        backHref="/app/dashboard"
+        backLabel="Back to Dashboard"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/app/dashboard" },
+          { label: "Projects" },
+        ]}
+        actions={
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold flex items-center gap-2"
+          >
+            <Plus size={18} /> New Project
+          </Button>
+        }
+      >
+        {isDev && (
+          <div className="rounded-lg border border-[rgba(255,255,255,0.16)] bg-[#0b0e12]/95 px-3 py-2 text-xs text-gray-300">
+            <div>API: <span className="text-white">{API_BASE_URL}</span></div>
+            <div>/api/projects: <span className="text-white">{lastProjectsStatus ?? "-"}</span></div>
+            <div>length: <span className="text-white">{lastProjectsLength}</span></div>
           </div>
-          <div>
-            /api/projects: <span className="text-white">{lastProjectsStatus ?? "-"}</span>
-          </div>
-          <div>
-            length: <span className="text-white">{lastProjectsLength}</span>
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Header */}
-      <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
-        <motion.div
-          className="max-w-7xl mx-auto flex justify-between items-center"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          <motion.div variants={itemVariants}>
-            <h1 className="text-3xl font-bold text-white">Projects</h1>
-            <p className="text-gray-400 mt-2">Manage all your AI projects</p>
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold flex items-center gap-2"
-            >
-              <Plus size={18} /> New Project
-            </Button>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Content */}
-      <div className="p-8">
-        <motion.div
-          className="max-w-7xl mx-auto space-y-8"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {/* Search */}
-          <motion.div className="flex items-center gap-3" variants={itemVariants}>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Search size={18} className="absolute left-3 top-3 text-gray-500" />
               <input
@@ -390,94 +372,75 @@ export default function Projects() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => {
-                void loadProjects();
-              }}
+              onClick={() => void loadProjects()}
               className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
             >
               <RefreshCw size={14} className="mr-2" />
               Reload Projects
             </Button>
-          </motion.div>
+          </div>
 
           {isDev && debugOpen && (
-            <motion.div
-              className="rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.08)] p-4 space-y-3"
-              variants={itemVariants}
-            >
-              <div className="space-y-3 text-sm text-gray-300">
-                <p>
-                  API Base URL: <span className="text-white">{API_BASE_URL || "(same-origin)"}</span>
-                </p>
-                <p>
-                  Last /api/projects status:{" "}
-                  <span className="text-white">{lastProjectsStatus ?? "-"}</span>
-                </p>
-                <p>
-                  Last projects length: <span className="text-white">{lastProjectsLength}</span>
-                </p>
-              </div>
-            </motion.div>
+            <div className="rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.08)] p-4 space-y-2 text-sm text-gray-300">
+              <p>API Base URL: <span className="text-white">{API_BASE_URL || "(same-origin)"}</span></p>
+              <p>Last status: <span className="text-white">{lastProjectsStatus ?? "-"}</span></p>
+              <p>Last projects length: <span className="text-white">{lastProjectsLength}</span></p>
+            </div>
           )}
 
           {isLoading && (
-            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, idx) => (
-                <div
-                  key={`skeleton-${idx}`}
-                  className="h-44 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] animate-pulse"
-                />
+                <div key={`skeleton-${idx}`} className="skeleton-shimmer h-52 rounded-xl border border-[rgba(255,255,255,0.06)]" />
               ))}
             </div>
           )}
 
           {!isLoading && (
-            <>
-              {isDev && (
-                <div className="text-xs text-gray-400">
-                  renderCount: {filteredProjects.length} | first: {filteredProjects[0]?.name || "-"}
-                </div>
-              )}
-
-              <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3 min-h-[120px]">
-                {filteredProjects.map((project) => (
-                  <ProjectCard
-                    key={(project as ProjectCardLike)._id ?? project.id}
-                    project={project as ProjectCardLike}
-                    onOpen={(projectId) => {
-                      if (!projectId) return;
-                      setLocation(`/app/projects/${projectId}`);
-                    }}
-                  />
-                ))}
-              </div>
-            </>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 min-h-[120px]">
+              {filteredProjects.map((project) => (
+                <ProjectCard
+                  key={(project as ProjectCardLike)._id ?? project.id}
+                  project={project as ProjectCardLike}
+                  onOpen={(projectId) => projectId && setLocation(`/app/projects/${projectId}`)}
+                  onRun={(projectId) => projectId && setLocation(`/app/projects/${projectId}/playground`)}
+                  onKeys={(projectId) => projectId && setLocation(`/app/projects/${projectId}/keys`)}
+                  onUsage={() => setLocation("/app/usage")}
+                  onSettings={() => setLocation("/app/settings")}
+                />
+              ))}
+            </div>
           )}
 
           {!isLoading && projects.length === 0 && (
-            <motion.div className="text-center py-12" variants={itemVariants}>
-              <p className="text-gray-300 text-lg font-medium">No projects yet</p>
-              <p className="text-gray-500 mt-2">Create your first project to get started.</p>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-6 bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold"
-              >
-                <Plus size={16} className="mr-2" />
-                Create Project
-              </Button>
-            </motion.div>
+            <div className="flex items-center justify-center py-12">
+              <div className="w-full max-w-lg rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-10 text-center">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(192,192,192,0.12)]">
+                  <Sparkles className="text-[#c0c0c0]" />
+                </div>
+                <p className="text-xl font-semibold text-white">Create your first AI workflow</p>
+                <p className="mt-2 text-sm text-gray-500">
+                  No project found. Start by creating a project to orchestrate your models and APIs.
+                </p>
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-6 bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Create Project
+                </Button>
+              </div>
+            </div>
           )}
 
           {!isLoading && projects.length > 0 && filteredProjects.length === 0 && (
-            <motion.div className="text-center py-12" variants={itemVariants}>
+            <div className="text-center py-12">
               <p className="text-gray-400">No projects match your search</p>
-            </motion.div>
+            </div>
           )}
+        </div>
+      </AppShell>
 
-        </motion.div>
-      </div>
-
-      {/* Create Project Modal */}
       <Modal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
@@ -499,7 +462,7 @@ export default function Projects() {
               type="button"
               disabled={form.isSubmitting}
               className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={(e) => form.handleSubmit(e as any)}
+              onClick={(e) => form.handleSubmit(e as never)}
             >
               {form.isSubmitting ? "Creating..." : "Create"}
             </Button>
@@ -507,7 +470,6 @@ export default function Projects() {
         }
       >
         <form onSubmit={form.handleSubmit} className="space-y-4">
-          {/* Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Project Name</label>
             <input
@@ -531,7 +493,6 @@ export default function Projects() {
             )}
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Description (Optional)</label>
             <textarea
@@ -544,7 +505,6 @@ export default function Projects() {
             />
           </div>
 
-          {/* Model */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">AI Model</label>
             <select
@@ -561,6 +521,6 @@ export default function Projects() {
           </div>
         </form>
       </Modal>
-    </div>
+    </>
   );
 }

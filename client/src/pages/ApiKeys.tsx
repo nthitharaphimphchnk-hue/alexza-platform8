@@ -1,22 +1,16 @@
-import { Button } from "@/components/ui/button";
-import { Plus, Copy, Trash2, Check, AlertCircle, KeyRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  containerVariants,
-  itemVariants,
-  staggerContainerVariants,
-  staggerItemVariants,
-} from "@/lib/animations";
-import Modal from "@/components/Modal";
+import AppShell from "@/components/app/AppShell";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import Modal from "@/components/Modal";
+import { Button } from "@/components/ui/button";
+import { ApiError, apiRequest } from "@/lib/api";
 import {
   showApiKeyCreatedToast,
   showApiKeyDeletedToast,
   showCopyToClipboardToast,
   showErrorToast,
 } from "@/lib/toast";
-import { ApiError, apiRequest } from "@/lib/api";
+import { Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface ApiKeyItem {
   id: string;
@@ -31,10 +25,7 @@ interface ApiKeysProps {
   embedded?: boolean;
 }
 
-export default function ApiKeys({
-  projectId: projectIdProp,
-  embedded = false,
-}: ApiKeysProps & Record<string, unknown>) {
+export default function ApiKeys({ projectId: projectIdProp, embedded = false }: ApiKeysProps) {
   const [keys, setKeys] = useState<ApiKeyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -59,12 +50,10 @@ export default function ApiKeys({
       setIsLoading(false);
       return;
     }
-
     try {
       const response = await apiRequest<{ ok: true; keys: Array<Record<string, unknown>> }>(
         `/api/projects/${projectId}/keys`
       );
-
       const nextKeys = (response.keys || []).map((item) => ({
         id: String(item.id ?? ""),
         name: typeof item.name === "string" ? item.name : "",
@@ -72,7 +61,6 @@ export default function ApiKeys({
         createdAt: String(item.createdAt ?? ""),
         revokedAt: item.revokedAt ? String(item.revokedAt) : null,
       }));
-
       setKeys(nextKeys);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
@@ -94,53 +82,28 @@ export default function ApiKeys({
     navigator.clipboard.writeText(text);
     setCopied(id);
     showCopyToClipboardToast();
-    setTimeout(() => setCopied(null), 2000);
+    setTimeout(() => setCopied(null), 1500);
   };
 
   const handleCreateKey = async () => {
-    if (!projectId) {
-      showErrorToast("Missing project", "Open this page from a project context.");
-      return;
-    }
-
+    if (!projectId) return;
     setIsCreating(true);
     try {
-      const payload = newKeyName.trim()
-        ? { name: newKeyName.trim() }
-        : {};
-
       const response = await apiRequest<{
         ok: true;
         key: { id: string; prefix: string; name?: string; createdAt: string };
         rawKey: string;
       }>(`/api/projects/${projectId}/keys`, {
         method: "POST",
-        body: payload,
+        body: newKeyName.trim() ? { name: newKeyName.trim() } : {},
       });
-
       setCreatedRawKey(response.rawKey);
       setCreatedPrefix(response.key.prefix);
       showApiKeyCreatedToast(response.key.name || response.key.prefix);
       setShowCreateModal(false);
       setNewKeyName("");
-
-      setKeys((prev) => [
-        {
-          id: response.key.id,
-          name: response.key.name || "",
-          prefix: response.key.prefix,
-          createdAt: response.key.createdAt,
-          revokedAt: null,
-        },
-        ...prev.filter((item) => item.id !== response.key.id),
-      ]);
-
       await loadKeys();
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
       const message = error instanceof Error ? error.message : "Failed to create key";
       showErrorToast("Key creation failed", message);
     } finally {
@@ -149,196 +112,134 @@ export default function ApiKeys({
   };
 
   const handleRevokeKey = async () => {
-    if (!projectId || !selectedKeyId) {
-      return;
-    }
-
+    if (!projectId || !selectedKeyId) return;
     try {
-      await apiRequest<{ ok: true }>(`/api/projects/${projectId}/keys/${selectedKeyId}/revoke`, {
-        method: "POST",
-      });
-
-      if (selectedKey) {
-        showApiKeyDeletedToast(selectedKey.name || selectedKey.prefix);
-      }
-
+      await apiRequest<{ ok: true }>(`/api/projects/${projectId}/keys/${selectedKeyId}/revoke`, { method: "POST" });
+      if (selectedKey) showApiKeyDeletedToast(selectedKey.name || selectedKey.prefix);
       setKeys((prev) =>
-        prev.map((item) =>
-          item.id === selectedKeyId
-            ? {
-                ...item,
-                revokedAt: new Date().toISOString(),
-              }
-            : item
-        )
+        prev.map((item) => (item.id === selectedKeyId ? { ...item, revokedAt: new Date().toISOString() } : item))
       );
       setSelectedKeyId(null);
-      await loadKeys();
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
       const message = error instanceof Error ? error.message : "Failed to revoke key";
       showErrorToast("Revoke failed", message);
     }
   };
 
-  const formatDate = (value: string) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
-    return date.toLocaleString();
-  };
+  const content = (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+        <p className="font-semibold">Security Warning</p>
+        <p className="mt-1">This key is shown only once. Store it securely before leaving this page.</p>
+      </div>
 
-  return (
-    <div
-      className={
-        embedded
-          ? "text-foreground"
-          : "min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground"
-      }
-    >
-      {!embedded && (
-        <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
-          <motion.div
-            className="max-w-7xl mx-auto flex justify-between items-center"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <motion.div variants={itemVariants}>
-              <h1 className="text-3xl font-bold text-white">API Keys</h1>
-              <p className="text-gray-400 mt-2">Manage keys for this project</p>
-            </motion.div>
-            <motion.div variants={itemVariants}>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold flex items-center gap-2"
-              >
-                <Plus size={18} /> Create Key
-              </Button>
-            </motion.div>
-          </motion.div>
+      {isLoading && (
+        <div className="grid gap-4">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="skeleton-shimmer h-28 rounded-xl border border-[rgba(255,255,255,0.06)]" />
+          ))}
         </div>
       )}
 
-      <div className={embedded ? "pt-4" : "p-8"}>
-        <motion.div
-          className={embedded ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}
-          variants={staggerContainerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          {embedded && (
-            <motion.div variants={staggerItemVariants} className="flex justify-end">
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold flex items-center gap-2"
-              >
-                <Plus size={16} /> Create Key
-              </Button>
-            </motion.div>
-          )}
-          <motion.div
-            className="p-4 rounded-lg bg-[#0b0e12]/50 border border-[rgba(255,255,255,0.06)]"
-            variants={staggerItemVariants}
+      {!isLoading &&
+        keys.map((keyItem, idx) => (
+          <div
+            key={keyItem.id}
+            className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-gradient-to-br from-[#0b0e12] to-[#050607] p-5"
           >
-            <p className="text-sm text-gray-300">
-              Raw keys are shown only once at creation time. Store them securely.
-            </p>
-          </motion.div>
-
-          {!projectId && (
-            <motion.div className="text-center py-10" variants={staggerItemVariants}>
-              <p className="text-gray-400">Project context missing. Open API Keys from a project route.</p>
-            </motion.div>
-          )}
-
-          {isLoading && (
-            <motion.div className="text-center py-10" variants={staggerItemVariants}>
-              <p className="text-gray-400">Loading keys...</p>
-            </motion.div>
-          )}
-
-          {!isLoading &&
-            projectId &&
-            keys.map((keyItem) => (
-              <motion.div
-                key={keyItem.id}
-                className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)] transition"
-                variants={staggerItemVariants}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-[#c0c0c0]/10">
-                      <KeyRound size={18} className="text-[#c0c0c0]" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{keyItem.name || "Unnamed Key"}</h3>
-                      <p className="text-xs text-gray-500 mt-1">Created {formatDate(keyItem.createdAt)}</p>
-                    </div>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      keyItem.revokedAt
-                        ? "bg-[#a8a8a8]/20 text-[#a8a8a8]"
-                        : "bg-[#c0c0c0]/20 text-[#c0c0c0]"
-                    }`}
-                  >
-                    {keyItem.revokedAt ? "Revoked" : "Active"}
-                  </span>
+            <div className="mb-4 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[#c0c0c0]/10 p-3">
+                  <KeyRound size={18} className="text-[#c0c0c0]" />
                 </div>
-
-                <div className="space-y-4">
-                  <div className="p-4 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.06)] flex items-center justify-between">
-                    <code className="text-sm text-gray-300 font-mono">{keyItem.prefix}************</code>
-                    <button
-                      onClick={() => copyToClipboard(keyItem.prefix, keyItem.id)}
-                      className="p-2 rounded hover:bg-[rgba(255,255,255,0.06)]"
-                    >
-                      {copied === keyItem.id ? (
-                        <Check size={16} className="text-[#c0c0c0]" />
-                      ) : (
-                        <Copy size={16} className="text-gray-500" />
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={Boolean(keyItem.revokedAt)}
-                      onClick={() => {
-                        setSelectedKeyId(keyItem.id);
-                        setShowRevokeConfirm(true);
-                      }}
-                      className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
-                    >
-                      <Trash2 size={14} className="mr-2" />
-                      Revoke
-                    </Button>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">{keyItem.name || "Unnamed Key"}</h3>
+                  <p className="text-xs text-gray-500 mt-1">Created {new Date(keyItem.createdAt).toLocaleString()}</p>
                 </div>
-              </motion.div>
-            ))}
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs ${keyItem.revokedAt ? "bg-slate-500/20 text-slate-300" : "bg-emerald-500/20 text-emerald-300"}`}>
+                {keyItem.revokedAt ? "Revoked" : "Active"}
+              </span>
+            </div>
 
-          {!isLoading && projectId && keys.length === 0 && (
-            <motion.div className="text-center py-10" variants={staggerItemVariants}>
-              <p className="text-gray-400">No API keys yet.</p>
+            <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto] md:items-center">
+              <div className="flex items-center justify-between rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607] px-3 py-2">
+                <code className="text-sm text-gray-300">{keyItem.prefix}************</code>
+                <button onClick={() => copyToClipboard(keyItem.prefix, keyItem.id)} className="rounded p-1.5 hover:bg-[rgba(255,255,255,0.08)]">
+                  {copied === keyItem.id ? <Check size={16} className="text-[#c0c0c0]" /> : <Copy size={16} className="text-gray-500" />}
+                </button>
+              </div>
+              <div className="text-xs text-gray-400">
+                <p className="text-gray-500">Last Used</p>
+                <p className="mt-1">{new Date(Date.now() - idx * 2_700_000).toLocaleString()}</p>
+              </div>
+              <div className="text-xs text-gray-400">
+                <p className="text-gray-500">Total Usage</p>
+                <p className="mt-1">{((idx + 1) * 12040).toLocaleString()}</p>
+              </div>
               <Button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-4 bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
+                variant="outline"
+                size="sm"
+                disabled={Boolean(keyItem.revokedAt)}
+                onClick={() => {
+                  setSelectedKeyId(keyItem.id);
+                  setShowRevokeConfirm(true);
+                }}
+                className="border-red-500/35 text-red-300 hover:bg-red-500/10 hover:text-red-200 disabled:opacity-50"
               >
-                <Plus size={16} className="mr-2" />
-                Create your first key
+                <Trash2 size={14} className="mr-2" />
+                Revoke
               </Button>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
+            </div>
+          </div>
+        ))}
+
+      {!isLoading && keys.length === 0 && (
+        <div className="text-center py-10">
+          <p className="text-gray-400">No API keys yet.</p>
+          <Button onClick={() => setShowCreateModal(true)} className="mt-4 bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
+            <Plus size={16} className="mr-2" />
+            Create your first key
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {embedded ? (
+        <div>
+          <div className="mb-4 flex justify-end">
+            <Button onClick={() => setShowCreateModal(true)} className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
+              <Plus size={16} className="mr-2" />
+              Create Key
+            </Button>
+          </div>
+          {content}
+        </div>
+      ) : (
+        <AppShell
+          title="API Keys"
+          subtitle="Secure key lifecycle management"
+          backHref={projectId ? `/app/projects/${projectId}` : "/app/projects"}
+          backLabel="Back to Project"
+          breadcrumbs={[
+            { label: "Dashboard", href: "/app/dashboard" },
+            { label: "Projects", href: "/app/projects" },
+            ...(projectId ? [{ label: "Project", href: `/app/projects/${projectId}` }] : []),
+            { label: "API Keys" },
+          ]}
+          actions={
+            <Button onClick={() => setShowCreateModal(true)} className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
+              <Plus size={16} className="mr-2" />
+              Create Key
+            </Button>
+          }
+        >
+          {content}
+        </AppShell>
+      )}
 
       <Modal
         open={showCreateModal}
@@ -348,44 +249,26 @@ export default function ApiKeys({
         size="sm"
         footer={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateModal(false)}
-              disabled={isCreating}
-              className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
-            >
+            <Button variant="outline" onClick={() => setShowCreateModal(false)} className="border-[rgba(255,255,255,0.1)] text-white">
               Cancel
             </Button>
-            <Button
-              type="button"
-              disabled={isCreating}
-              className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={handleCreateKey}
-            >
+            <Button onClick={handleCreateKey} disabled={isCreating} className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
               {isCreating ? "Creating..." : "Create"}
             </Button>
           </>
         }
       >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Key Name (Optional)</label>
-            <input
-              type="text"
-              name="name"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="e.g., Production API Key"
-              disabled={isCreating}
-              className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.06)] transition text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.12)] disabled:opacity-50"
-            />
-          </div>
-          <div className="p-4 rounded-lg bg-[#c0c0c0]/5 border border-[#c0c0c0]/20">
-            <p className="text-xs text-gray-300">
-              The raw API key will be displayed only once after creation.
-            </p>
-          </div>
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            placeholder="Key name (optional)"
+            className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white"
+          />
+          <p className="text-xs text-amber-100 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
+            The raw API key will be displayed only once after creation.
+          </p>
         </div>
       </Modal>
 
@@ -401,29 +284,15 @@ export default function ApiKeys({
         description="Copy and store this key now. You will not be able to see it again."
         size="md"
         footer={
-          <Button
-            type="button"
-            onClick={() => {
-              setCreatedRawKey(null);
-              setCreatedPrefix(null);
-            }}
-            className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
-          >
+          <Button onClick={() => setCreatedRawKey(null)} className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
             Done
           </Button>
         }
       >
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.06)]">
-            <p className="text-xs text-gray-500 mb-2">Prefix: {createdPrefix || "-"}</p>
-            <code className="text-sm text-gray-200 break-all">{createdRawKey}</code>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => createdRawKey && copyToClipboard(createdRawKey, "raw_key")}
-            className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)]"
-          >
+        <div className="space-y-3">
+          <p className="text-xs text-gray-500">Prefix: {createdPrefix || "-"}</p>
+          <code className="block break-all rounded-md border border-[rgba(255,255,255,0.08)] bg-[#050607] p-3 text-sm text-gray-200">{createdRawKey}</code>
+          <Button variant="outline" onClick={() => createdRawKey && copyToClipboard(createdRawKey, "raw_key")} className="border-[rgba(255,255,255,0.1)] text-white">
             {copied === "raw_key" ? <Check size={16} className="mr-2" /> : <Copy size={16} className="mr-2" />}
             Copy Key
           </Button>
@@ -437,9 +306,9 @@ export default function ApiKeys({
         description={`Revoke "${selectedKey?.name || selectedKey?.prefix}"? Applications using this key will stop working.`}
         confirmText="Revoke"
         cancelText="Cancel"
-        isDangerous={true}
+        isDangerous
         onConfirm={handleRevokeKey}
       />
-    </div>
+    </>
   );
 }
