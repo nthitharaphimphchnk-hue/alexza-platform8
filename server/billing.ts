@@ -42,6 +42,12 @@ function addOneMonth(date: Date): Date {
   return next;
 }
 
+function subtractMonths(date: Date, months: number): Date {
+  const prev = new Date(date);
+  prev.setMonth(prev.getMonth() - months);
+  return prev;
+}
+
 function canUseAdminEndpoint(req: Request): boolean {
   if (process.env.NODE_ENV !== "production") return true;
   const configuredAdminKey = process.env.ADMIN_API_KEY;
@@ -253,6 +259,51 @@ router.post("/admin/billing/reset-monthly", async (req, res, next) => {
     return res.json({
       ok: true,
       resetCount: result.resetCount,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/admin/billing/force-reset-due", async (req, res, next) => {
+  try {
+    if (!canUseAdminEndpoint(req)) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
+    }
+
+    const body = req.body as { userId?: unknown; monthsAgo?: unknown };
+    const rawUserId = typeof body.userId === "string" ? body.userId.trim() : "";
+    if (!ObjectId.isValid(rawUserId)) {
+      return res.status(400).json({
+        ok: false,
+        error: "VALIDATION_ERROR",
+        message: "userId must be a valid ObjectId",
+      });
+    }
+
+    const parsedMonthsAgo = Number.parseInt(String(body.monthsAgo ?? "2"), 10);
+    const monthsAgo = Number.isFinite(parsedMonthsAgo) ? Math.max(1, Math.min(60, parsedMonthsAgo)) : 2;
+    const userId = new ObjectId(rawUserId);
+    const now = new Date();
+    const billingCycleAnchor = subtractMonths(now, monthsAgo);
+    const nextResetAt = addOneMonth(billingCycleAnchor);
+
+    const db = await getDb();
+    const users = db.collection<UserBillingDoc>("users");
+    const result = await users.updateOne({ _id: userId }, { $set: { billingCycleAnchor } });
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "USER_NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      userId: userId.toString(),
+      billingCycleAnchor,
+      nextResetAt,
     });
   } catch (error) {
     return next(error);

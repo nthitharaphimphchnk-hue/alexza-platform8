@@ -13,6 +13,9 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiRequest, ApiError } from "@/lib/api";
+import { LOW_CREDITS_THRESHOLD } from "@/lib/creditsConfig";
+import LowCreditsBanner from "@/components/LowCreditsBanner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +28,7 @@ import {
 type Mode = "Production" | "Test";
 
 const APP_MODE_STORAGE_KEY = "alexza_app_mode";
+const LOW_CREDITS_DISMISS_PREFIX = "alexza_low_credits_dismissed";
 
 type BreadcrumbItem = {
   label: string;
@@ -66,6 +70,10 @@ export default function AppShell({
 }: AppShellProps) {
   const [location, setLocation] = useLocation();
   const [mode, setMode] = useState<Mode>("Production");
+  const [lowCreditsBalance, setLowCreditsBalance] = useState<number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [lowCreditsDismissKey, setLowCreditsDismissKey] = useState<string | null>(null);
+  const [isLowCreditsDismissed, setIsLowCreditsDismissed] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(APP_MODE_STORAGE_KEY);
@@ -74,12 +82,52 @@ export default function AppShell({
     }
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLowCredits = async () => {
+      if (!location.startsWith("/app")) return;
+
+      try {
+        const [meResponse, balanceResponse] = await Promise.all([
+          apiRequest<{ ok: boolean; user: { id: string } }>("/api/me"),
+          apiRequest<{ ok: boolean; balanceCredits: number }>("/api/credits/balance"),
+        ]);
+        if (cancelled) return;
+
+        const userId = meResponse?.user?.id;
+        if (!userId) return;
+        setCurrentUserId(userId);
+
+        const dismissKey = `${LOW_CREDITS_DISMISS_PREFIX}:${userId}`;
+        const dismissed = window.localStorage.getItem(dismissKey) === "1";
+        setLowCreditsDismissKey(dismissKey);
+        setIsLowCreditsDismissed(dismissed);
+        setLowCreditsBalance(balanceResponse.balanceCredits);
+      } catch (error) {
+        if (cancelled) return;
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          return;
+        }
+      }
+    };
+
+    void loadLowCredits();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location]);
+
   const updateMode = (nextMode: Mode) => {
     setMode(nextMode);
     window.localStorage.setItem(APP_MODE_STORAGE_KEY, nextMode);
   };
 
   const pageKey = useMemo(() => location, [location]);
+  const isLowCredits =
+    typeof lowCreditsBalance === "number" && lowCreditsBalance < LOW_CREDITS_THRESHOLD;
+  const isZeroCredits = lowCreditsBalance === 0;
 
   const isActive = (href: string) => {
     if (href === "/app/dashboard") {
@@ -94,6 +142,34 @@ export default function AppShell({
       return;
     }
     setLocation(backHref);
+  };
+
+  const clearLowCreditsDismissOnLogout = (userId: string | null) => {
+    if (userId) {
+      window.localStorage.removeItem(`${LOW_CREDITS_DISMISS_PREFIX}:${userId}`);
+      return;
+    }
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(`${LOW_CREDITS_DISMISS_PREFIX}:`)) {
+        keysToRemove.push(key);
+      }
+    }
+    for (const key of keysToRemove) {
+      window.localStorage.removeItem(key);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await apiRequest<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
+      clearLowCreditsDismissOnLogout(currentUserId);
+    } catch {
+      // If logout API fails, keep current localStorage state unchanged.
+    } finally {
+      setLocation("/login");
+    }
   };
 
   return (
@@ -127,6 +203,15 @@ export default function AppShell({
                 >
                   <Icon size={18} />
                   <span>{item.label}</span>
+                  {item.href === "/app/billing/credits" && isLowCredits ? (
+                    <span
+                      className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        isZeroCredits ? "bg-red-500/25 text-red-200" : "bg-amber-500/25 text-amber-200"
+                      }`}
+                    >
+                      {isZeroCredits ? "Top up" : "Low"}
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
@@ -218,7 +303,7 @@ export default function AppShell({
                     <DropdownMenuItem onClick={() => setLocation("/app/settings")}>Profile Settings</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLocation("/app/billing/plans")}>Billing</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setLocation("/login")}>Sign Out</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void handleSignOut()}>Sign Out</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -233,6 +318,20 @@ export default function AppShell({
             className="flex-1 p-4 md:p-8"
           >
             <div className="mx-auto w-full max-w-7xl space-y-8">
+              {isLowCredits && !isLowCreditsDismissed ? (
+                <LowCreditsBanner
+                  balanceCredits={lowCreditsBalance ?? 0}
+                  onAddCredits={() => setLocation("/app/billing/credits")}
+                  onDismiss={
+                    lowCreditsDismissKey
+                      ? () => {
+                          window.localStorage.setItem(lowCreditsDismissKey, "1");
+                          setIsLowCreditsDismissed(true);
+                        }
+                      : undefined
+                  }
+                />
+              ) : null}
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <button
