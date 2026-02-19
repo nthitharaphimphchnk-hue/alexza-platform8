@@ -1,14 +1,18 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { randomUUID } from "crypto";
 import OpenAI from "openai";
 import {
   InsufficientCreditsError,
+  MonthlyQuotaExceededError,
   RUN_COST_CREDITS,
   TOKENS_PER_CREDIT,
   deductCreditsForUsage,
   getWalletBalanceCredits,
 } from "./credits";
+import { getUserBillingState } from "./billing";
+import { MAX_CREDITS_PER_REQUEST, MAX_ESTIMATED_TOKENS, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
+import { rateLimitByApiKey } from "./middleware/rateLimitByApiKey";
 import { logUsage } from "./usage";
 
 interface RunRequestBody {
@@ -31,7 +35,27 @@ function getOpenAIModel() {
   return process.env.OPENAI_MODEL || "gpt-4o-mini";
 }
 
-router.post("/v1/run", requireApiKey, async (req, res, next) => {
+function estimateTokensFromInput(input: string): number {
+  // Rough approximation: 1 token ~= 4 chars for mixed English/code payloads.
+  return Math.ceil(input.length / 4);
+}
+
+function runError(
+  res: Response,
+  statusCode: number,
+  error: string,
+  message: string,
+  details?: Record<string, unknown>
+) {
+  return res.status(statusCode).json({
+    ok: false,
+    error,
+    message,
+    ...(details ? { details } : {}),
+  });
+}
+
+router.post("/v1/run", requireApiKey, rateLimitByApiKey, async (req, res) => {
   const startMs = Date.now();
   const provider = "openai";
   const model = getOpenAIModel();
@@ -68,15 +92,29 @@ router.post("/v1/run", requireApiKey, async (req, res, next) => {
     const body = req.body as RunRequestBody;
     const input = typeof body.input === "string" ? body.input : "";
     if (!req.apiKey) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+      return runError(res, 401, "UNAUTHORIZED", "Unauthorized");
     }
     if (input.trim().length < 1) {
       const statusCode = 400;
       await safeLogUsage({ statusCode, status: "error" });
-      return res.status(statusCode).json({
-        ok: false,
-        error: "VALIDATION_ERROR",
-        message: "input must be a non-empty string",
+      return runError(res, statusCode, "VALIDATION_ERROR", "input must be a non-empty string");
+    }
+
+    if (input.length > MAX_INPUT_CHARS) {
+      const statusCode = 400;
+      await safeLogUsage({ statusCode, status: "error" });
+      return runError(res, statusCode, "REQUEST_TOO_LARGE", "Input too long. Please shorten.", {
+        maxInputChars: MAX_INPUT_CHARS,
+      });
+    }
+
+    const estimatedTokens = estimateTokensFromInput(input);
+    if (estimatedTokens > MAX_ESTIMATED_TOKENS) {
+      const statusCode = 400;
+      await safeLogUsage({ statusCode, status: "error" });
+      return runError(res, statusCode, "REQUEST_TOO_LARGE", "Input too long. Please shorten.", {
+        maxEstimatedTokens: MAX_ESTIMATED_TOKENS,
+        estimatedTokens,
       });
     }
 
@@ -84,21 +122,24 @@ router.post("/v1/run", requireApiKey, async (req, res, next) => {
     if (!openai) {
       const statusCode = 500;
       await safeLogUsage({ statusCode, status: "error" });
-      return res.status(statusCode).json({
-        ok: false,
-        error: "MISSING_OPENAI_KEY",
-        message: "Missing OPENAI_API_KEY",
-      });
+      return runError(res, statusCode, "PROVIDER_ERROR", "Provider is not configured.");
     }
 
     const balanceCredits = await getWalletBalanceCredits(req.apiKey.ownerUserId);
+    const billingState = await getUserBillingState(req.apiKey.ownerUserId);
     if (balanceCredits < RUN_COST_CREDITS) {
       const statusCode = 402;
       await safeLogUsage({ statusCode, status: "error" });
-      return res.status(statusCode).json({
-        ok: false,
-        error: "INSUFFICIENT_CREDITS",
-        message: "Insufficient credits",
+      return runError(res, statusCode, "INSUFFICIENT_CREDITS", "Insufficient credits");
+    }
+    if (billingState.monthlyCreditsUsed + RUN_COST_CREDITS > billingState.monthlyCreditsAllowance) {
+      const statusCode = 402;
+      await safeLogUsage({ statusCode, status: "error" });
+      return runError(res, statusCode, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded.", {
+        allowance: billingState.monthlyCreditsAllowance,
+        used: billingState.monthlyCreditsUsed,
+        needed: RUN_COST_CREDITS,
+        nextResetAt: billingState.nextResetAt,
       });
     }
 
@@ -115,6 +156,28 @@ router.post("/v1/run", requireApiKey, async (req, res, next) => {
       typeof totalTokens === "number"
         ? Math.max(1, Math.ceil(totalTokens / TOKENS_PER_CREDIT))
         : RUN_COST_CREDITS;
+
+    if (creditsCharged > MAX_CREDITS_PER_REQUEST) {
+      const statusCode = 400;
+      await safeLogUsage({
+        statusCode,
+        status: "error",
+        inputTokens: usage?.input_tokens ?? null,
+        outputTokens: usage?.output_tokens ?? null,
+        totalTokens,
+      });
+      return runError(
+        res,
+        statusCode,
+        "COST_CAP_EXCEEDED",
+        "Request cost too high for current limits.",
+        {
+          maxCreditsPerRequest: MAX_CREDITS_PER_REQUEST,
+          creditsCharged,
+          totalTokens,
+        }
+      );
+    }
     let nextBalanceCredits = balanceCredits;
     try {
       const deduction = await deductCreditsForUsage({
@@ -128,6 +191,22 @@ router.post("/v1/run", requireApiKey, async (req, res, next) => {
       });
       nextBalanceCredits = deduction.balanceCredits;
     } catch (error) {
+      if (error instanceof MonthlyQuotaExceededError) {
+        await safeLogUsage({
+          statusCode: 402,
+          status: "error",
+          inputTokens: usage?.input_tokens ?? null,
+          outputTokens: usage?.output_tokens ?? null,
+          totalTokens,
+        });
+        const latestBilling = await getUserBillingState(req.apiKey.ownerUserId);
+        return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded.", {
+          allowance: error.allowance,
+          used: error.used,
+          needed: error.needed,
+          nextResetAt: latestBilling.nextResetAt,
+        });
+      }
       if (error instanceof InsufficientCreditsError) {
         await safeLogUsage({
           statusCode: 402,
@@ -136,11 +215,7 @@ router.post("/v1/run", requireApiKey, async (req, res, next) => {
           outputTokens: usage?.output_tokens ?? null,
           totalTokens,
         });
-        return res.status(402).json({
-          ok: false,
-          error: "INSUFFICIENT_CREDITS",
-          message: "Insufficient credits",
-        });
+        return runError(res, 402, "INSUFFICIENT_CREDITS", "Insufficient credits");
       }
       throw error;
     }
@@ -162,8 +237,13 @@ router.post("/v1/run", requireApiKey, async (req, res, next) => {
       balanceCredits: nextBalanceCredits,
     });
   } catch (error) {
-    await safeLogUsage({ statusCode: 500, status: "error" });
-    return next(error);
+    await safeLogUsage({ statusCode: 502, status: "error" });
+    if (error instanceof OpenAI.APIError) {
+      return runError(res, 502, "PROVIDER_ERROR", "Provider request failed", {
+        status: error.status ?? null,
+      });
+    }
+    return runError(res, 502, "PROVIDER_ERROR", "Provider request failed");
   }
 });
 

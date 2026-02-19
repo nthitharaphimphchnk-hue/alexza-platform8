@@ -3,6 +3,7 @@ import { MongoServerError, ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { createCreditTransaction, FREE_TRIAL_CREDITS } from "./credits";
+import { PLAN_MONTHLY_ALLOWANCE } from "./billing";
 import {
   generateSessionToken,
   getSessionClearCookieOptions,
@@ -19,6 +20,10 @@ interface UserDoc {
   passwordHash: string;
   name: string;
   walletBalanceCredits: number;
+  plan: "free" | "pro";
+  monthlyCreditsAllowance: number;
+  monthlyCreditsUsed: number;
+  billingCycleAnchor: Date;
   createdAt: Date;
 }
 
@@ -149,6 +154,10 @@ router.post("/auth/signup", async (req, res, next) => {
       passwordHash,
       name: payload.name,
       walletBalanceCredits: FREE_TRIAL_CREDITS,
+      plan: "free",
+      monthlyCreditsAllowance: PLAN_MONTHLY_ALLOWANCE.free,
+      monthlyCreditsUsed: 0,
+      billingCycleAnchor: createdAt,
       createdAt,
     });
 

@@ -18,6 +18,22 @@ type CreditTransactionType = "bonus" | "topup" | "usage" | "refund";
 
 interface UserWalletDoc {
   walletBalanceCredits?: number;
+  monthlyCreditsAllowance?: number;
+  monthlyCreditsUsed?: number;
+}
+
+export class MonthlyQuotaExceededError extends Error {
+  allowance: number;
+  used: number;
+  needed: number;
+
+  constructor(message: string, allowance: number, used: number, needed: number) {
+    super(message);
+    this.name = "MonthlyQuotaExceededError";
+    this.allowance = allowance;
+    this.used = used;
+    this.needed = needed;
+  }
 }
 
 interface CreditTransactionDoc {
@@ -111,12 +127,36 @@ export async function deductCreditsForUsage(params: {
   const db = await getDb();
   const users = db.collection<UserWalletDoc>("users");
   const next = await users.findOneAndUpdate(
-    { _id: params.userId, walletBalanceCredits: { $gte: params.costCredits } },
-    { $inc: { walletBalanceCredits: -params.costCredits } },
+    {
+      _id: params.userId,
+      walletBalanceCredits: { $gte: params.costCredits },
+      $expr: {
+        $lte: [
+          { $add: [{ $ifNull: ["$monthlyCreditsUsed", 0] }, params.costCredits] },
+          { $ifNull: ["$monthlyCreditsAllowance", 0] },
+        ],
+      },
+    },
+    {
+      $inc: {
+        walletBalanceCredits: -params.costCredits,
+        monthlyCreditsUsed: params.costCredits,
+      },
+    },
     { returnDocument: "after" }
   );
 
   if (!next) {
+    const snapshot = await users.findOne({ _id: params.userId });
+    if (!snapshot) {
+      throw new InsufficientCreditsError("Insufficient credits");
+    }
+    const allowance =
+      typeof snapshot.monthlyCreditsAllowance === "number" ? snapshot.monthlyCreditsAllowance : 0;
+    const used = typeof snapshot.monthlyCreditsUsed === "number" ? snapshot.monthlyCreditsUsed : 0;
+    if (used + params.costCredits > allowance) {
+      throw new MonthlyQuotaExceededError("Monthly quota exceeded.", allowance, used, params.costCredits);
+    }
     throw new InsufficientCreditsError("Insufficient credits");
   }
 

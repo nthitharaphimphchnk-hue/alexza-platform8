@@ -9,7 +9,13 @@ interface UsageLogDoc {
   ownerUserId: ObjectId;
   apiKeyId: ObjectId;
   endpoint: string;
+  status: "success" | "error";
   statusCode: number;
+  provider: string;
+  model: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
   createdAt: Date;
   latencyMs: number;
 }
@@ -59,6 +65,14 @@ function normalizeMetricRow<T extends Record<string, unknown>>(row: T) {
     calls,
     errors,
     avgLatencyMs: toRounded(row.avgLatencyMs),
+  };
+}
+
+function normalizeTokenRow<T extends Record<string, unknown>>(row: T) {
+  return {
+    inputTokens: toNumber(row.inputTokens),
+    outputTokens: toNumber(row.outputTokens),
+    totalTokens: toNumber(row.totalTokens),
   };
 }
 
@@ -158,6 +172,98 @@ async function getUsageSummary(ownerUserId: ObjectId, days: number, projectId?: 
     ])
     .toArray();
 
+  const [totalsTokensRaw] = await logs
+    .aggregate<{
+      inputTokens: number;
+      outputTokens: number;
+      totalTokens: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          inputTokens: { $sum: { $ifNull: ["$inputTokens", 0] } },
+          outputTokens: { $sum: { $ifNull: ["$outputTokens", 0] } },
+          totalTokens: { $sum: { $ifNull: ["$totalTokens", 0] } },
+        },
+      },
+      { $project: { _id: 0, inputTokens: 1, outputTokens: 1, totalTokens: 1 } },
+    ])
+    .toArray();
+
+  const byDayTokensRaw = await logs
+    .aggregate<{
+      date: string;
+      inputTokens: number;
+      outputTokens: number;
+      totalTokens: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              date: "$createdAt",
+              format: "%Y-%m-%d",
+            },
+          },
+          inputTokens: { $sum: { $ifNull: ["$inputTokens", 0] } },
+          outputTokens: { $sum: { $ifNull: ["$outputTokens", 0] } },
+          totalTokens: { $sum: { $ifNull: ["$totalTokens", 0] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ])
+    .toArray();
+
+  const byModelRaw = await logs
+    .aggregate<{
+      model: string;
+      calls: number;
+      totalTokens: number;
+      errors: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: "$model",
+          calls: { $sum: 1 },
+          totalTokens: { $sum: { $ifNull: ["$totalTokens", 0] } },
+          errors: {
+            $sum: {
+              $cond: [{ $gte: ["$statusCode", 400] }, 1, 0],
+            },
+          },
+        },
+      },
+      { $sort: { totalTokens: -1, calls: -1, _id: 1 } },
+    ])
+    .toArray();
+
+  const byProviderRaw = await logs
+    .aggregate<{
+      provider: string;
+      calls: number;
+      totalTokens: number;
+      errors: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: "$provider",
+          calls: { $sum: 1 },
+          totalTokens: { $sum: { $ifNull: ["$totalTokens", 0] } },
+          errors: {
+            $sum: {
+              $cond: [{ $gte: ["$statusCode", 400] }, 1, 0],
+            },
+          },
+        },
+      },
+      { $sort: { totalTokens: -1, calls: -1, _id: 1 } },
+    ])
+    .toArray();
+
   const byProjectRaw = await logs
     .aggregate<{
       projectId: ObjectId;
@@ -238,9 +344,26 @@ async function getUsageSummary(ownerUserId: ObjectId, days: number, projectId?: 
       errorRate: totalsErrorRate,
       avgLatencyMs: totalsAvgLatency,
     },
+    totalsTokens: normalizeTokenRow(totalsTokensRaw ?? {}),
     byDay: byDayRaw.map((row) => ({
       date: row.date || "",
       ...normalizeMetricRow(row),
+    })),
+    byDayTokens: byDayTokensRaw.map((row) => ({
+      date: row.date || "",
+      ...normalizeTokenRow(row),
+    })),
+    byModel: byModelRaw.map((row) => ({
+      model: row.model || "",
+      calls: toNumber(row.calls),
+      totalTokens: toNumber(row.totalTokens),
+      errors: toNumber(row.errors),
+    })),
+    byProvider: byProviderRaw.map((row) => ({
+      provider: row.provider || "",
+      calls: toNumber(row.calls),
+      totalTokens: toNumber(row.totalTokens),
+      errors: toNumber(row.errors),
     })),
     byEndpoint: byEndpointRaw.map((row) => ({
       endpoint: row.endpoint || "",

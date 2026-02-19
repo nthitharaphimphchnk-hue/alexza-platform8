@@ -15,11 +15,68 @@ import { projectsRouter } from "./projects";
 import { runRouter } from "./run";
 import { usageRouter } from "./usageRoutes";
 import { creditsRouter } from "./credits";
+import { billingRouter, runBillingUserMigration } from "./billing";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function canAccessDebugRoutes(req: express.Request): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  const configuredAdminKey = process.env.ADMIN_API_KEY;
+  if (!configuredAdminKey || configuredAdminKey.trim().length === 0) return false;
+  const rawHeader = req.headers["x-admin-key"];
+  const providedAdminKey = typeof rawHeader === "string" ? rawHeader.trim() : "";
+  return providedAdminKey.length > 0 && providedAdminKey === configuredAdminKey;
+}
+
+function extractRegisteredRoutes(app: express.Express): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  type StackLayer = {
+    route?: { path?: string; methods?: Record<string, boolean> };
+    name?: string;
+    handle?: { stack?: StackLayer[] };
+    regexp?: { source?: string };
+  };
+
+  const appWithRouter = app as unknown as { _router?: { stack?: StackLayer[] } };
+  const stack = appWithRouter._router?.stack ?? [];
+
+  const walk = (layers: StackLayer[], parentPath = "") => {
+    for (const layer of layers) {
+      if (layer.route?.path && layer.route.methods) {
+        const methods = Object.keys(layer.route.methods)
+          .filter((method) => layer.route?.methods?.[method])
+          .map((method) => method.toUpperCase());
+        const rawPath = `${parentPath}${layer.route.path}`;
+        for (const method of methods) {
+          const full = `${method} ${rawPath}`;
+          if (!seen.has(full)) {
+            seen.add(full);
+            result.push(full);
+          }
+        }
+        continue;
+      }
+
+      if (layer.name === "router" && layer.handle?.stack) {
+        let routerPrefix = parentPath;
+        const source = layer.regexp?.source ?? "";
+        if (source.includes("\\/api\\/?")) {
+          routerPrefix = `${parentPath}/api`;
+        }
+        walk(layer.handle.stack, routerPrefix);
+      }
+    }
+  };
+
+  walk(stack);
+  return result.sort((a, b) => a.localeCompare(b));
+}
+
 async function startServer() {
+  await runBillingUserMigration();
   const app = express();
   const server = createServer(app);
   const trustProxyRaw = process.env.TRUST_PROXY;
@@ -83,7 +140,32 @@ async function startServer() {
   app.use("/api", keysRouter);
   app.use("/api", usageRouter);
   app.use("/api", creditsRouter);
+  app.use("/api", billingRouter);
   app.use(runRouter);
+
+  app.get("/api/_debug/routes", (req, res) => {
+    if (!canAccessDebugRoutes(req)) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
+    }
+
+    const routes = extractRegisteredRoutes(app);
+    const requiredRoutes = [
+      "GET /api/health",
+      "GET /api/credits/balance",
+      "GET /api/billing/plan",
+      "POST /api/admin/billing/reset-monthly",
+    ];
+    const requiredRoutesPresent = requiredRoutes.reduce<Record<string, boolean>>((acc, route) => {
+      acc[route] = routes.includes(route);
+      return acc;
+    }, {});
+
+    return res.json({
+      ok: true,
+      routes,
+      requiredRoutesPresent,
+    });
+  });
   if (process.env.NODE_ENV !== "production") {
     console.log("Mounted /api/projects routes OK");
   }

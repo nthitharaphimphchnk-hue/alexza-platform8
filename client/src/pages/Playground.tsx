@@ -12,6 +12,14 @@ interface ProjectApiKeyItem {
   revokedAt: string | null;
 }
 
+interface RunUiError {
+  code: string;
+  message: string;
+  hint?: string;
+  retryable?: boolean;
+  nextResetAt?: string;
+}
+
 export default function Playground() {
   const [location, setLocation] = useLocation();
   const [input, setInput] = useState("");
@@ -20,6 +28,7 @@ export default function Playground() {
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [keys, setKeys] = useState<ProjectApiKeyItem[]>([]);
+  const [runError, setRunError] = useState<RunUiError | null>(null);
 
   const projectId = useMemo(() => {
     const match = location.match(/^\/app\/projects\/([^/]+)\/playground$/);
@@ -52,14 +61,23 @@ export default function Playground() {
     const trimmedApiKey = apiKey.trim();
     if (!trimmedInput) {
       showErrorToast("Validation error", "Please enter input.");
+      setRunError({
+        code: "VALIDATION_ERROR",
+        message: "Please enter input.",
+      });
       return;
     }
     if (!trimmedApiKey) {
       showErrorToast("Validation error", "Please paste your raw API key.");
+      setRunError({
+        code: "VALIDATION_ERROR",
+        message: "Please paste your raw API key.",
+      });
       return;
     }
 
     setIsRunning(true);
+    setRunError(null);
     try {
       const startedAt = performance.now();
       const response = await fetch(`${API_BASE_URL}/v1/run`, {
@@ -75,19 +93,102 @@ export default function Playground() {
       setLatencyMs(elapsed);
 
       if (!response.ok) {
+        const errorCode = typeof payload?.error === "string" ? payload.error : "UNKNOWN";
         const message =
-          payload?.message || payload?.error || `Run failed with status ${response.status}`;
-        throw new ApiError(message, response.status, payload?.error);
+          typeof payload?.message === "string"
+            ? payload.message
+            : payload?.error || `Run failed with status ${response.status}`;
+        if (errorCode === "MONTHLY_QUOTA_EXCEEDED") {
+          const nextResetAt =
+            typeof payload?.details?.nextResetAt === "string" ? payload.details.nextResetAt : undefined;
+          const resetText = nextResetAt
+            ? ` Next reset: ${new Date(nextResetAt).toLocaleString()}.`
+            : "";
+          const uiError: RunUiError = {
+            code: "MONTHLY_QUOTA_EXCEEDED",
+            message: "Monthly quota exceeded.",
+            hint: `Upgrade plan, wait for next reset, or reduce usage.${resetText}`,
+            nextResetAt,
+          };
+          setRunError(uiError);
+          showErrorToast("Monthly quota exceeded", uiError.hint);
+          return;
+        }
+        throw new ApiError(message, response.status, errorCode);
       }
 
       setOutput(typeof payload.output === "string" ? payload.output : "");
       showSuccessToast("Run complete", `Latency ${elapsed} ms`);
+      setRunError(null);
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        showErrorToast("Unauthorized", "Invalid or revoked API key.");
-        return;
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          const uiError: RunUiError = {
+            code: "UNAUTHORIZED",
+            message: "Invalid or revoked API key.",
+          };
+          setRunError(uiError);
+          showErrorToast("Unauthorized", uiError.message);
+          return;
+        }
+        if (error.status === 402 || error.code === "INSUFFICIENT_CREDITS") {
+          const uiError: RunUiError = {
+            code: "INSUFFICIENT_CREDITS",
+            message: "Insufficient credits for this request.",
+            hint: "Top up your wallet and try again.",
+          };
+          setRunError(uiError);
+          showErrorToast("Insufficient credits", uiError.hint);
+          return;
+        }
+        if (error.status === 429 || error.code === "RATE_LIMITED") {
+          const uiError: RunUiError = {
+            code: "RATE_LIMITED",
+            message: "Too many requests. Try again later.",
+            hint: "Wait a moment before retrying.",
+            retryable: true,
+          };
+          setRunError(uiError);
+          showErrorToast("Rate limited", uiError.hint);
+          return;
+        }
+        if (error.code === "REQUEST_TOO_LARGE") {
+          const uiError: RunUiError = {
+            code: "REQUEST_TOO_LARGE",
+            message: "Input too long. Please shorten.",
+            hint: "Try splitting the prompt into smaller chunks.",
+          };
+          setRunError(uiError);
+          showErrorToast("Request too large", uiError.hint);
+          return;
+        }
+        if (error.code === "COST_CAP_EXCEEDED") {
+          const uiError: RunUiError = {
+            code: "COST_CAP_EXCEEDED",
+            message: "Request cost too high for current limits.",
+            hint: "Split this task into smaller runs or upgrade plan limits.",
+          };
+          setRunError(uiError);
+          showErrorToast("Cost cap exceeded", uiError.hint);
+          return;
+        }
+        if (error.code === "MONTHLY_QUOTA_EXCEEDED") {
+          const uiError: RunUiError = {
+            code: "MONTHLY_QUOTA_EXCEEDED",
+            message: "Monthly quota exceeded.",
+            hint: "Upgrade plan or wait until the next monthly reset.",
+          };
+          setRunError(uiError);
+          showErrorToast("Monthly quota exceeded", uiError.hint);
+          return;
+        }
       }
       const message = error instanceof Error ? error.message : "Failed to run";
+      setRunError({
+        code: "PROVIDER_ERROR",
+        message,
+        hint: "Please try again.",
+      });
       showErrorToast("Run failed", message);
     } finally {
       setIsRunning(false);
@@ -170,6 +271,65 @@ export default function Playground() {
               <Play size={16} className="mr-2" />
               {isRunning ? "Running..." : "Run"}
             </Button>
+
+            {runError && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+                <p className="font-medium">{runError.message}</p>
+                {runError.hint && <p className="mt-1 text-xs text-amber-200">{runError.hint}</p>}
+                {runError.code === "MONTHLY_QUOTA_EXCEEDED" && runError.nextResetAt && (
+                  <p className="mt-1 text-xs text-amber-200">
+                    Next reset: {new Date(runError.nextResetAt).toLocaleString()}
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {runError.code === "INSUFFICIENT_CREDITS" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation("/app/billing/credits")}
+                      className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                    >
+                      Open Wallet
+                    </Button>
+                  )}
+                  {runError.code === "MONTHLY_QUOTA_EXCEEDED" && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLocation("/app/billing/plans")}
+                        className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                      >
+                        Upgrade Plan
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLocation("/app/billing/credits")}
+                        className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                      >
+                        Open Wallet
+                      </Button>
+                    </>
+                  )}
+                  {runError.retryable && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleRun()}
+                      disabled={isRunning}
+                      className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                    >
+                      Retry
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6 space-y-3">
