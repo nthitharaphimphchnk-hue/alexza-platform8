@@ -302,6 +302,7 @@ export default function AppShell({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setLocation("/app/settings")}>Profile Settings</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLocation("/app/billing/plans")}>Billing</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/app/admin/tools")}>Admin Tools</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => void handleSignOut()}>Sign Out</DropdownMenuItem>
                   </DropdownMenuContent>

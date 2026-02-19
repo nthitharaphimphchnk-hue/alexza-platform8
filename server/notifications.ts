@@ -259,4 +259,21 @@ router.post("/admin/notifications/cron/low-credits-scan", async (req, res, next)
   }
 });
 
+router.get("/admin/notifications/status", async (req, res, next) => {
+  try {
+    if (!canUseAdminEndpoint(req)) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
+    }
+    const resendConfigured = Boolean(process.env.RESEND_API_KEY?.trim() && process.env.EMAIL_FROM?.trim());
+    return res.json({
+      ok: true,
+      resendConfigured,
+      emailFrom: process.env.EMAIL_FROM?.trim() || "",
+      threshold: LOW_CREDITS_EMAIL_THRESHOLD,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 export { router as notificationsRouter };

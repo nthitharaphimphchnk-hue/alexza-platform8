@@ -22,6 +22,7 @@ import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import Settings from "./pages/Settings";
+import AdminTools from "./pages/AdminTools";
 import { useEffect } from "react";
 import { logApiBaseUrlOnce } from "./lib/api";
 
@@ -52,6 +53,7 @@ function Router() {
       <Route path={"/app/billing/credits"} component={Wallet} />
       <Route path={"/app/billing/plans"} component={BillingPlans} />
       <Route path={"/app/settings"} component={Settings} />
+      <Route path={"/app/admin/tools"} component={AdminTools} />
       
       {/* Legacy Routes */}
       <Route path={"/dashboard"} component={Dashboard} />

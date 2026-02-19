@@ -161,6 +161,7 @@ async function startServer() {
       "POST /api/admin/billing/force-reset-due",
       "POST /api/admin/notifications/test-low-credits",
       "POST /api/admin/notifications/cron/low-credits-scan",
+      "GET /api/admin/notifications/status",
     ];
     const requiredRoutesPresent = requiredRoutes.reduce<Record<string, boolean>>((acc, route) => {
       acc[route] = routes.includes(route);
