@@ -1,9 +1,10 @@
 import AppShell from "@/components/app/AppShell";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { showSuccessToast } from "@/lib/toast";
+import { ApiError, apiRequest } from "@/lib/api";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { Bell, Building2, KeyRound, Lock, Shield, User, WalletCards, Webhook } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 type TabId = "profile" | "security" | "notifications" | "organization" | "plan" | "limits";
@@ -40,6 +41,30 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabId>("profile");
   const [confirmSignout, setConfirmSignout] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isEmailNotificationsEnabled, setIsEmailNotificationsEnabled] = useState(true);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadMe = async () => {
+      try {
+        const response = await apiRequest<{
+          ok: boolean;
+          user: { lowCreditsEmailSuppressed?: boolean };
+        }>("/api/me");
+        if (cancelled) return;
+        setIsEmailNotificationsEnabled(!(response.user.lowCreditsEmailSuppressed ?? false));
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          window.location.href = "/login";
+        }
+      }
+    };
+    void loadMe();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
@@ -108,6 +133,15 @@ export default function Settings() {
             {activeTab === "notifications" && (
               <ContentCard title="Notifications" description="Operational alerts and summary delivery">
                 <div className="space-y-2">
+                  <label className="flex items-center justify-between rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2">
+                    <span className="text-sm text-gray-300">Low credits email notifications</span>
+                    <input
+                      type="checkbox"
+                      checked={isEmailNotificationsEnabled}
+                      onChange={(event) => setIsEmailNotificationsEnabled(event.target.checked)}
+                      className="accent-[#c0c0c0]"
+                    />
+                  </label>
                   {["Critical errors", "Budget alerts", "Daily digest", "Deployment events"].map((item) => (
                     <label key={item} className="flex items-center justify-between rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2">
                       <span className="text-sm text-gray-300">{item}</span>
@@ -115,7 +149,27 @@ export default function Settings() {
                     </label>
                   ))}
                 </div>
-                <Button className="mt-4 bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]" onClick={() => showSuccessToast("Notification preferences saved")}>
+                <Button
+                  disabled={isSavingNotifications}
+                  className="mt-4 bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
+                  onClick={() => {
+                    void (async () => {
+                      setIsSavingNotifications(true);
+                      try {
+                        await apiRequest("/api/me", {
+                          method: "PATCH",
+                          body: { lowCreditsEmailSuppressed: !isEmailNotificationsEnabled },
+                        });
+                        showSuccessToast("Notification preferences saved");
+                      } catch (error) {
+                        const message = error instanceof Error ? error.message : "Failed to save settings";
+                        showErrorToast("Unable to save", message);
+                      } finally {
+                        setIsSavingNotifications(false);
+                      }
+                    })();
+                  }}
+                >
                   Save Preferences
                 </Button>
               </ContentCard>

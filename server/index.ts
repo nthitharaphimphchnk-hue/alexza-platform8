@@ -16,6 +16,7 @@ import { runRouter } from "./run";
 import { usageRouter } from "./usageRoutes";
 import { creditsRouter } from "./credits";
 import { billingRouter, runBillingUserMigration } from "./billing";
+import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,6 +78,7 @@ function extractRegisteredRoutes(app: express.Express): string[] {
 
 async function startServer() {
   await runBillingUserMigration();
+  await runLowCreditsEmailMigration();
   const app = express();
   const server = createServer(app);
   const trustProxyRaw = process.env.TRUST_PROXY;
@@ -141,6 +143,7 @@ async function startServer() {
   app.use("/api", usageRouter);
   app.use("/api", creditsRouter);
   app.use("/api", billingRouter);
+  app.use("/api", notificationsRouter);
   app.use(runRouter);
 
   app.get("/api/_debug/routes", (req, res) => {
@@ -156,6 +159,8 @@ async function startServer() {
       "POST /api/admin/billing/reset-monthly",
       "POST /api/admin/billing/cron/reset-monthly",
       "POST /api/admin/billing/force-reset-due",
+      "POST /api/admin/notifications/test-low-credits",
+      "POST /api/admin/notifications/cron/low-credits-scan",
     ];
     const requiredRoutesPresent = requiredRoutes.reduce<Record<string, boolean>>((acc, route) => {
       acc[route] = routes.includes(route);

@@ -24,6 +24,9 @@ interface UserDoc {
   monthlyCreditsAllowance: number;
   monthlyCreditsUsed: number;
   billingCycleAnchor: Date;
+  lowCreditsEmailLastSentAt?: Date;
+  lowCreditsEmailSuppressed?: boolean;
+  lowCreditsEmailLastBalance?: number;
   createdAt: Date;
 }
 
@@ -108,6 +111,7 @@ function buildUserResponse(user: WithId<UserDoc>) {
     id: user._id.toString(),
     email: user.email,
     name: user.name,
+    lowCreditsEmailSuppressed: user.lowCreditsEmailSuppressed ?? false,
   };
 }
 
@@ -158,6 +162,7 @@ router.post("/auth/signup", async (req, res, next) => {
       monthlyCreditsAllowance: PLAN_MONTHLY_ALLOWANCE.free,
       monthlyCreditsUsed: 0,
       billingCycleAnchor: createdAt,
+      lowCreditsEmailSuppressed: false,
       createdAt,
     });
 
@@ -217,11 +222,50 @@ router.post("/auth/login", async (req, res, next) => {
   }
 });
 
-router.get("/me", requireAuth, (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+router.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+    const db = await getDb();
+    const users = db.collection<UserDoc>("users");
+    const user = (await users.findOne({ _id: req.user._id })) as WithId<UserDoc> | null;
+    if (!user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+    return res.json({ ok: true, user: buildUserResponse(user) });
+  } catch (error) {
+    return next(error);
   }
-  return res.json({ ok: true, user: req.user });
+});
+
+router.patch("/me", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+    const body = req.body as { lowCreditsEmailSuppressed?: unknown };
+    if (typeof body.lowCreditsEmailSuppressed !== "boolean") {
+      return res.status(400).json(
+        validationError("lowCreditsEmailSuppressed must be a boolean")
+      );
+    }
+
+    const db = await getDb();
+    const users = db.collection<UserDoc>("users");
+    await users.updateOne(
+      { _id: req.user._id },
+      { $set: { lowCreditsEmailSuppressed: body.lowCreditsEmailSuppressed } }
+    );
+
+    const updatedUser = (await users.findOne({ _id: req.user._id })) as WithId<UserDoc> | null;
+    if (!updatedUser) {
+      return res.status(404).json({ ok: false, error: "USER_NOT_FOUND" });
+    }
+    return res.json({ ok: true, user: buildUserResponse(updatedUser) });
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.post("/auth/logout", async (req, res, next) => {
