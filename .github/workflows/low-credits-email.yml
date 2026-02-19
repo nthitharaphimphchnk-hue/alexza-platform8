@@ -1,0 +1,16 @@
+name: Low Credits Email Scan
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call low credits scan endpoint
+        run: |
+          curl -X POST https://alexza-platform8.onrender.com/api/admin/notifications/cron/low-credits-scan \
+            -H "x-admin-key: ${{ secrets.ADMIN_API_KEY }}"
