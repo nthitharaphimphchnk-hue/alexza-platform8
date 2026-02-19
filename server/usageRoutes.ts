@@ -21,8 +21,22 @@ interface ProjectDoc {
 
 const router = Router();
 
-function parseDays(rawDays: unknown): number {
-  const parsed = Number.parseInt(String(rawDays ?? "7"), 10);
+function parsePeriodToDays(rawPeriod: unknown): number | null {
+  if (typeof rawPeriod !== "string") return null;
+  const value = rawPeriod.trim().toLowerCase();
+  if (value === "7d") return 7;
+  if (value === "14d") return 14;
+  if (value === "30d") return 30;
+  if (value === "90d") return 90;
+  return null;
+}
+
+function parseDays(query: Record<string, unknown>): number {
+  const fromPeriod = parsePeriodToDays(query.period);
+  if (fromPeriod !== null) {
+    return fromPeriod;
+  }
+  const parsed = Number.parseInt(String(query.days ?? "7"), 10);
   if (Number.isNaN(parsed) || parsed < 1) return 7;
   if (parsed > 90) return 90;
   return parsed;
@@ -250,7 +264,7 @@ router.get("/usage/summary", requireAuth, async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     }
-    const days = parseDays(req.query.days);
+    const days = parseDays(req.query as Record<string, unknown>);
     const response = await getUsageSummary(req.user._id, days);
     return res.json(response);
   } catch (error) {
@@ -280,7 +294,7 @@ router.get("/projects/:id/usage/summary", requireAuth, async (req, res, next) =>
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
 
-    const days = parseDays(req.query.days);
+    const days = parseDays(req.query as Record<string, unknown>);
     const response = await getUsageSummary(req.user._id, days, projectId);
     return res.json(response);
   } catch (error) {

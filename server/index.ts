@@ -14,6 +14,7 @@ import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
 import { projectsRouter } from "./projects";
 import { runRouter } from "./run";
 import { usageRouter } from "./usageRoutes";
+import { creditsRouter } from "./credits";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,6 +82,7 @@ async function startServer() {
   app.use("/api", projectsRouter);
   app.use("/api", keysRouter);
   app.use("/api", usageRouter);
+  app.use("/api", creditsRouter);
   app.use(runRouter);
   if (process.env.NODE_ENV !== "production") {
     console.log("Mounted /api/projects routes OK");

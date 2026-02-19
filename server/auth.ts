@@ -2,6 +2,7 @@ import { Router, type Response } from "express";
 import { MongoServerError, ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { createCreditTransaction, FREE_TRIAL_CREDITS } from "./credits";
 import {
   generateSessionToken,
   getSessionClearCookieOptions,
@@ -17,6 +18,7 @@ interface UserDoc {
   email: string;
   passwordHash: string;
   name: string;
+  walletBalanceCredits: number;
   createdAt: Date;
 }
 
@@ -146,8 +148,21 @@ router.post("/auth/signup", async (req, res, next) => {
       email: payload.email,
       passwordHash,
       name: payload.name,
+      walletBalanceCredits: FREE_TRIAL_CREDITS,
       createdAt,
     });
+
+    try {
+      await createCreditTransaction({
+        userId: insertResult.insertedId,
+        type: "bonus",
+        amountCredits: FREE_TRIAL_CREDITS,
+        reason: "Signup free trial credits",
+      });
+    } catch (transactionError) {
+      await users.deleteOne({ _id: insertResult.insertedId });
+      throw transactionError;
+    }
 
     const user = (await users.findOne({ _id: insertResult.insertedId })) as WithId<UserDoc> | null;
     if (!user) {
