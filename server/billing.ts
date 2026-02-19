@@ -2,6 +2,7 @@ import { Router, type Request } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { createCreditTransaction } from "./credits";
 
 export type BillingPlan = "free" | "pro";
 
@@ -163,12 +164,17 @@ export async function getUserBillingState(userId: ObjectId): Promise<BillingStat
 }
 
 export async function resetMonthlyCredits(): Promise<{ resetCount: number }> {
+  const result = await runMonthlyResetJob();
+  return { resetCount: result.resetCount };
+}
+
+async function runMonthlyResetJob(): Promise<{ resetCount: number; ranAt: string }> {
   const db = await getDb();
   const users = db.collection<UserBillingDoc>("users");
   const now = new Date();
   const docs = await users.find({}, { projection: { billingCycleAnchor: 1 } }).toArray();
+  const resetUserIds: ObjectId[] = [];
 
-  let resetCount = 0;
   for (const user of docs) {
     const anchor =
       user.billingCycleAnchor instanceof Date && !Number.isNaN(user.billingCycleAnchor.getTime())
@@ -187,10 +193,27 @@ export async function resetMonthlyCredits(): Promise<{ resetCount: number }> {
       { _id: user._id },
       { $set: { monthlyCreditsUsed: 0, billingCycleAnchor: newAnchor } }
     );
-    if (result.modifiedCount > 0) resetCount += 1;
+    if (result.modifiedCount > 0) {
+      resetUserIds.push(user._id);
+    }
   }
 
-  return { resetCount };
+  const ranAt = now.toISOString();
+  for (const userId of resetUserIds) {
+    await createCreditTransaction({
+      userId,
+      type: "monthly_reset_bonus",
+      amountCredits: 0,
+      reason: "Monthly usage quota reset",
+      createdAt: now,
+    });
+  }
+
+  console.log(
+    `[BillingReset] Monthly reset ran at ${ranAt}. resetCount=${resetUserIds.length}`
+  );
+
+  return { resetCount: resetUserIds.length, ranAt };
 }
 
 router.get("/billing/plan", requireAuth, async (req, res, next) => {
@@ -255,10 +278,27 @@ router.post("/admin/billing/reset-monthly", async (req, res, next) => {
     if (!canUseAdminEndpoint(req)) {
       return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
     }
-    const result = await resetMonthlyCredits();
+    const result = await runMonthlyResetJob();
     return res.json({
       ok: true,
       resetCount: result.resetCount,
+      ranAt: result.ranAt,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/admin/billing/cron/reset-monthly", async (req, res, next) => {
+  try {
+    if (!canUseAdminEndpoint(req)) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
+    }
+    const result = await runMonthlyResetJob();
+    return res.json({
+      ok: true,
+      resetCount: result.resetCount,
+      ranAt: result.ranAt,
     });
   } catch (error) {
     return next(error);

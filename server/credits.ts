@@ -14,7 +14,12 @@ export class InsufficientCreditsError extends Error {
   }
 }
 
-type CreditTransactionType = "bonus" | "topup" | "usage" | "refund";
+export type CreditTransactionType =
+  | "bonus"
+  | "topup"
+  | "usage"
+  | "refund"
+  | "monthly_reset_bonus";
 
 interface UserWalletDoc {
   walletBalanceCredits?: number;

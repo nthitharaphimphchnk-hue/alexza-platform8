@@ -8,7 +8,7 @@ import { AlertCircle, ChevronDown, ChevronUp, Download, Plus, RefreshCw } from "
 import { Fragment } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type FilterType = "all" | "topup" | "usage" | "bonus";
+type FilterType = "all" | "topup" | "usage" | "bonus" | "monthly_reset";
 
 interface CreditsBalanceResponse {
   ok: boolean;
@@ -17,7 +17,7 @@ interface CreditsBalanceResponse {
 
 interface CreditTransaction {
   id: string;
-  type: "bonus" | "topup" | "usage" | "refund";
+  type: "bonus" | "topup" | "usage" | "refund" | "monthly_reset_bonus";
   amountCredits: number;
   reason: string;
   relatedRunId: string | null;
@@ -116,6 +116,8 @@ export default function Wallet() {
             ? "Usage"
             : tx.type === "refund"
               ? "Refund"
+              : tx.type === "monthly_reset_bonus"
+                ? "Monthly Reset"
               : "Bonus";
       const dateText = new Date(tx.createdAt).toLocaleString();
       return {
@@ -152,6 +154,7 @@ export default function Wallet() {
       if (filter === "all") return true;
       if (filter === "topup") return row.originalType === "topup";
       if (filter === "usage") return row.originalType === "usage";
+      if (filter === "monthly_reset") return row.originalType === "monthly_reset_bonus";
       return row.originalType === "bonus";
     });
   }, [filter, normalizedRows]);
@@ -323,6 +326,7 @@ export default function Wallet() {
                 <option value="topup">Topup</option>
                 <option value="usage">Usage</option>
                 <option value="bonus">Bonus</option>
+                <option value="monthly_reset">Monthly Reset</option>
               </select>
             </div>
           </div>
@@ -354,6 +358,8 @@ export default function Wallet() {
                                 ? "bg-blue-500/15 text-blue-300"
                                 : row.typeLabel === "Refund"
                                   ? "bg-amber-500/15 text-amber-300"
+                                  : row.typeLabel === "Monthly Reset"
+                                    ? "bg-violet-500/15 text-violet-300"
                                   : "bg-emerald-500/15 text-emerald-300"
                           }`}
                         >
