@@ -2,7 +2,7 @@ import AppShell from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { ApiError, apiRequest } from "@/lib/api";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 interface NotificationsStatusResponse {
   ok: boolean;
@@ -26,31 +26,49 @@ export default function AdminTools() {
     return headers;
   }, [adminKey]);
 
+  const hasAdminKey = adminKey.trim().length > 0;
+
   const loadStatus = async () => {
+    if (!hasAdminKey) {
+      showErrorToast("Please enter Admin Key");
+      setResponseLog(JSON.stringify({ ok: false, error: "MISSING_KEY", message: "Please enter Admin Key" }, null, 2));
+      return;
+    }
     setIsLoadingStatus(true);
+    setResponseLog("");
     try {
       const res = await apiRequest<NotificationsStatusResponse>("/api/admin/notifications/status", {
         headers: adminHeaders,
       });
       setStatus(res);
       setResponseLog(JSON.stringify(res, null, 2));
+      showSuccessToast("Status loaded");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load notification status";
-      showErrorToast("Status check failed", message);
-      if (error instanceof ApiError) {
-        setResponseLog(JSON.stringify({ ok: false, error: error.code, message: error.message }, null, 2));
-      }
+      const errObj =
+        error instanceof ApiError
+          ? { ok: false, error: error.code, message: error.message, status: error.status }
+          : { ok: false, error: "UNKNOWN", message: error instanceof Error ? error.message : "Request failed" };
+      setResponseLog(JSON.stringify(errObj, null, 2));
+      const msg =
+        error instanceof ApiError
+          ? `Status ${error.status}: ${error.message}`
+          : error instanceof Error
+            ? error.message
+            : "Request failed";
+      showErrorToast("Status check failed", msg);
     } finally {
       setIsLoadingStatus(false);
     }
   };
 
-  useEffect(() => {
-    void loadStatus();
-  }, []);
-
   const sendTestLowCreditEmail = async () => {
+    if (!hasAdminKey) {
+      showErrorToast("Please enter Admin Key");
+      setResponseLog(JSON.stringify({ ok: false, error: "MISSING_KEY", message: "Please enter Admin Key" }, null, 2));
+      return;
+    }
     setIsSendingTest(true);
+    setResponseLog("");
     try {
       const res = await apiRequest<{
         ok: boolean;
@@ -70,11 +88,18 @@ export default function AdminTools() {
         showSuccessToast("Test call completed", res.skippedReason ?? "No email sent");
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to send test low-credit email";
-      showErrorToast("Test email failed", message);
-      if (error instanceof ApiError) {
-        setResponseLog(JSON.stringify({ ok: false, error: error.code, message: error.message }, null, 2));
-      }
+      const errObj =
+        error instanceof ApiError
+          ? { ok: false, error: error.code, message: error.message, status: error.status }
+          : { ok: false, error: "UNKNOWN", message: error instanceof Error ? error.message : "Request failed" };
+      setResponseLog(JSON.stringify(errObj, null, 2));
+      const msg =
+        error instanceof ApiError
+          ? `Status ${error.status}: ${error.message}`
+          : error instanceof Error
+            ? error.message
+            : "Request failed";
+      showErrorToast("Test email failed", msg);
     } finally {
       setIsSendingTest(false);
     }
@@ -109,7 +134,7 @@ export default function AdminTools() {
           <Button
             type="button"
             variant="outline"
-            disabled={isLoadingStatus}
+            disabled={!hasAdminKey || isLoadingStatus}
             onClick={() => void loadStatus()}
             className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
           >
@@ -117,7 +142,7 @@ export default function AdminTools() {
           </Button>
           <Button
             type="button"
-            disabled={isSendingTest}
+            disabled={!hasAdminKey || isSendingTest}
             onClick={() => void sendTestLowCreditEmail()}
             className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
           >
