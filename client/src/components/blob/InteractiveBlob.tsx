@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 interface InteractiveBlobProps {
   size?: number;
@@ -61,18 +62,11 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Neutral environment - soft gradient sphere (no visible cube/box reflections)
+    // Environment reflection (studio-like, RoomEnvironment)
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envScene = new THREE.Scene();
-    const envSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(80, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x555555, side: THREE.BackSide })
-    );
-    envScene.add(envSphere);
+    const envScene = new RoomEnvironment();
     const envMap = pmremGenerator.fromScene(envScene).texture;
     scene.environment = envMap;
-    envSphere.geometry.dispose();
-    (envSphere.material as THREE.Material).dispose();
     pmremGenerator.dispose();
 
     // Create blob group
@@ -91,15 +85,15 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       { position: [0, -0.8, -0.2], scale: 0.55 },
     ];
 
-    // High-contrast chrome material - polished chrome per reference
-    // metalness:1, roughness:0.04, clearcoat:1, envMapIntensity:2.2, base:#f2f2f2
+    // Reflective chrome metal material
+    // metalness:1, roughness:0.05, clearcoat:1, envMapIntensity:2, base:#e6e6e6
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xf2f2f2,
+      color: 0xe6e6e6,
       metalness: 1,
-      roughness: 0.04,
+      roughness: 0.05,
       clearcoat: 1,
       clearcoatRoughness: 0.05,
-      envMapIntensity: 2.2,
+      envMapIntensity: 2,
     });
 
     // Create spheres (all use same chrome material)
@@ -121,35 +115,18 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // Add ground plane to receive shadows (subtle, cinematic depth)
-    const planeGeometry = new THREE.CircleGeometry(4, 32);
-    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.25 });
-    const shadowPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-    shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = -2.5;
-    shadowPlane.receiveShadow = true;
-    scene.add(shadowPlane);
-
-    // Cinematic chrome lighting - darker overall, strong highlight, rim
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    // Lighting: ambient 0.25, spotLight [2,5,5], directional [-5,5,5]
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
     scene.add(ambientLight);
 
-    // SpotLight from top-front - bright hot highlight (intensity 3, angle 0.4, penumbra 1)
     const spotLight = new THREE.SpotLight(0xffffff, 3, 25, 0.4, 1, 1);
-    spotLight.position.set(0, 8, 5);
+    spotLight.position.set(2, 5, 5);
     spotLight.target.position.set(0, 0, 0);
     scene.add(spotLight);
     scene.add(spotLight.target);
 
-    // One directional behind for rim highlight (darker edges, cinematic depth)
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    rimLight.position.set(0, 2, -6);
-    scene.add(rimLight);
-
-    // Shadow-casting key light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 6, 3);
-    directionalLight.castShadow = true;
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(-5, 5, 5);
     directionalLight.shadow.mapSize.width = 1024;
     directionalLight.shadow.mapSize.height = 1024;
     directionalLight.shadow.camera.near = 0.5;
@@ -250,8 +227,6 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         sphere.geometry.dispose();
         (sphere.material as THREE.Material).dispose();
       });
-      planeGeometry.dispose();
-      planeMaterial.dispose();
       containerRef.current?.removeChild(renderer.domElement);
     };
   }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, isHovering]);
@@ -263,7 +238,6 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        boxShadow: '0 0 40px rgba(242, 242, 242, 0.1)',
       }}
     />
   );
