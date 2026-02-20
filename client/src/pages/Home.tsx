@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { containerVariants, itemVariants, scrollFadeInVariants, scrollScaleInVariants, scrollSlideInLeftVariants, scrollSlideInRightVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 import MorphingBlob from "@/components/blob";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import Logo from "@/components/Logo";
 
 
 export default function Home() {
@@ -20,11 +21,8 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-[#050607]/80 backdrop-blur-md border-b border-[rgba(255,255,255,0.06)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#c0c0c0] to-[#a8a8a8] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">ALEXZA AI</span>
+          <div className="flex items-center">
+            <Logo size="navbar" />
           </div>
 
           {/* Desktop Menu */}
@@ -92,7 +90,7 @@ export default function Home() {
             variants={itemVariants}
           >
             <MorphingBlob
-              size={320}
+              size={480}
               intensity={0.7}
               colorAccent="#c0c0c0"
               idleSpeed={0.4}

@@ -9,7 +9,6 @@ import {
   Home,
   Search,
   Settings,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Logo from "@/components/Logo";
 
 type Mode = "Production" | "Test";
 
@@ -176,16 +176,8 @@ export default function AppShell({
     <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
       <div className="flex min-h-screen">
         <aside className="hidden w-72 shrink-0 border-r border-[rgba(255,255,255,0.06)] bg-[#06090d]/85 backdrop-blur-xl lg:flex lg:flex-col">
-          <div className="border-b border-[rgba(255,255,255,0.06)] px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#c0c0c0] to-[#808080] text-black">
-                <Sparkles size={18} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">ALEXZA AI</p>
-                <p className="text-base font-semibold text-white">Orchestration</p>
-              </div>
-            </div>
+          <div className="border-b border-[rgba(255,255,255,0.06)] px-4 py-4">
+            <Logo size="sidebar" />
           </div>
 
           <nav className="flex-1 space-y-1 px-4 py-6">
@@ -221,7 +213,11 @@ export default function AppShell({
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-[rgba(255,255,255,0.06)] bg-[#050607]/85 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="grid grid-cols-1 items-center gap-3 xl:grid-cols-[2fr_1.5fr_2fr]">
-              <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap text-sm">
+              <div className="flex items-center gap-3">
+                <div className="lg:hidden shrink-0">
+                  <Logo size="sidebar" />
+                </div>
+                <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap text-sm min-w-0">
                 {breadcrumbs.map((item, idx) => (
                   <div key={`${item.label}-${idx}`} className="flex items-center gap-1">
                     {item.href ? (
@@ -237,6 +233,7 @@ export default function AppShell({
                     {idx !== breadcrumbs.length - 1 && <ChevronRight size={14} className="text-gray-500" />}
                   </div>
                 ))}
+                </div>
               </div>
 
               <div className="relative">

@@ -8,6 +8,7 @@ import { validateSignupForm, getFieldError, hasFieldError } from "@/lib/validati
 import { useState } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
 import { ApiError, apiRequest } from "@/lib/api";
+import Logo from "@/components/Logo";
 
 /**
  * ALEXZA AI Signup Page
@@ -78,20 +79,19 @@ export default function Signup() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground flex flex-col items-center justify-center px-4 py-8">
+      <div className="flex justify-center mb-6">
+        <Logo size="auth" />
+      </div>
       <motion.div
         className="w-full max-w-md"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Logo */}
         <motion.div className="text-center mb-12" variants={itemVariants}>
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#c0c0c0] to-[#a8a8a8] flex items-center justify-center mx-auto mb-4">
-            <span className="text-black font-bold text-lg">A</span>
-          </div>
-          <h1 className="text-3xl font-bold text-white">ALEXZA AI</h1>
-          <p className="text-gray-400 mt-2">Create your account</p>
+          <h1 className="text-3xl font-bold text-white">Create your account</h1>
+          <p className="text-gray-400 mt-2">Join ALEXZA AI</p>
         </motion.div>
 
         {/* Success Message */}

@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, Zap } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { containerVariants, itemVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
+import Logo from "@/components/Logo";
 
 /**
  * ALEXZA AI Pricing Page
@@ -50,6 +51,20 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050607]/80 backdrop-blur-md border-b border-[rgba(255,255,255,0.06)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Logo size="navbar" />
+          <div className="flex items-center gap-4">
+            <a href="/docs" className="text-sm text-gray-300 hover:text-white transition">Docs</a>
+            <a href="/" className="text-sm text-gray-300 hover:text-white transition">Home</a>
+            <Button variant="outline" className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12]" onClick={() => (window.location.href = "/login")}>
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </nav>
+
       {/* Header */}
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <motion.div

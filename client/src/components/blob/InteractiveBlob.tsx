@@ -45,7 +45,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 3;
+    camera.position.z = 4;
     cameraRef.current = camera;
 
     // Renderer setup with transparency
@@ -127,6 +127,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
     directionalLight.position.set(-5, 5, 5);
+    directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 1024;
     directionalLight.shadow.mapSize.height = 1024;
     directionalLight.shadow.camera.near = 0.5;
@@ -177,14 +178,18 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         const newScale = originalScale * (1 + breathe);
         sphere.scale.set(newScale, newScale, newScale);
 
-        // Floating animation with phase offset
-        const floatOffset = Math.sin(timeRef.current * 0.3 + index) * 0.1;
-        sphere.position.y = originalPos.y + floatOffset;
+        // Floating animation with phase offset (wider range for more freedom)
+        const floatY = Math.sin(timeRef.current * 0.3 + index) * 0.18;
+        const floatX = Math.cos(timeRef.current * 0.25 + index * 0.7) * 0.12;
+        const floatZ = Math.sin(timeRef.current * 0.2 + index * 0.5) * 0.12;
+        sphere.position.y = originalPos.y + floatY;
+        sphere.position.x = originalPos.x + floatX;
+        sphere.position.z = originalPos.z + floatZ;
 
-        // Mouse interaction - subtle attraction
-        const mouseInfluence = isHovering ? hoverStrength * 0.15 : 0;
-        sphere.position.x += (mouseRef.current.x * mouseInfluence - sphere.position.x * 0.02);
-        sphere.position.z += (mouseRef.current.y * mouseInfluence - sphere.position.z * 0.02);
+        // Mouse interaction - subtle attraction (stronger for more movement)
+        const mouseInfluence = isHovering ? hoverStrength * 0.25 : 0;
+        sphere.position.x += (mouseRef.current.x * mouseInfluence - (sphere.position.x - originalPos.x - floatX) * 0.03);
+        sphere.position.z += (mouseRef.current.y * mouseInfluence - (sphere.position.z - originalPos.z - floatZ) * 0.03);
 
         // Gentle rotation
         sphere.rotation.x += 0.0001 + Math.sin(timeRef.current * 0.2 + index) * 0.0001;
