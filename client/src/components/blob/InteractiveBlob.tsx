@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 interface InteractiveBlobProps {
   size?: number;
@@ -62,11 +61,18 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Environment map for chrome reflections (RoomEnvironment - neutral, no background)
+    // Neutral environment - soft gradient sphere (no visible cube/box reflections)
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envScene = new RoomEnvironment();
+    const envScene = new THREE.Scene();
+    const envSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(80, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0x555555, side: THREE.BackSide })
+    );
+    envScene.add(envSphere);
     const envMap = pmremGenerator.fromScene(envScene).texture;
     scene.environment = envMap;
+    envSphere.geometry.dispose();
+    (envSphere.material as THREE.Material).dispose();
     pmremGenerator.dispose();
 
     // Create blob group
@@ -85,15 +91,15 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       { position: [0, -0.8, -0.2], scale: 0.55 },
     ];
 
-    // Chrome metallic material - polished chrome per reference
-    // metalness:1, roughness:0.06, clearcoat:1, envMapIntensity:1.8, base:#d7d9dc
+    // High-contrast chrome material - polished chrome per reference
+    // metalness:1, roughness:0.04, clearcoat:1, envMapIntensity:2.2, base:#f2f2f2
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xd7d9dc,
+      color: 0xf2f2f2,
       metalness: 1,
-      roughness: 0.06,
+      roughness: 0.04,
       clearcoat: 1,
-      clearcoatRoughness: 0.08,
-      envMapIntensity: 1.8,
+      clearcoatRoughness: 0.05,
+      envMapIntensity: 2.2,
     });
 
     // Create spheres (all use same chrome material)
@@ -115,37 +121,33 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // Add ground plane to receive shadows (subtle, adds dimensionality)
+    // Add ground plane to receive shadows (subtle, cinematic depth)
     const planeGeometry = new THREE.CircleGeometry(4, 32);
-    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
+    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.25 });
     const shadowPlane = new THREE.Mesh(planeGeometry, planeMaterial);
     shadowPlane.rotation.x = -Math.PI / 2;
     shadowPlane.position.y = -2.5;
     shadowPlane.receiveShadow = true;
     scene.add(shadowPlane);
 
-    // Lighting: match reference - low ambient, hot highlight from top/front, rim lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+    // Cinematic chrome lighting - darker overall, strong highlight, rim
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    // SpotLight from top/front - bright "hot highlight" (intensity ~2)
-    const spotLight = new THREE.SpotLight(0xffffff, 2, 20, Math.PI / 6, 0.5, 1);
-    spotLight.position.set(0, 8, 4);
+    // SpotLight from top-front - bright hot highlight (intensity 3, angle 0.4, penumbra 1)
+    const spotLight = new THREE.SpotLight(0xffffff, 3, 25, 0.4, 1, 1);
+    spotLight.position.set(0, 8, 5);
     spotLight.target.position.set(0, 0, 0);
     scene.add(spotLight);
     scene.add(spotLight.target);
 
-    // Rim lights - define edges, monochrome
-    const rimLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
-    rimLight1.position.set(-5, 2, 5);
-    scene.add(rimLight1);
+    // One directional behind for rim highlight (darker edges, cinematic depth)
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    rimLight.position.set(0, 2, -6);
+    scene.add(rimLight);
 
-    const rimLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-    rimLight2.position.set(5, -1, 4);
-    scene.add(rimLight2);
-
-    // Shadow-casting key light (directional)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    // Shadow-casting key light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(0, 6, 3);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 1024;
@@ -261,7 +263,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        boxShadow: '0 0 40px rgba(215, 217, 220, 0.12)',
+        boxShadow: '0 0 40px rgba(242, 242, 242, 0.1)',
       }}
     />
   );
