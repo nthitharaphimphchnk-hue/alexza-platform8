@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 interface InteractiveBlobProps {
   size?: number;
@@ -27,6 +26,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const blobGroupRef = useRef<THREE.Group | null>(null);
   const spheresRef = useRef<THREE.Mesh[]>([]);
+  const ringsRef = useRef<THREE.Mesh[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
   const timeRef = useRef(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -62,11 +62,18 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Environment reflection (studio-like, RoomEnvironment)
+    // Neutral dark environment (no visible box/room reflections)
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envScene = new RoomEnvironment();
+    const envScene = new THREE.Scene();
+    const envSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(80, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.BackSide })
+    );
+    envScene.add(envSphere);
     const envMap = pmremGenerator.fromScene(envScene).texture;
     scene.environment = envMap;
+    envSphere.geometry.dispose();
+    (envSphere.material as THREE.Material).dispose();
     pmremGenerator.dispose();
 
     // Create blob group
@@ -85,8 +92,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       { position: [0, -0.8, -0.2], scale: 0.55 },
     ];
 
-    // Reflective chrome metal material
-    // metalness:1, roughness:0.05, clearcoat:1, envMapIntensity:2, base:#e6e6e6
+    // Chrome material + internal energy core glow (Alien Tech)
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xe6e6e6,
       metalness: 1,
@@ -94,6 +100,8 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       clearcoat: 1,
       clearcoatRoughness: 0.05,
       envMapIntensity: 2,
+      emissive: 0x88cfff,
+      emissiveIntensity: 0.4,
     });
 
     // Create spheres (all use same chrome material)
@@ -115,15 +123,35 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // Lighting: ambient 0.25, spotLight [2,5,5], directional [-5,5,5]
+    // Thin energy rings (Alien Tech Core) - 3 torus floating around blob
+    const ringRadii = [1.3, 1.5, 1.7];
+    ringRadii.forEach((radius, i) => {
+      const ringGeometry = new THREE.TorusGeometry(radius, 0.01, 16, 100);
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        color: 0xd9f3ff,
+        transparent: true,
+        opacity: 0.3,
+      });
+      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+      ring.rotation.x = Math.PI / 2 + (i * 0.3); // tilt each ring differently
+      ring.rotation.z = i * 0.5;
+      blobGroup.add(ring);
+      ringsRef.current.push(ring);
+    });
+
+    // Lighting: ambient 0.25, spotLight top, rim behind
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
     scene.add(ambientLight);
 
     const spotLight = new THREE.SpotLight(0xffffff, 3, 25, 0.4, 1, 1);
-    spotLight.position.set(2, 5, 5);
+    spotLight.position.set(0, 6, 5);
     spotLight.target.position.set(0, 0, 0);
     scene.add(spotLight);
     scene.add(spotLight.target);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    rimLight.position.set(0, 2, -6);
+    scene.add(rimLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
     directionalLight.position.set(-5, 5, 5);
@@ -202,6 +230,11 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         blobGroup.rotation.y += 0.0002;
       }
 
+      // Energy rings slow orbit (visual only)
+      ringsRef.current.forEach((ring, i) => {
+        ring.rotation.y += 0.0015 + i * 0.0003;
+      });
+
       renderer.render(scene, camera);
     };
 
@@ -227,6 +260,10 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       containerRef.current?.removeEventListener('mouseleave', handleMouseLeave);
       envMap.dispose();
       chromeMaterial.dispose();
+      ringsRef.current.forEach((ring) => {
+        ring.geometry.dispose();
+        (ring.material as THREE.Material).dispose();
+      });
       renderer.dispose();
       spheresRef.current.forEach((sphere) => {
         sphere.geometry.dispose();
