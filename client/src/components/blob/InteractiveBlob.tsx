@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 interface InteractiveBlobProps {
   size?: number;
@@ -56,43 +57,55 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     renderer.setSize(size, size);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setClearColor(0x000000, 0); // Transparent background
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
+    // Environment map for chrome reflections (RoomEnvironment - neutral, no background)
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const envScene = new RoomEnvironment();
+    const envMap = pmremGenerator.fromScene(envScene).texture;
+    scene.environment = envMap;
+    pmremGenerator.dispose();
 
     // Create blob group
     const blobGroup = new THREE.Group();
     scene.add(blobGroup);
     blobGroupRef.current = blobGroup;
 
-    // Define sphere positions for multi-sphere blob
+    // Define sphere positions for multi-sphere blob (all use same chrome material)
     const sphereConfigs = [
-      { position: [0, 0, 0], scale: 1.2, color: 0xd0d0d0 },      // Center large sphere
-      { position: [0.8, 0.6, 0.5], scale: 0.8, color: 0xe8e8e8 }, // Top right
-      { position: [-0.7, 0.5, 0.4], scale: 0.75, color: 0xd8d8d8 }, // Top left
-      { position: [0.5, -0.7, 0.3], scale: 0.7, color: 0xe0e0e0 }, // Bottom right
-      { position: [-0.6, -0.6, 0.2], scale: 0.65, color: 0xd5d5d5 }, // Bottom left
-      { position: [0, 0.8, -0.3], scale: 0.6, color: 0xe5e5e5 },  // Top center
-      { position: [0, -0.8, -0.2], scale: 0.55, color: 0xd2d2d2 }, // Bottom center
+      { position: [0, 0, 0], scale: 1.2 },
+      { position: [0.8, 0.6, 0.5], scale: 0.8 },
+      { position: [-0.7, 0.5, 0.4], scale: 0.75 },
+      { position: [0.5, -0.7, 0.3], scale: 0.7 },
+      { position: [-0.6, -0.6, 0.2], scale: 0.65 },
+      { position: [0, 0.8, -0.3], scale: 0.6 },
+      { position: [0, -0.8, -0.2], scale: 0.55 },
     ];
 
-    // Create metallic material
-    const createMetallicMaterial = (baseColor: number) => {
-      return new THREE.MeshStandardMaterial({
-        color: baseColor,
-        metalness: 0.85,
-        roughness: 0.15,
-        envMapIntensity: 1.0,
-      });
-    };
+    // Chrome metallic material - polished chrome per reference
+    // metalness:1, roughness:0.06, clearcoat:1, envMapIntensity:1.8, base:#d7d9dc
+    const chromeMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xd7d9dc,
+      metalness: 1,
+      roughness: 0.06,
+      clearcoat: 1,
+      clearcoatRoughness: 0.08,
+      envMapIntensity: 1.8,
+    });
 
-    // Create spheres
+    // Create spheres (all use same chrome material)
     sphereConfigs.forEach((config) => {
       const geometry = new THREE.SphereGeometry(1, 64, 64);
-      const material = createMetallicMaterial(config.color);
+      const material = chromeMaterial.clone();
       const sphere = new THREE.Mesh(geometry, material);
       
       sphere.position.set(...(config.position as [number, number, number]));
       sphere.scale.set(config.scale, config.scale, config.scale);
+      sphere.castShadow = true;
+      sphere.receiveShadow = true;
       
       // Store original position for animation
       (sphere as any).originalPosition = new THREE.Vector3(...(config.position as [number, number, number]));
@@ -102,23 +115,49 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // Add environment lighting for metallic effect
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Add ground plane to receive shadows (subtle, adds dimensionality)
+    const planeGeometry = new THREE.CircleGeometry(4, 32);
+    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
+    const shadowPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = -2.5;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    // Lighting: match reference - low ambient, hot highlight from top/front, rim lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
     scene.add(ambientLight);
 
-    // Add directional light for highlights
+    // SpotLight from top/front - bright "hot highlight" (intensity ~2)
+    const spotLight = new THREE.SpotLight(0xffffff, 2, 20, Math.PI / 6, 0.5, 1);
+    spotLight.position.set(0, 8, 4);
+    spotLight.target.position.set(0, 0, 0);
+    scene.add(spotLight);
+    scene.add(spotLight.target);
+
+    // Rim lights - define edges, monochrome
+    const rimLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+    rimLight1.position.set(-5, 2, 5);
+    scene.add(rimLight1);
+
+    const rimLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    rimLight2.position.set(5, -1, 4);
+    scene.add(rimLight2);
+
+    // Shadow-casting key light (directional)
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 5);
+    directionalLight.position.set(0, 6, 3);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 20;
+    directionalLight.shadow.camera.left = -5;
+    directionalLight.shadow.camera.right = 5;
+    directionalLight.shadow.camera.top = 5;
+    directionalLight.shadow.camera.bottom = -5;
+    directionalLight.shadow.bias = -0.0001;
     scene.add(directionalLight);
-
-    // Add point lights for depth
-    const pointLight1 = new THREE.PointLight(0xffffff, 0.6, 100);
-    pointLight1.position.set(-5, 3, 5);
-    scene.add(pointLight1);
-
-    const pointLight2 = new THREE.PointLight(0x8080ff, 0.4, 100);
-    pointLight2.position.set(5, -3, 5);
-    scene.add(pointLight2);
 
     // Mouse tracking
     const handleMouseMove = (e: MouseEvent) => {
@@ -202,11 +241,15 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       window.removeEventListener('resize', handleResize);
       containerRef.current?.removeEventListener('mouseenter', handleMouseEnter);
       containerRef.current?.removeEventListener('mouseleave', handleMouseLeave);
+      envMap.dispose();
+      chromeMaterial.dispose();
       renderer.dispose();
       spheresRef.current.forEach((sphere) => {
         sphere.geometry.dispose();
         (sphere.material as THREE.Material).dispose();
       });
+      planeGeometry.dispose();
+      planeMaterial.dispose();
       containerRef.current?.removeChild(renderer.domElement);
     };
   }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, isHovering]);
@@ -218,6 +261,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       style={{
         width: `${size}px`,
         height: `${size}px`,
+        boxShadow: '0 0 40px rgba(215, 217, 220, 0.12)',
       }}
     />
   );
