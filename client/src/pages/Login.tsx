@@ -65,7 +65,7 @@ export default function Login() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen text-foreground flex flex-col items-center justify-center px-4">
       <div className="flex justify-center mb-6">
         <Logo size="auth" />
       </div>

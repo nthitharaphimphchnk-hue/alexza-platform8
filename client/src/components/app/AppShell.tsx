@@ -173,7 +173,7 @@ export default function AppShell({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="flex min-h-screen">
         <aside className="hidden w-72 shrink-0 border-r border-[rgba(255,255,255,0.06)] bg-[#06090d]/85 backdrop-blur-xl lg:flex lg:flex-col">
           <div className="border-b border-[rgba(255,255,255,0.06)] px-4 py-4">

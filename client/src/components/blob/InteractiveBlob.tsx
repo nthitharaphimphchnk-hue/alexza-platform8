@@ -87,15 +87,29 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     scene.add(blobGroup);
     blobGroupRef.current = blobGroup;
 
-    // Define sphere positions for multi-sphere blob (all use same chrome material)
+    // ติดกันเหมือนผสมกัน แต่โผล่ออกมานิดๆ (overlap/merge, slight separation)
+    const sizeMult = 1.55;
     const sphereConfigs = [
-      { position: [0, 0, 0], scale: 1.2 },
-      { position: [0.8, 0.6, 0.5], scale: 0.8 },
-      { position: [-0.7, 0.5, 0.4], scale: 0.75 },
-      { position: [0.5, -0.7, 0.3], scale: 0.7 },
-      { position: [-0.6, -0.6, 0.2], scale: 0.65 },
-      { position: [0, 0.8, -0.3], scale: 0.6 },
-      { position: [0, -0.8, -0.2], scale: 0.55 },
+      { position: [0, 0, 0], scale: 0.75 * sizeMult },
+      { position: [0.5, 0.4, 0.35], scale: 0.5 * sizeMult },
+      { position: [-0.45, 0.35, 0.3], scale: 0.48 * sizeMult },
+      { position: [0.35, -0.5, 0.22], scale: 0.45 * sizeMult },
+      { position: [-0.4, -0.45, 0.18], scale: 0.42 * sizeMult },
+      { position: [0, 0.55, -0.22], scale: 0.38 * sizeMult },
+      { position: [0, -0.55, -0.18], scale: 0.35 * sizeMult },
+      { position: [0.7, 0.15, 0.42], scale: 0.32 * sizeMult },
+      { position: [-0.65, 0.12, 0.38], scale: 0.3 * sizeMult },
+      { position: [0.5, -0.6, 0.3], scale: 0.28 * sizeMult },
+      { position: [-0.55, -0.58, 0.26], scale: 0.26 * sizeMult },
+      { position: [0.6, 0.6, -0.08], scale: 0.24 * sizeMult },
+      { position: [-0.6, 0.58, -0.1], scale: 0.22 * sizeMult },
+      { position: [0.22, 0.75, -0.3], scale: 0.2 * sizeMult },
+      { position: [-0.25, -0.72, -0.26], scale: 0.19 * sizeMult },
+      { position: [0.8, -0.28, -0.15], scale: 0.18 * sizeMult },
+      { position: [-0.78, -0.25, -0.18], scale: 0.17 * sizeMult },
+      { position: [0.35, 0.35, -0.5], scale: 0.16 * sizeMult },
+      { position: [-0.38, 0.32, -0.48], scale: 0.15 * sizeMult },
+      { position: [0, 0.2, -0.62], scale: 0.14 * sizeMult },
     ];
 
     // Black-grey metal (ดำเทา)
@@ -127,45 +141,23 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // Large soft light, realistic, dramatic dimension (แสงขนาดใหญ่ สมจริง มิติเงา)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+    // แสงเงาด้านเดียว 4 มิติ (single key light, dramatic depth)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.SpotLight(0xffffff, 6, 60, 0.5, 0.8, 1);
-    keyLight.position.set(0, 12, 3);
-    keyLight.target.position.set(0, 0, 0);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.5);
+    keyLight.position.set(5, 6, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.bias = -0.0001;
     scene.add(keyLight);
-    scene.add(keyLight.target);
-
-    const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    rimLight.position.set(0, 3, -8);
-    scene.add(rimLight);
-
-    const sideRimLeft = new THREE.DirectionalLight(0xffffff, 1);
-    sideRimLeft.position.set(-8, 0, 2);
-    scene.add(sideRimLeft);
-
-    const sideRimRight = new THREE.DirectionalLight(0xffffff, 1);
-    sideRimRight.position.set(8, 0, 2);
-    scene.add(sideRimRight);
-
-    const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    fillLight.position.set(-4, 2, 4);
-    scene.add(fillLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.position.set(4, 4, 4);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 20;
-    directionalLight.shadow.camera.left = -5;
-    directionalLight.shadow.camera.right = 5;
-    directionalLight.shadow.camera.top = 5;
-    directionalLight.shadow.camera.bottom = -5;
-    directionalLight.shadow.bias = -0.0001;
-    scene.add(directionalLight);
 
     // Mouse tracking
     const handleMouseMove = (e: MouseEvent) => {
@@ -219,15 +211,17 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         sphere.position.x += (mouseRef.current.x * mouseInfluence - (sphere.position.x - originalPos.x - floatX) * 0.03);
         sphere.position.z += (mouseRef.current.y * mouseInfluence - (sphere.position.z - originalPos.z - floatZ) * 0.03);
 
-        // Gentle rotation
-        sphere.rotation.x += 0.0001 + Math.sin(timeRef.current * 0.2 + index) * 0.0001;
-        sphere.rotation.y += 0.0002 + Math.cos(timeRef.current * 0.15 + index) * 0.0001;
+        // Gentle rotation (slowly increases over time)
+        const rotRamp = 0.0003 + Math.min(timeRef.current * 0.000015, 0.0008);
+        sphere.rotation.x += rotRamp * (0.4 + Math.sin(timeRef.current * 0.2 + index) * 0.2);
+        sphere.rotation.y += rotRamp * (0.8 + Math.cos(timeRef.current * 0.15 + index) * 0.2);
       });
 
-      // Group rotation (slower, ominous)
+      // Group rotation - slowly increases over time (องศาเพิ่มขึ้นช้าๆ)
       if (blobGroup) {
-        blobGroup.rotation.x += 0.00006;
-        blobGroup.rotation.y += 0.00012;
+        const groupRotRamp = 0.00015 + Math.min(timeRef.current * 0.000008, 0.0005);
+        blobGroup.rotation.x += groupRotRamp;
+        blobGroup.rotation.y += groupRotRamp * 1.5;
       }
 
       renderer.render(scene, camera);

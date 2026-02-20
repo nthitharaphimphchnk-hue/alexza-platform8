@@ -171,7 +171,7 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">

@@ -46,7 +46,7 @@ export default function ChatBuilder() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground flex">
+    <div className="min-h-screen text-foreground flex">
       {/* Sidebar */}
       <aside className="w-64 bg-[#0b0e12] border-r border-[rgba(255,255,255,0.06)] p-4 flex flex-col">
         {/* Logo */}

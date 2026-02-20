@@ -48,7 +48,7 @@ export default function Billing() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-foreground">
+    <div className="min-h-screen text-foreground">
       {/* Header */}
       <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
         <motion.div
