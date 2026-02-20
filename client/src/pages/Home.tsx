@@ -396,6 +396,21 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
+            {/* 3D blob แบบ hero - แสงเขียวด้านล่าง */}
+            <div className="integrate-sphere-wrap">
+              <div className="integrate-sphere-panel">
+                <MorphingBlob
+                  size={140}
+                  intensity={0.6}
+                  colorAccent="#c0c0c0"
+                  idleSpeed={0.5}
+                  hoverStrength={0.8}
+                  glowStrength={1}
+                  glowColor="#22c55e"
+                  chaosLevel={0.85}
+                />
+              </div>
+            </div>
             <h2 className="text-4xl font-bold text-white mb-4">Integrate</h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg">
               A simple, elegant interface so you can start orchestrating AI in minutes. 

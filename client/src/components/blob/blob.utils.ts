@@ -11,6 +11,8 @@ export interface BlobConfig {
   hoverStrength: number;
   glowStrength: number;
   enableWebGL: boolean;
+  glowColor?: string;
+  chaosLevel?: number;
 }
 
 export const DEFAULT_BLOB_CONFIG: BlobConfig = {

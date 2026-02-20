@@ -9,6 +9,8 @@ interface InteractiveBlobFallbackProps {
   idleSpeed?: number;
   hoverStrength?: number;
   glowStrength?: number;
+  glowColor?: string;
+  chaosLevel?: number;
 }
 
 const InteractiveBlobFallback: React.FC<InteractiveBlobFallbackProps> = ({
@@ -18,6 +20,8 @@ const InteractiveBlobFallback: React.FC<InteractiveBlobFallbackProps> = ({
   idleSpeed = 0.4,
   hoverStrength = 0.8,
   glowStrength = 1.2,
+  glowColor,
+  chaosLevel,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -38,7 +42,7 @@ const InteractiveBlobFallback: React.FC<InteractiveBlobFallbackProps> = ({
   }, []);
 
   const blobStyle = {
-    '--color-accent': colorAccent,
+    '--color-accent': glowColor || colorAccent,
     '--glow-strength': glowStrength,
     '--hover-scale': isHovering ? 1.05 : 1,
     '--mouse-x': `${mousePos.x}px`,

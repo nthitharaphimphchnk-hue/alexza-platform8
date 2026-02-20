@@ -10,6 +10,10 @@ interface InteractiveBlobProps {
   idleSpeed?: number;
   hoverStrength?: number;
   glowStrength?: number;
+  /** Green glow from below (e.g. #22c55e) - for Integrate section */
+  glowColor?: string;
+  /** 0-1: หมุนเร็ว เคลื่อนตัวแรง เหมือนปีศาจกำลังแตกตัว */
+  chaosLevel?: number;
 }
 
 const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
@@ -19,6 +23,8 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   idleSpeed = 0.4,
   hoverStrength = 0.8,
   glowStrength = 1.2,
+  glowColor,
+  chaosLevel = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -167,6 +173,17 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     rimLight.position.set(-2, 3, -4);
     scene.add(rimLight);
 
+    // Green glow from below (Integrate section)
+    if (glowColor) {
+      const greenHex = parseInt(glowColor.replace('#', ''), 16);
+      const bottomLight = new THREE.PointLight(greenHex, 3, 8);
+      bottomLight.position.set(0, -3, 2);
+      scene.add(bottomLight);
+      const bottomLight2 = new THREE.PointLight(greenHex, 1.5, 6);
+      bottomLight2.position.set(0, -2.5, 1);
+      scene.add(bottomLight2);
+    }
+
     // Mouse tracking
     const handleMouseMove = (e: MouseEvent) => {
       const rect = containerRef.current?.getBoundingClientRect();
@@ -197,9 +214,13 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.1;
       mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.1;
 
-      // Hatching / incubating cycle - ช่วงฟักไข่ AI (4-5 วินาทีต่อรอบ)
-      const hatchCycle = timeRef.current * 0.25;
-      const hatchPulse = Math.sin(hatchCycle) * 0.12 + Math.sin(hatchCycle * 2) * 0.04;
+      // Chaos multiplier - หมุนเร็ว เคลื่อนแรง เหมือนปีศาจแตกตัว
+      const c = 1 + chaosLevel * 3;
+      const speedMult = 1 + chaosLevel * 2.5;
+
+      // Hatching / incubating cycle - ช่วงฟักไข่ AI
+      const hatchCycle = timeRef.current * (0.25 * speedMult);
+      const hatchPulse = Math.sin(hatchCycle) * (0.12 * c) + Math.sin(hatchCycle * 2) * (0.06 * c);
 
       // Animate each sphere - AI hatching movement
       spheresRef.current.forEach((sphere, index) => {
@@ -207,21 +228,22 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         const originalScale = (sphere as any).originalScale;
         const phase = index * 0.4;
 
-        // Hatching breathing - ขยายหดเหมือนกำลังฟัก (heartbeat + slow pulse)
-        const breathe = Math.sin(timeRef.current * idleSpeed * 0.5 + phase) * 0.04;
+        // Hatching breathing - ขยายหด (chaos: หนักขึ้น)
+        const breathe = Math.sin(timeRef.current * idleSpeed * (0.5 * speedMult) + phase) * (0.04 * c);
         const newScale = originalScale * (1 + hatchPulse + breathe);
         sphere.scale.set(newScale, newScale, newScale);
 
-        // Formation wave - เคลื่อนตัวเหมือนกำลังก่อตัว (radial pulse)
-        const formWave = Math.sin(hatchCycle + phase) * 0.08;
+        // Formation wave - เคลื่อนตัว radial (chaos: แยกตัวแรง เหมือนแตกออก)
+        const formWave = Math.sin(hatchCycle + phase) * (0.08 + chaosLevel * 0.22);
         const radialX = originalPos.x * formWave;
         const radialY = originalPos.y * formWave;
         const radialZ = originalPos.z * formWave;
 
-        // Floating animation - ลอยนุ่มนวล
-        const floatY = Math.sin(timeRef.current * 0.2 + index) * 0.12;
-        const floatX = Math.cos(timeRef.current * 0.16 + index * 0.7) * 0.09;
-        const floatZ = Math.sin(timeRef.current * 0.14 + index * 0.5) * 0.09;
+        // Floating animation - ลอย (chaos: ขยับแรงเหมือนเต้น)
+        const floatMult = 1 + chaosLevel * 2.5;
+        const floatY = Math.sin(timeRef.current * (0.35 * speedMult) + index) * (0.12 * floatMult);
+        const floatX = Math.cos(timeRef.current * (0.3 * speedMult) + index * 0.7) * (0.09 * floatMult);
+        const floatZ = Math.sin(timeRef.current * (0.28 * speedMult) + index * 0.5) * (0.09 * floatMult);
 
         sphere.position.y = originalPos.y + floatY + radialY;
         sphere.position.x = originalPos.x + floatX + radialX;
@@ -232,20 +254,22 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         sphere.position.x += (mouseRef.current.x * mouseInfluence - (sphere.position.x - originalPos.x - floatX - radialX) * 0.03);
         sphere.position.z += (mouseRef.current.y * mouseInfluence - (sphere.position.z - originalPos.z - floatZ - radialZ) * 0.03);
 
-        // Gentle rotation - หมุนเหมือนเดิม
-        const rotRamp = 0.0003 + Math.min(timeRef.current * 0.000015, 0.0008);
+        // Rotation - chaos: หมุนเร็วขึ้น
+        const rotMult = 1 + chaosLevel * 5;
+        const rotRamp = (0.0003 + Math.min(timeRef.current * 0.000015, 0.0008)) * rotMult;
         sphere.rotation.x += rotRamp * (0.4 + Math.sin(timeRef.current * 0.2 + index) * 0.2);
         sphere.rotation.y += rotRamp * (0.8 + Math.cos(timeRef.current * 0.15 + index) * 0.2);
       });
 
-      // Group rotation - หมุนเหมือนเดิม
+      // Group rotation - chaos: หมุนเร็ว
       if (blobGroup) {
-        const groupRotRamp = 0.00015 + Math.min(timeRef.current * 0.000008, 0.0005);
+        const groupRotMult = 1 + chaosLevel * 5;
+        const groupRotRamp = (0.00015 + Math.min(timeRef.current * 0.000008, 0.0005)) * groupRotMult;
         blobGroup.rotation.x += groupRotRamp;
         blobGroup.rotation.y += groupRotRamp * 1.5;
 
-        // Whole blob hatching pulse - ทั้งก้อนขยายหดเหมือนไข่ฟัก
-        const wholePulse = Math.sin(hatchCycle * 0.5) * 0.02;
+        // Whole blob pulse - chaos: ขยายหดแรง
+        const wholePulse = Math.sin(hatchCycle * 0.5) * (0.02 * c);
         blobGroup.scale.set(1 + wholePulse, 1 + wholePulse, 1 + wholePulse);
       }
 
@@ -281,7 +305,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       });
       containerRef.current?.removeChild(renderer.domElement);
     };
-  }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength]);
+  }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, glowColor, chaosLevel]);
 
   return (
     <div
