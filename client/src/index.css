@@ -262,13 +262,14 @@
     box-shadow: 0 0 20px rgba(192, 192, 192, 0.15), 0 0 40px rgba(192, 192, 192, 0.08);
   }
 
-  /* Metallic steel button - สีเหล็ก มีแสงเงามิติ */
+  /* Metallic steel button - สีเหล็ก มีแสงเงามิติ + neon green เล่นแสง */
   .btn-metallic {
     background: linear-gradient(180deg, #505558 0%, #3d4045 25%, #2d3035 60%, #1e2126 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
       inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 16px rgba(34, 197, 94, 0.2),
       0 4px 12px rgba(0, 0, 0, 0.4) !important;
     color: #e8e8e8 !important;
   }
@@ -277,7 +278,47 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.18),
       inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+      0 0 24px rgba(34, 197, 94, 0.35),
+      0 0 40px rgba(34, 197, 94, 0.15),
       0 6px 16px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  /* Code block - แสงเขียววิ่งรอบกรอบ (running light) */
+  .code-block-border-glow {
+    position: relative;
+    padding: 2px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .code-block-border-glow::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    margin-left: -100%;
+    margin-top: -100%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      transparent 300deg,
+      rgba(34, 197, 94, 0.25) 320deg,
+      #22c55e 332deg,
+      #4ade80 345deg,
+      #22c55e 358deg,
+      transparent 360deg
+    );
+    animation: border-glow-spin 4s linear infinite;
+    z-index: 0;
+  }
+  .code-block-border-glow > div {
+    position: relative;
+    z-index: 1;
+    border-radius: 12px;
+  }
+  @keyframes border-glow-spin {
+    to { transform: rotate(360deg); }
   }
 
   /* Code block - โค๊ดวิ่งช้าๆ มีชีวิต */

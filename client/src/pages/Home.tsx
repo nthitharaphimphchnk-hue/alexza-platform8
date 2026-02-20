@@ -96,9 +96,11 @@ export default function Home() {
               size={480}
               intensity={0.7}
               colorAccent="#c0c0c0"
-              idleSpeed={0.4}
+              idleSpeed={0.5}
               hoverStrength={0.8}
               glowStrength={1.2}
+              glowColor="#22c55e"
+              chaosLevel={0.85}
             />
           </motion.div>
 
@@ -419,12 +421,13 @@ export default function Home() {
           </motion.div>
 
           <motion.div 
-            className="rounded-xl border-2 border-[rgba(255,255,255,0.18)] bg-[#050607] overflow-hidden"
+            className="code-block-border-glow"
             variants={scrollFadeInVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
+            <div className="rounded-xl border border-[rgba(255,255,255,0.12)] bg-[#050607] overflow-hidden relative">
             {/* Tabs - Resend style */}
             <div className="flex flex-wrap gap-1 p-3 border-b-2 border-[rgba(255,255,255,0.12)] bg-[#0b0e12]">
               {(['node', 'python', 'curl'] as const).map((tab) => (
@@ -560,6 +563,7 @@ export default function Home() {
               <a href="/signup" className="text-sm text-[#c0c0c0] hover:text-white transition">
                 Get API Key
               </a>
+            </div>
             </div>
           </motion.div>
         </div>
