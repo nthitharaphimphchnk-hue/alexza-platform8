@@ -280,6 +280,62 @@
       0 6px 16px rgba(0, 0, 0, 0.45) !important;
   }
 
+  /* Code block - โค๊ดวิ่งช้าๆ มีชีวิต */
+  .code-block-animated {
+    position: relative;
+    overflow: hidden;
+  }
+  .code-block-animated::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.03),
+      transparent
+    );
+    animation: code-shimmer 8s ease-in-out infinite;
+  }
+  @keyframes code-shimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+  }
+  .code-cursor-blink {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: #c0c0c0;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: cursor-blink 1.2s step-end infinite;
+  }
+  @keyframes cursor-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Code scroll - โค๊ดเลื่อนขึ้นช้าๆ */
+  .code-scroll-wrap {
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
+  .code-scroll-inner {
+    animation: code-scroll-up 25s linear infinite;
+  }
+  .code-scroll-inner:hover {
+    animation-play-state: paused;
+  }
+  @keyframes code-scroll-up {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+
   .glow-edge {
     box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1), 0 0 15px rgba(192, 192, 192, 0.1);
   }

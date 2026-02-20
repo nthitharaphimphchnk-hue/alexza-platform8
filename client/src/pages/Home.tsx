@@ -9,9 +9,12 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 
 
+type CodeTab = 'node' | 'python' | 'curl';
+
 export default function Home() {
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [codeTab, setCodeTab] = useState<CodeTab>('node');
   const containerRef = useRef(null);
   const { scrollY } = useScroll();
   const parallaxY = useTransform(scrollY, [0, 500], [0, 150]);
@@ -379,6 +382,170 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Integrate - Resend-style API code block */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-5xl mx-auto">
+          <motion.div 
+            className="text-center mb-12"
+            variants={scrollFadeInVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">Integrate</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+              A simple, elegant interface so you can start orchestrating AI in minutes. 
+              It fits right into your code with our REST API.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="rounded-xl border-2 border-[rgba(255,255,255,0.18)] bg-[#050607] overflow-hidden"
+            variants={scrollFadeInVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {/* Tabs - Resend style */}
+            <div className="flex flex-wrap gap-1 p-3 border-b-2 border-[rgba(255,255,255,0.12)] bg-[#0b0e12]">
+              {(['node', 'python', 'curl'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setCodeTab(tab)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    codeTab === tab
+                      ? 'bg-[#1a1d22] border-2 border-[rgba(255,255,255,0.25)] text-white'
+                      : 'text-gray-400 hover:text-white border-2 border-transparent'
+                  }`}
+                >
+                  {tab === 'node' && 'Node.js'}
+                  {tab === 'python' && 'Python'}
+                  {tab === 'curl' && 'cURL'}
+                </button>
+              ))}
+            </div>
+
+            {/* Code block - โค๊ดเลื่อนขึ้นช้าๆ เหมือนกำลัง stream */}
+            <div className="p-6 overflow-x-auto code-block-animated relative">
+              <div className="code-scroll-wrap max-h-[280px]">
+                <div className="code-scroll-inner">
+                  <pre className="text-sm font-mono text-gray-300 leading-relaxed">
+                    {codeTab === 'node' && (
+                      <>
+                        <code>
+                          <span className="text-blue-400">const</span> response = <span className="text-blue-400">await</span> fetch(<span className="text-green-400">'https://api.alexza.ai/v1/run'</span>, {'{'}{'\n'}
+                          {'  '}method: <span className="text-green-400">'POST'</span>,{'\n'}
+                          {'  '}headers: {'{'}{'\n'}
+                          {'    '}<span className="text-green-400">'Content-Type'</span>: <span className="text-green-400">'application/json'</span>,{'\n'}
+                          {'    '}<span className="text-green-400">'x-api-key'</span>: <span className="text-green-400">'axza_xxxxxxxx'</span>,{'\n'}
+                          {'  '}{'}'},{'\n'}
+                          {'  '}body: JSON.stringify({'{'}{'\n'}
+                          {'    '}input: <span className="text-green-400">'Hello, run my AI flow'</span>{'\n'}
+                          {'  '}{'}'}){'\n'}
+                          {'}'});{'\n\n'}
+                          <span className="text-blue-400">const</span> data = <span className="text-blue-400">await</span> response.json();{'\n'}
+                          console.log(data.output)<span className="code-cursor-blink" />
+                        </code>
+                        <code className="block pt-8">
+                          <span className="text-blue-400">const</span> response = <span className="text-blue-400">await</span> fetch(<span className="text-green-400">'https://api.alexza.ai/v1/run'</span>, {'{'}{'\n'}
+                          {'  '}method: <span className="text-green-400">'POST'</span>,{'\n'}
+                          {'  '}headers: {'{'}{'\n'}
+                          {'    '}<span className="text-green-400">'Content-Type'</span>: <span className="text-green-400">'application/json'</span>,{'\n'}
+                          {'    '}<span className="text-green-400">'x-api-key'</span>: <span className="text-green-400">'axza_xxxxxxxx'</span>,{'\n'}
+                          {'  '}{'}'},{'\n'}
+                          {'  '}body: JSON.stringify({'{'}{'\n'}
+                          {'    '}input: <span className="text-green-400">'Hello, run my AI flow'</span>{'\n'}
+                          {'  '}{'}'}){'\n'}
+                          {'}'});{'\n\n'}
+                          <span className="text-blue-400">const</span> data = <span className="text-blue-400">await</span> response.json();{'\n'}
+                          console.log(data.output)<span className="code-cursor-blink" />
+                        </code>
+                      </>
+                    )}
+                    {codeTab === 'python' && (
+                      <>
+                        <code>
+                          <span className="text-purple-400">import</span> requests{'\n\n'}
+                          response = requests.post({'\n'}
+                          {'    '}<span className="text-green-400">'https://api.alexza.ai/v1/run'</span>,{'\n'}
+                          {'    '}headers={'{'}{'\n'}
+                          {'        '}<span className="text-green-400">'Content-Type'</span>: <span className="text-green-400">'application/json'</span>,{'\n'}
+                          {'        '}<span className="text-green-400">'x-api-key'</span>: <span className="text-green-400">'axza_xxxxxxxx'</span>{'\n'}
+                          {'    '}{'}'},{'\n'}
+                          {'    '}json={'{'}<span className="text-orange-400">'input'</span>: <span className="text-green-400">'Hello, run my AI flow'</span>{'}'}{'\n'}
+                          ){'\n\n'}
+                          data = response.json(){'\n'}
+                          print(data[<span className="text-green-400">'output'</span>])<span className="code-cursor-blink" />
+                        </code>
+                        <code className="block pt-8">
+                          <span className="text-purple-400">import</span> requests{'\n\n'}
+                          response = requests.post({'\n'}
+                          {'    '}<span className="text-green-400">'https://api.alexza.ai/v1/run'</span>,{'\n'}
+                          {'    '}headers={'{'}{'\n'}
+                          {'        '}<span className="text-green-400">'Content-Type'</span>: <span className="text-green-400">'application/json'</span>,{'\n'}
+                          {'        '}<span className="text-green-400">'x-api-key'</span>: <span className="text-green-400">'axza_xxxxxxxx'</span>{'\n'}
+                          {'    '}{'}'},{'\n'}
+                          {'    '}json={'{'}<span className="text-orange-400">'input'</span>: <span className="text-green-400">'Hello, run my AI flow'</span>{'}'}{'\n'}
+                          ){'\n\n'}
+                          data = response.json(){'\n'}
+                          print(data[<span className="text-green-400">'output'</span>])<span className="code-cursor-blink" />
+                        </code>
+                      </>
+                    )}
+                    {codeTab === 'curl' && (
+                      <>
+                        <code>
+                          curl -X POST <span className="text-green-400">'https://api.alexza.ai/v1/run'</span> \{'\n'}
+                          {'  '}-H <span className="text-green-400">'Content-Type: application/json'</span> \{'\n'}
+                          {'  '}-H <span className="text-green-400">'x-api-key: axza_xxxxxxxx'</span> \{'\n'}
+                          {'  '}-d <span className="text-green-400">{`'{"input": "Hello, run my AI flow"}'`}</span><span className="code-cursor-blink" />
+                        </code>
+                        <code className="block pt-8">
+                          curl -X POST <span className="text-green-400">'https://api.alexza.ai/v1/run'</span> \{'\n'}
+                          {'  '}-H <span className="text-green-400">'Content-Type: application/json'</span> \{'\n'}
+                          {'  '}-H <span className="text-green-400">'x-api-key: axza_xxxxxxxx'</span> \{'\n'}
+                          {'  '}-d <span className="text-green-400">{`'{"input": "Hello, run my AI flow"}'`}</span><span className="code-cursor-blink" />
+                        </code>
+                      </>
+                    )}
+                  </pre>
+                </div>
+              </div>
+
+              {/* HTTP response logs - โผล่ขึ้นมาช้าๆ วนซ้ำตลอด */}
+              <div className="mt-4 space-y-1 border-t border-[rgba(255,255,255,0.08)] pt-4 min-h-[72px]">
+                {['26abdd24-36a9-475d-83bf-4d27a31c7def', 'cc3817db-d398-4892-8bc0-8bc589a2cfb3', '4ea2f827-c3a2-471e-b0a1-8bb0bcb5c67c'].map((id, i) => (
+                  <motion.div
+                    key={id}
+                    className="text-xs font-mono text-green-400/90"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    transition={{
+                      duration: 8,
+                      repeat: Infinity,
+                      repeatDelay: 0,
+                      times: [0, 0.15, 0.7, 1],
+                      delay: i * 2,
+                    }}
+                  >
+                    HTTP 200: {'{ "id": "'}{id.slice(0, 8)}...{'" }'}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 pb-6 flex flex-wrap gap-4">
+              <a href="/docs" className="text-sm text-[#c0c0c0] hover:text-white transition flex items-center gap-1">
+                View Documentation <ArrowRight size={14} />
+              </a>
+              <a href="/signup" className="text-sm text-[#c0c0c0] hover:text-white transition">
+                Get API Key
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>
