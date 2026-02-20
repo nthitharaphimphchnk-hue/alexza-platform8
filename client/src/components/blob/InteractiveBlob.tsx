@@ -26,7 +26,6 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const blobGroupRef = useRef<THREE.Group | null>(null);
   const spheresRef = useRef<THREE.Mesh[]>([]);
-  const ringsRef = useRef<THREE.Mesh[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
   const timeRef = useRef(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -62,18 +61,25 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Neutral dark environment (no visible box/room reflections)
+    // Environment - flat smooth layers (มิติ พื้นเรียบ หลายชั้น, no room)
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const envScene = new THREE.Scene();
-    const envSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(80, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.BackSide })
-    );
-    envScene.add(envSphere);
+    const layerColors = [0x303038, 0x252530, 0x1a1a22, 0x101015];
+    layerColors.forEach((color, i) => {
+      const r = 60 + i * 15;
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 32, 32),
+        new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
+      );
+      envScene.add(sphere);
+    });
     const envMap = pmremGenerator.fromScene(envScene).texture;
     scene.environment = envMap;
-    envSphere.geometry.dispose();
-    (envSphere.material as THREE.Material).dispose();
+    envScene.children.forEach((child) => {
+      const m = child as THREE.Mesh;
+      m.geometry.dispose();
+      (m.material as THREE.Material).dispose();
+    });
     pmremGenerator.dispose();
 
     // Create blob group
@@ -92,16 +98,14 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       { position: [0, -0.8, -0.2], scale: 0.55 },
     ];
 
-    // Chrome material + internal energy core glow (Alien Tech)
+    // Black-grey metal (ดำเทา)
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xe6e6e6,
+      color: 0x505058,
       metalness: 1,
-      roughness: 0.05,
+      roughness: 0.02,
       clearcoat: 1,
-      clearcoatRoughness: 0.05,
-      envMapIntensity: 2,
-      emissive: 0x88cfff,
-      emissiveIntensity: 0.4,
+      clearcoatRoughness: 0.02,
+      envMapIntensity: 2.8,
     });
 
     // Create spheres (all use same chrome material)
@@ -123,41 +127,37 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // Thin energy rings (Alien Tech Core) - 3 torus floating around blob
-    const ringRadii = [1.3, 1.5, 1.7];
-    ringRadii.forEach((radius, i) => {
-      const ringGeometry = new THREE.TorusGeometry(radius, 0.01, 16, 100);
-      const ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0xd9f3ff,
-        transparent: true,
-        opacity: 0.3,
-      });
-      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.rotation.x = Math.PI / 2 + (i * 0.3); // tilt each ring differently
-      ring.rotation.z = i * 0.5;
-      blobGroup.add(ring);
-      ringsRef.current.push(ring);
-    });
-
-    // Lighting: ambient 0.25, spotLight top, rim behind
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+    // Large soft light, realistic, dramatic dimension (แสงขนาดใหญ่ สมจริง มิติเงา)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     scene.add(ambientLight);
 
-    const spotLight = new THREE.SpotLight(0xffffff, 3, 25, 0.4, 1, 1);
-    spotLight.position.set(0, 6, 5);
-    spotLight.target.position.set(0, 0, 0);
-    scene.add(spotLight);
-    scene.add(spotLight.target);
+    const keyLight = new THREE.SpotLight(0xffffff, 6, 60, 0.5, 0.8, 1);
+    keyLight.position.set(0, 12, 3);
+    keyLight.target.position.set(0, 0, 0);
+    scene.add(keyLight);
+    scene.add(keyLight.target);
 
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    rimLight.position.set(0, 2, -6);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    rimLight.position.set(0, 3, -8);
     scene.add(rimLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    directionalLight.position.set(-5, 5, 5);
+    const sideRimLeft = new THREE.DirectionalLight(0xffffff, 1);
+    sideRimLeft.position.set(-8, 0, 2);
+    scene.add(sideRimLeft);
+
+    const sideRimRight = new THREE.DirectionalLight(0xffffff, 1);
+    sideRimRight.position.set(8, 0, 2);
+    scene.add(sideRimRight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    fillLight.position.set(-4, 2, 4);
+    scene.add(fillLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight.position.set(4, 4, 4);
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
     directionalLight.shadow.camera.near = 0.5;
     directionalLight.shadow.camera.far = 20;
     directionalLight.shadow.camera.left = -5;
@@ -201,15 +201,15 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         const originalPos = (sphere as any).originalPosition;
         const originalScale = (sphere as any).originalScale;
         
-        // Breathing animation
-        const breathe = Math.sin(timeRef.current * idleSpeed) * 0.08;
+        // Breathing animation (slower, flowing)
+        const breathe = Math.sin(timeRef.current * idleSpeed * 0.6) * 0.06;
         const newScale = originalScale * (1 + breathe);
         sphere.scale.set(newScale, newScale, newScale);
 
-        // Floating animation with phase offset (wider range for more freedom)
-        const floatY = Math.sin(timeRef.current * 0.3 + index) * 0.18;
-        const floatX = Math.cos(timeRef.current * 0.25 + index * 0.7) * 0.12;
-        const floatZ = Math.sin(timeRef.current * 0.2 + index * 0.5) * 0.12;
+        // Floating animation (slower, wave-like flow)
+        const floatY = Math.sin(timeRef.current * 0.18 + index) * 0.14;
+        const floatX = Math.cos(timeRef.current * 0.15 + index * 0.7) * 0.1;
+        const floatZ = Math.sin(timeRef.current * 0.12 + index * 0.5) * 0.1;
         sphere.position.y = originalPos.y + floatY;
         sphere.position.x = originalPos.x + floatX;
         sphere.position.z = originalPos.z + floatZ;
@@ -224,16 +224,11 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         sphere.rotation.y += 0.0002 + Math.cos(timeRef.current * 0.15 + index) * 0.0001;
       });
 
-      // Group rotation
+      // Group rotation (slower, ominous)
       if (blobGroup) {
-        blobGroup.rotation.x += 0.0001;
-        blobGroup.rotation.y += 0.0002;
+        blobGroup.rotation.x += 0.00006;
+        blobGroup.rotation.y += 0.00012;
       }
-
-      // Energy rings slow orbit (visual only)
-      ringsRef.current.forEach((ring, i) => {
-        ring.rotation.y += 0.0015 + i * 0.0003;
-      });
 
       renderer.render(scene, camera);
     };
@@ -260,10 +255,6 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       containerRef.current?.removeEventListener('mouseleave', handleMouseLeave);
       envMap.dispose();
       chromeMaterial.dispose();
-      ringsRef.current.forEach((ring) => {
-        ring.geometry.dispose();
-        (ring.material as THREE.Material).dispose();
-      });
       renderer.dispose();
       spheresRef.current.forEach((sphere) => {
         sphere.geometry.dispose();
