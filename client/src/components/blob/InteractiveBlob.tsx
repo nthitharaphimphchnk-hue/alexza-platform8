@@ -14,6 +14,14 @@ interface InteractiveBlobProps {
   glowColor?: string;
   /** 0-1: หมุนเร็ว เคลื่อนตัวแรง เหมือนปีศาจกำลังแตกตัว */
   chaosLevel?: number;
+  /** เต็ม box หลายตัว เคลื่อนไหวเหมือนอยากออกจากกรอบ */
+  burstMode?: boolean;
+  /** คูณความเร็วหมุนรอบตัวเอง (เห็น 360°) */
+  spinSpeed?: number;
+  /** 0-1: ยิ่งน้อย spheres ยิ่งติดกัน (default 1) */
+  tightness?: number;
+  /** จำนวน spheres เพิ่มเติม (default 0) */
+  extraSpheres?: number;
 }
 
 const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
@@ -25,6 +33,10 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   glowStrength = 1.2,
   glowColor,
   chaosLevel = 0,
+  burstMode = false,
+  spinSpeed = 1,
+  tightness = 1,
+  extraSpheres: extraCount = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -50,7 +62,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 4;
+    camera.position.z = 4.8;
     cameraRef.current = camera;
 
     // Renderer setup with transparency
@@ -93,9 +105,10 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     scene.add(blobGroup);
     blobGroupRef.current = blobGroup;
 
-    // ติดกันเหมือนผสมกัน แต่โผล่ออกมานิดๆ (overlap/merge, slight separation)
-    const sizeMult = 1.55;
-    const sphereConfigs = [
+    // burstMode: เต็ม box หลายตัว | default: ติดกันแน่น
+    const sizeMult = burstMode ? 1.95 : 1.78;
+    const posScale = Math.max(0.5, Math.min(1, tightness));
+    const baseConfigs = [
       { position: [0, 0, 0], scale: 0.75 * sizeMult },
       { position: [0.5, 0.4, 0.35], scale: 0.5 * sizeMult },
       { position: [-0.45, 0.35, 0.3], scale: 0.48 * sizeMult },
@@ -116,7 +129,35 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       { position: [0.35, 0.35, -0.5], scale: 0.16 * sizeMult },
       { position: [-0.38, 0.32, -0.48], scale: 0.15 * sizeMult },
       { position: [0, 0.2, -0.62], scale: 0.14 * sizeMult },
-    ];
+      // extra lumps - กึ่มเพิ่ม
+      ...(extraCount >= 1 ? [{ position: [0.42, 0.1, 0.5], scale: 0.13 * sizeMult }] : []),
+      ...(extraCount >= 2 ? [{ position: [-0.38, -0.15, 0.48], scale: 0.12 * sizeMult }] : []),
+      ...(extraCount >= 3 ? [{ position: [0.15, 0.5, 0.4], scale: 0.12 * sizeMult }] : []),
+      ...(extraCount >= 4 ? [{ position: [-0.2, -0.48, 0.35], scale: 0.11 * sizeMult }] : []),
+      ...(extraCount >= 5 ? [{ position: [0.55, -0.2, 0.25], scale: 0.11 * sizeMult }] : []),
+      ...(extraCount >= 6 ? [{ position: [-0.5, 0.25, 0.28], scale: 0.1 * sizeMult }] : []),
+    ].map((c) => ({
+      position: [(c.position as number[])[0] * posScale, (c.position as number[])[1] * posScale, (c.position as number[])[2] * posScale],
+      scale: c.scale,
+    }));
+    const burstConfigs = burstMode ? [
+      { position: [0.85, 0.85, 0.2], scale: 0.2 * sizeMult },
+      { position: [-0.85, 0.85, 0.2], scale: 0.19 * sizeMult },
+      { position: [0.85, -0.85, 0.2], scale: 0.19 * sizeMult },
+      { position: [-0.85, -0.85, 0.2], scale: 0.18 * sizeMult },
+      { position: [0.9, 0, 0.3], scale: 0.17 * sizeMult },
+      { position: [-0.9, 0, 0.3], scale: 0.17 * sizeMult },
+      { position: [0, 0.9, 0.1], scale: 0.16 * sizeMult },
+      { position: [0, -0.9, 0.1], scale: 0.16 * sizeMult },
+      { position: [0.75, 0.5, -0.35], scale: 0.15 * sizeMult },
+      { position: [-0.75, 0.5, -0.35], scale: 0.15 * sizeMult },
+      { position: [0.5, -0.75, -0.3], scale: 0.14 * sizeMult },
+      { position: [-0.5, -0.75, -0.3], scale: 0.14 * sizeMult },
+    ].map((c) => ({
+      position: [(c.position as number[])[0] * posScale, (c.position as number[])[1] * posScale, (c.position as number[])[2] * posScale],
+      scale: c.scale,
+    })) : [];
+    const sphereConfigs = [...baseConfigs, ...burstConfigs];
 
     // Dark metallic - ดำเทาเข้ม มีแสงและเงา
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
@@ -233,8 +274,9 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         const newScale = originalScale * (1 + hatchPulse + breathe);
         sphere.scale.set(newScale, newScale, newScale);
 
-        // Formation wave - เคลื่อนตัว radial (chaos: แยกตัวแรง เหมือนแตกออก)
-        const formWave = Math.sin(hatchCycle + phase) * (0.08 + chaosLevel * 0.22);
+        // Formation wave - เคลื่อนตัว radial (burstMode: ดันออกเหมือนอยากออกจาก box)
+        const formWaveBase = Math.sin(hatchCycle + phase) * (0.08 + chaosLevel * 0.22);
+        const formWave = formWaveBase + (burstMode ? 0.28 : 0);
         const radialX = originalPos.x * formWave;
         const radialY = originalPos.y * formWave;
         const radialZ = originalPos.z * formWave;
@@ -261,9 +303,9 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         sphere.rotation.y += rotRamp * (0.8 + Math.cos(timeRef.current * 0.15 + index) * 0.2);
       });
 
-      // Group rotation - chaos: หมุนเร็ว
+      // Group rotation - spinSpeed: หมุนรอบตัวเองเห็น 360°
       if (blobGroup) {
-        const groupRotMult = 1 + chaosLevel * 5;
+        const groupRotMult = (1 + chaosLevel * 5) * spinSpeed;
         const groupRotRamp = (0.00015 + Math.min(timeRef.current * 0.000008, 0.0005)) * groupRotMult;
         blobGroup.rotation.x += groupRotRamp;
         blobGroup.rotation.y += groupRotRamp * 1.5;
@@ -305,7 +347,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       });
       containerRef.current?.removeChild(renderer.domElement);
     };
-  }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, glowColor, chaosLevel]);
+  }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, glowColor, chaosLevel, burstMode, spinSpeed, tightness, extraCount]);
 
   return (
     <div

@@ -46,6 +46,10 @@ const MorphingBlob: React.FC<MorphingBlobProps> = ({
   glowStrength,
   glowColor,
   chaosLevel,
+  burstMode,
+  spinSpeed,
+  tightness,
+  extraSpheres,
   useFallback = false,
   onBlobClick,
 }) => {
@@ -60,8 +64,12 @@ const MorphingBlob: React.FC<MorphingBlobProps> = ({
         glowStrength,
         glowColor,
         chaosLevel,
+        burstMode,
+        spinSpeed,
+        tightness,
+        extraSpheres,
       }),
-    [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, glowColor, chaosLevel]
+    [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, glowColor, chaosLevel, burstMode, spinSpeed, tightness, extraSpheres]
   );
 
   // Determine which component to use
@@ -86,6 +94,10 @@ const MorphingBlob: React.FC<MorphingBlobProps> = ({
         glowStrength={config.glowStrength}
         glowColor={config.glowColor}
         chaosLevel={config.chaosLevel}
+        burstMode={config.burstMode}
+        spinSpeed={config.spinSpeed}
+        tightness={config.tightness}
+        extraSpheres={config.extraSpheres}
       />
     </div>
   );

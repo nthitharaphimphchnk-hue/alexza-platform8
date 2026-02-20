@@ -138,6 +138,11 @@
   body {
     @apply bg-background text-foreground;
     background: linear-gradient(135deg, #050607 0%, #0b0e12 50%, #050607 100%);
+    font-family: 'Geist', system-ui, sans-serif;
+  }
+  /* Brand font - ใช้เหมือนกับ Logo ALEXZA AI */
+  .font-brand {
+    font-family: 'Geist', system-ui, sans-serif;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -201,6 +206,12 @@
     @apply bg-[#0b0e12]/80 border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
+  }
+
+  /* Nav mega menu - Resend-style dropdown */
+  .nav-mega-menu [data-slot="navigation-menu-viewport"] {
+    @apply rounded-xl border-[rgba(255,255,255,0.08)] shadow-xl;
+    background: #0b0e12 !important;
   }
 
   .glow-input:focus {
@@ -283,7 +294,115 @@
       0 6px 16px rgba(0, 0, 0, 0.45) !important;
   }
 
-  /* Code block - แสงเขียววิ่งรอบกรอบ (running light) */
+  /* Gold button - สีทอง */
+  .btn-gold {
+    background: linear-gradient(180deg, #d4a84b 0%, #c4942e 25%, #a67c1f 60%, #8b6919 100%) !important;
+    border: 1px solid rgba(255, 220, 150, 0.35) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 16px rgba(212, 168, 75, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    color: #1a1a1a !important;
+  }
+  .btn-gold:hover {
+    background: linear-gradient(180deg, #e0b85a 0%, #d4a84b 25%, #b88a28 60%, #9a7218 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+      0 0 24px rgba(212, 168, 75, 0.45),
+      0 0 40px rgba(212, 168, 75, 0.2),
+      0 6px 16px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  /* Outline silver glow button - กรอบสีเงินแสง */
+  .btn-outline-silver {
+    background: transparent !important;
+    border: 2px solid rgba(200, 200, 200, 0.5) !important;
+    box-shadow:
+      0 0 12px rgba(255, 255, 255, 0.15),
+      inset 0 0 12px rgba(255, 255, 255, 0.03) !important;
+    color: #e8e8e8 !important;
+  }
+  .btn-outline-silver:hover {
+    border-color: rgba(230, 230, 230, 0.7) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    box-shadow:
+      0 0 20px rgba(255, 255, 255, 0.25),
+      0 0 35px rgba(255, 255, 255, 0.1),
+      inset 0 0 16px rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+  }
+
+  /* Silver bright button - สีเงินแสงสว่าง */
+  .btn-silver-bright {
+    background: linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 25%, #c8c8c8 60%, #b8b8b8 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+      0 0 20px rgba(255, 255, 255, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    color: #1a1a1a !important;
+  }
+  .btn-silver-bright:hover {
+    background: linear-gradient(180deg, #f0f0f0 0%, #e5e5e5 25%, #d5d5d5 60%, #c5c5c5 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 0 28px rgba(255, 255, 255, 0.5),
+      0 0 45px rgba(255, 255, 255, 0.2),
+      0 6px 16px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  /* Black with glow button - สีดำแสง */
+  .btn-black-glow {
+    background: linear-gradient(180deg, #0d0d0d 0%, #080808 40%, #050505 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(255, 255, 255, 0.12),
+      0 0 40px rgba(255, 255, 255, 0.06),
+      0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    color: #e8e8e8 !important;
+  }
+  .btn-black-glow:hover {
+    background: linear-gradient(180deg, #141414 0%, #0d0d0d 40%, #080808 100%) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+      0 0 28px rgba(255, 255, 255, 0.2),
+      0 0 50px rgba(255, 255, 255, 0.1),
+      0 6px 16px rgba(0, 0, 0, 0.5) !important;
+    color: #ffffff !important;
+  }
+
+  /* Gold-black button - สีทองดำ */
+  .btn-gold-dark {
+    background: linear-gradient(180deg, #1a1814 0%, #141210 30%, #0d0c0a 70%, #080706 100%) !important;
+    border: 1px solid rgba(180, 134, 11, 0.45) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(212, 168, 75, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 0 12px rgba(180, 134, 11, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    color: #b8860b !important;
+  }
+  .btn-gold-dark:hover {
+    background: linear-gradient(180deg, #252219 0%, #1a1814 30%, #141210 70%, #0d0c0a 100%) !important;
+    border-color: rgba(212, 168, 75, 0.55) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(212, 168, 75, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(180, 134, 11, 0.3),
+      0 0 35px rgba(180, 134, 11, 0.12),
+      0 6px 16px rgba(0, 0, 0, 0.5) !important;
+    color: #d4a84b !important;
+  }
+
+  /* Code block - แสงขาวเทาวิ่งรอบกรอบ (running light) */
   .code-block-border-glow {
     position: relative;
     padding: 2px;
@@ -303,10 +422,10 @@
       from 0deg,
       transparent 0deg,
       transparent 300deg,
-      rgba(34, 197, 94, 0.25) 320deg,
-      #22c55e 332deg,
-      #4ade80 345deg,
-      #22c55e 358deg,
+      rgba(255, 255, 255, 0.15) 320deg,
+      rgba(230, 230, 230, 0.9) 332deg,
+      rgba(255, 255, 255, 1) 345deg,
+      rgba(230, 230, 230, 0.9) 358deg,
       transparent 360deg
     );
     animation: border-glow-spin 4s linear infinite;
@@ -319,6 +438,56 @@
   }
   @keyframes border-glow-spin {
     to { transform: rotate(360deg); }
+  }
+
+  /* Code block - พื้นหลังคาร์บอนดำทึบ */
+  .code-block-carbon {
+    background: 
+      linear-gradient(135deg, #0a0a0a 0%, #080808 40%, #050505 100%) !important;
+    position: relative;
+    overflow: hidden;
+  }
+  .code-block-carbon > * {
+    position: relative;
+    z-index: 1;
+  }
+  .code-block-carbon::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 1px,
+        rgba(255, 255, 255, 0.012) 1px,
+        rgba(255, 255, 255, 0.012) 2px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 1px,
+        rgba(255, 255, 255, 0.008) 1px,
+        rgba(255, 255, 255, 0.008) 2px
+      );
+    pointer-events: none;
+  }
+  .code-block-carbon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(
+        ellipse 100% 80% at 50% 0%,
+        rgba(255, 255, 255, 0.02) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse 80% 60% at 100% 100%,
+        rgba(0, 0, 0, 0.4) 0%,
+        transparent 50%
+      );
+    pointer-events: none;
   }
 
   /* Code block - โค๊ดวิ่งช้าๆ มีชีวิต */
@@ -382,24 +551,25 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 1.5rem;
-    min-height: 180px;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    min-height: 100px;
   }
   .integrate-sphere-panel {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 24px 32px;
+    padding: 10px 16px;
     background: 
       linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 40%, transparent 100%),
       linear-gradient(145deg, #0d0d10 0%, #060608 100%);
-    border-radius: 24px;
+    border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.02);
     box-shadow:
       inset 2px 2px 8px rgba(255, 255, 255, 0.03),
       inset -1px -1px 4px rgba(0, 0, 0, 0.2),
-      0 0 80px rgba(34, 197, 94, 0.2),
-      0 20px 45px rgba(0, 0, 0, 0.5);
+      0 0 60px rgba(34, 197, 94, 0.2),
+      0 16px 36px rgba(0, 0, 0, 0.5);
     position: relative;
     overflow: visible;
   }
@@ -407,7 +577,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 24px;
+    border-radius: 18px;
     background: repeating-linear-gradient(
       -45deg,
       transparent 0px,
@@ -444,6 +614,44 @@
 
   .dark-glass-strong {
     @apply bg-[#0b0e12]/70 backdrop-blur-xl border border-[rgba(255,255,255,0.08)];
+  }
+
+  /* Showcase cards - Resend-style silver frame + แสงเงาเข้ม */
+  .showcase-card {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 4px 6px rgba(0, 0, 0, 0.4),
+      0 10px 25px rgba(0, 0, 0, 0.5),
+      0 20px 50px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  .showcase-card:hover {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 0 20px rgba(255, 255, 255, 0.04),
+      0 6px 12px rgba(0, 0, 0, 0.5),
+      0 16px 35px rgba(0, 0, 0, 0.55),
+      0 30px 60px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Founder name - metallic gradient text */
+  .founder-name-gradient {
+    font-family: 'Geist', system-ui, sans-serif;
+    color: #c0c0c0;
+    background: linear-gradient(135deg, #e8e8e8 0%, #c0c0c0 25%, #a8a8a8 50%, #c0c0c0 75%, #e0e0e0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Companies scroll - ซ่อน scrollbar */
+  .companies-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .companies-scroll::-webkit-scrollbar {
+    display: none;
   }
 
   .card-hover {

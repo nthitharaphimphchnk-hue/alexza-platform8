@@ -1,5 +1,7 @@
 import AppShell from "@/components/app/AppShell";
 import AnimatedCounter from "@/components/app/AnimatedCounter";
+import ApiKeysWidget from "@/components/dashboard/ApiKeysWidget";
+import UsageAnalyticsWidget from "@/components/dashboard/UsageAnalyticsWidget";
 import { Button } from "@/components/ui/button";
 import { Activity, Gauge, Plus, Server, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -76,6 +78,11 @@ export default function Dashboard() {
           })}
         </div>
       )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ApiKeysWidget />
+        <UsageAnalyticsWidget />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <section className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-6 backdrop-blur">

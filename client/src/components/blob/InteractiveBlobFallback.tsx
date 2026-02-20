@@ -11,6 +11,10 @@ interface InteractiveBlobFallbackProps {
   glowStrength?: number;
   glowColor?: string;
   chaosLevel?: number;
+  burstMode?: boolean;
+  spinSpeed?: number;
+  tightness?: number;
+  extraSpheres?: number;
 }
 
 const InteractiveBlobFallback: React.FC<InteractiveBlobFallbackProps> = ({
@@ -22,6 +26,8 @@ const InteractiveBlobFallback: React.FC<InteractiveBlobFallbackProps> = ({
   glowStrength = 1.2,
   glowColor,
   chaosLevel,
+  burstMode,
+  spinSpeed,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });

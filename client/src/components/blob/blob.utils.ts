@@ -13,6 +13,12 @@ export interface BlobConfig {
   enableWebGL: boolean;
   glowColor?: string;
   chaosLevel?: number;
+  burstMode?: boolean;
+  spinSpeed?: number;
+  /** 0-1: ยิ่งน้อย spheres ยิ่งติดกัน (default 1) */
+  tightness?: number;
+  /** จำนวน spheres เพิ่มเติม (default 0) */
+  extraSpheres?: number;
 }
 
 export const DEFAULT_BLOB_CONFIG: BlobConfig = {
@@ -55,7 +61,7 @@ export function isMobileDevice(): boolean {
 export function getOptimalBlobConfig(
   userConfig?: Partial<BlobConfig>
 ): BlobConfig {
-  const config = { ...DEFAULT_BLOB_CONFIG, ...userConfig };
+  const config = { ...DEFAULT_BLOB_CONFIG, ...userConfig } as BlobConfig;
 
   // Reduce quality on mobile for better performance
   if (isMobileDevice()) {
