@@ -52,20 +52,15 @@ export default function FounderSpotlight() {
             `,
           }}
         >
-          {/* Horizontal layout: photo left, text right */}
-          <div className="flex flex-col lg:flex-row items-center lg:items-stretch gap-0">
-            {/* Photo frame - polished chrome metal */}
-            <div className="relative flex-shrink-0 p-8 lg:p-12">
+          {/* Horizontal layout: small photo + name/title inline, quote below */}
+          <div className="flex flex-col p-5 lg:p-6">
+            {/* Photo + name + title - compact inline */}
+            <div className="flex items-center gap-3 mb-4">
               <div
-                className="relative w-56 h-56 lg:w-64 lg:h-64 rounded-full overflow-hidden"
+                className="relative w-10 h-10 lg:w-12 lg:h-12 flex-shrink-0 rounded-full overflow-hidden"
                 style={{
-                  border: '3px solid rgba(220,220,220,0.4)',
-                  boxShadow: `
-                    inset 0 2px 20px rgba(255,255,255,0.15),
-                    inset 0 -2px 15px rgba(0,0,0,0.3),
-                    0 0 30px rgba(255,255,255,0.12),
-                    0 0 60px rgba(255,255,255,0.06)
-                  `,
+                  border: '2px solid rgba(220,220,220,0.35)',
+                  boxShadow: '0 0 12px rgba(255,255,255,0.08)',
                   background: 'linear-gradient(145deg, #2a2a2e 0%, #1a1a1d 50%, #0d0d0f 100%)',
                 }}
               >
@@ -82,29 +77,22 @@ export default function FounderSpotlight() {
                   }}
                 />
               </div>
-            </div>
-
-            {/* Text content */}
-            <div className="flex-1 p-8 lg:p-12 lg:pl-0 flex flex-col justify-center">
-              <div className="space-y-4">
-                {/* Name - metallic silver gradient (chiseled steel) */}
-                <h3 className="text-3xl lg:text-4xl font-bold tracking-wider founder-name-gradient">
+              <div>
+                <h3 className="text-base lg:text-lg font-bold tracking-wider founder-name-gradient">
                   Phatrachat Chaikitthanakul
                 </h3>
-
-                {/* Title */}
-                <p className="font-brand text-lg text-[#b0b0b0] font-medium tracking-wide">
+                <p className="font-brand text-xs text-[#b0b0b0] font-medium tracking-wide mt-0.5">
                   CEO & Founder, ALEXZA AI
                 </p>
-
-                {/* Quote */}
-                <blockquote className="font-brand text-base lg:text-lg text-gray-400 leading-relaxed pt-2">
-                  &ldquo;Our mission is to forge the infrastructure of the future, empowering enterprises with
-                  orchestrated, intelligent AI systems that redefine possibility. We build the metallic backbone of
-                  tomorrow&apos;s intelligence.&rdquo;
-                </blockquote>
               </div>
             </div>
+
+            {/* Quote */}
+            <blockquote className="font-brand text-sm lg:text-base text-gray-400 leading-relaxed">
+              &ldquo;Our mission is to forge the infrastructure of the future, empowering enterprises with
+              orchestrated, intelligent AI systems that redefine possibility. We build the metallic backbone of
+              tomorrow&apos;s intelligence.&rdquo;
+            </blockquote>
           </div>
         </motion.div>
       </div>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Cpu, TrendingUp, MessageSquare, FileText, Eye, BarChart3, Shield, Sparkles, Menu, X, Bell, Settings, Plus, MoreHorizontal, AlertCircle, Network, GitBranch, Gauge, FlaskConical, Webhook, Send, Mail } from "lucide-react";
+import { ArrowRight, Zap, Cpu, TrendingUp, MessageSquare, FileText, Eye, BarChart3, Shield, Sparkles, Menu, X, Bell, Settings, Plus, MoreHorizontal, AlertCircle, Network, GitBranch, Gauge, FlaskConical, Webhook, Send, Mail, MapPin, Github, Linkedin, Youtube } from "lucide-react";
 import { useState, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -113,7 +113,7 @@ export default function Home() {
             variants={itemVariants}
           >
             <div className="space-y-4">
-              <h1 className="font-brand text-5xl md:text-6xl font-bold text-white leading-tight">
+              <h1 className="hero-title-gradient font-brand text-5xl md:text-6xl font-extrabold md:font-black leading-tight tracking-tight">
                 ALEXZA AI — Solution Orchestration Platform
               </h1>
               <p className="text-xl text-gray-300">
@@ -157,12 +157,21 @@ export default function Home() {
             viewport={{ once: true, margin: "-80px" }}
           >
             {[
-              { icon: Network, title: "Multi-LLM Routing", desc: "Seamlessly switch between OpenAI, Anthropic, and local models with intelligent routing logic.", color: "purple" as const },
-              { icon: GitBranch, title: "Visual Flow Builder", desc: "Design complex AI agent workflows with our intuitive drag-and-drop interface.", color: "gold" as const },
-              { icon: Gauge, title: "Real-time Optimization", desc: "Monitor performance, track costs, and optimize latency automatically.", color: "green" as const },
+              { icon: Network, title: "Multi-LLM Routing", desc: "Seamlessly switch between OpenAI, Anthropic, and local models with intelligent routing logic.", color: "mono" as const },
+              { icon: GitBranch, title: "Visual Flow Builder", desc: "Design complex AI agent workflows with our intuitive drag-and-drop interface.", color: "mono" as const },
+              { icon: Gauge, title: "Real-time Optimization", desc: "Monitor performance, track costs, and optimize latency automatically.", color: "mono" as const },
             ].map((item, i) => {
               const Icon = item.icon;
               const colorMap = {
+                mono: {
+                  border: "hover:border-[rgba(255,255,255,0.4)]",
+                  shadow: "hover:shadow-[0_0_30px_rgba(255,255,255,0.1),0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                  iconBorder: "border-[rgba(255,255,255,0.25)]",
+                  iconBg: "bg-[#1a1d22]",
+                  iconBgHover: "group-hover:bg-[#252830] group-hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]",
+                  iconGlow: "",
+                  iconColor: "text-[#c0c0c0]",
+                },
                 purple: {
                   border: "hover:border-[rgba(109,40,217,0.55)]",
                   shadow: "hover:shadow-[0_0_30px_rgba(109,40,217,0.25)]",
@@ -195,7 +204,7 @@ export default function Home() {
               return (
                 <motion.div
                   key={i}
-                  className={`group p-6 rounded-xl bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.1)] transition-all duration-300 ${c.border} ${c.shadow}`}
+                  className={`group p-6 rounded-xl bg-[#07090b] border border-[rgba(255,255,255,0.1)] transition-all duration-300 ${c.border} ${c.shadow} shadow-[0_4px_20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)]`}
                   variants={scrollFadeInVariants}
                 >
                   <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 border ${c.iconBorder} ${c.iconBg} ${c.iconBgHover} ${c.iconGlow} transition-all`}>
@@ -647,7 +656,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Footer - Resend-style sharp border */}
+      {/* Footer - Resend-style with contact info & link columns */}
       <motion.footer 
         className="border-t-2 border-[rgba(255,255,255,0.15)] py-12 px-4 sm:px-6 lg:px-8"
         initial={{ opacity: 0 }}
@@ -656,42 +665,94 @@ export default function Home() {
         viewport={{ once: true }}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Features</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Pricing</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Security</a></li>
-              </ul>
+          <div className="grid lg:grid-cols-[1fr_2fr] gap-12 mb-10">
+            {/* Left: Address, backing badge, social icons, status */}
+            <div className="space-y-5">
+              <p className="text-gray-400 text-sm leading-relaxed flex items-start gap-2">
+                <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-500" />
+                <span>2261 Market Street #5039, San Francisco, CA 94114</span>
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1d22] border border-[rgba(255,255,255,0.1)]">
+                <span className="text-xs font-medium text-gray-400">Backed by</span>
+                <span className="text-sm font-bold text-[#c0c0c0]">Y Combinator</span>
+              </div>
+              <div className="flex gap-2">
+                {[
+                  { Icon: X, href: '#', label: 'X' },
+                  { Icon: Github, href: '#', label: 'GitHub' },
+                  { Icon: Linkedin, href: '#', label: 'LinkedIn' },
+                  { Icon: Youtube, href: '#', label: 'YouTube' },
+                ].map(({ Icon, href, label }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    aria-label={label}
+                    className="w-9 h-9 rounded-full border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-gray-400 hover:text-white hover:border-[rgba(255,255,255,0.3)] transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm text-gray-400">All systems operational</span>
+              </a>
             </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">About</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Privacy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Terms</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Connect</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">Twitter</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm">GitHub</a></li>
-              </ul>
+
+            {/* Right: Link columns */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-sm">Features</h4>
+                <ul className="space-y-2">
+                  {['API', 'Flow Builder', 'Webhooks', 'Analytics', 'Integrations'].map((link) => (
+                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-sm">Resources</h4>
+                <ul className="space-y-2">
+                  {['Changelog', 'Pricing', 'Security', 'Docs', 'Status'].map((link) => (
+                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-sm">Company</h4>
+                <ul className="space-y-2">
+                  {['About', 'Blog', 'Careers', 'Contact'].map((link) => (
+                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-sm">Help</h4>
+                <ul className="space-y-2">
+                  {['Contact', 'Support', 'Status', 'Knowledge Base'].map((link) => (
+                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold mb-4 text-sm">Legal</h4>
+                <ul className="space-y-2">
+                  {['Privacy', 'Terms'].map((link) => (
+                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
           
-          <div className="border-t-2 border-[rgba(255,255,255,0.12)] pt-8 flex justify-between items-center text-sm text-gray-400">
+          <div className="border-t-2 border-[rgba(255,255,255,0.12)] pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
             <p>© 2026 ALEXZA AI. All rights reserved.</p>
-            <p>All systems operational</p>
+            <p className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500" />
+              All systems operational
+            </p>
           </div>
         </div>
       </motion.footer>
