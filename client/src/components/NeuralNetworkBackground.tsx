@@ -10,9 +10,10 @@ interface Node {
   connections: number;
 }
 
-const NODE_COUNT = 140;
+// Reduced for performance - fewer nodes = fewer edges & calculations
+const NODE_COUNT = 50;
 const CONNECT_DISTANCE = 220;
-const LINE_GLOW = 3;
+const LINE_GLOW = 1;
 
 export default function NeuralNetworkBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,7 +73,7 @@ export default function NeuralNetworkBackground() {
         ctx.beginPath();
         ctx.moveTo(band.xBase, 0);
 
-        for (let y = 0; y <= h + 100; y += 5) {
+        for (let y = 0; y <= h + 100; y += 12) {
           const wave = Math.sin(y * 0.008 + time * 0.0005) * 65;
           const wave2 = Math.sin(y * 0.004 + time * 0.0003) * 40;
           const swirl = Math.sin(y * 0.02 + time * 0.0008) * 12;
@@ -89,6 +90,10 @@ export default function NeuralNetworkBackground() {
     };
 
     const draw = (time: number) => {
+      if (document.hidden) {
+        animationId = requestAnimationFrame(draw);
+        return;
+      }
       const w = canvas.width;
       const h = canvas.height;
 
@@ -157,7 +162,7 @@ export default function NeuralNetworkBackground() {
         const brightness = Math.min(0.35 + node.connections * 0.1, 0.95);
         const radius = 3 + node.connections * 0.6;
 
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 2;
         ctx.shadowColor = `rgba(240,248,255,${brightness})`;
         const gradient = ctx.createRadialGradient(
           node.x, node.y, 0,
@@ -196,7 +201,7 @@ export default function NeuralNetworkBackground() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 w-full h-full -z-10 pointer-events-none"
-      style={{ background: 'transparent' }}
+      style={{ background: 'transparent', contain: 'strict' }}
     />
   );
 }

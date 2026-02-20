@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 interface InteractiveBlobProps {
@@ -28,7 +28,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   const spheresRef = useRef<THREE.Mesh[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
   const timeRef = useRef(0);
-  const [isHovering, setIsHovering] = useState(false);
+  const isHoveringRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -54,17 +54,17 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       precision: 'highp',
     });
     renderer.setSize(size, size);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0); // Transparent background
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Environment - flat smooth layers (มิติ พื้นเรียบ หลายชั้น, no room)
+    // Environment - dark gradient for metallic reflection
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const envScene = new THREE.Scene();
-    const layerColors = [0x303038, 0x252530, 0x1a1a22, 0x101015];
+    const layerColors = [0x353540, 0x282830, 0x1a1a22, 0x0f0f14];
     layerColors.forEach((color, i) => {
       const r = 60 + i * 15;
       const sphere = new THREE.Mesh(
@@ -112,21 +112,21 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       { position: [0, 0.2, -0.62], scale: 0.14 * sizeMult },
     ];
 
-    // Black-grey metal (ดำเทา)
+    // Dark metallic - ดำเทาเข้ม มีแสงและเงา
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x505058,
+      color: 0x1a1a22,
       metalness: 1,
-      roughness: 0.02,
+      roughness: 0.04,
       clearcoat: 1,
-      clearcoatRoughness: 0.02,
-      envMapIntensity: 2.8,
+      clearcoatRoughness: 0.03,
+      envMapIntensity: 4,
     });
 
-    // Create spheres (all use same chrome material)
+    // Shared geometry for all spheres (reduces memory)
+    const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
     sphereConfigs.forEach((config) => {
-      const geometry = new THREE.SphereGeometry(1, 64, 64);
       const material = chromeMaterial.clone();
-      const sphere = new THREE.Mesh(geometry, material);
+      const sphere = new THREE.Mesh(sphereGeometry, material);
       
       sphere.position.set(...(config.position as [number, number, number]));
       sphere.scale.set(config.scale, config.scale, config.scale);
@@ -141,15 +141,15 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       spheresRef.current.push(sphere);
     });
 
-    // แสงเงาด้านเดียว 4 มิติ (single key light, dramatic depth)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
+    // Lighting - แสงและเงาชัด (key + fill + rim)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.06);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 3.5);
-    keyLight.position.set(5, 6, 5);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 4);
+    keyLight.position.set(5, 7, 5);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 2048;
-    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
     keyLight.shadow.camera.near = 0.5;
     keyLight.shadow.camera.far = 20;
     keyLight.shadow.camera.left = -6;
@@ -158,6 +158,14 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     keyLight.shadow.camera.bottom = -6;
     keyLight.shadow.bias = -0.0001;
     scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    fillLight.position.set(-4, 2, 3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    rimLight.position.set(-2, 3, -4);
+    scene.add(rimLight);
 
     // Mouse tracking
     const handleMouseMove = (e: MouseEvent) => {
@@ -168,9 +176,9 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       }
     };
 
-    const handleMouseEnter = () => setIsHovering(true);
+    const handleMouseEnter = () => { isHoveringRef.current = true; };
     const handleMouseLeave = () => {
-      setIsHovering(false);
+      isHoveringRef.current = false;
       mouseRef.current.targetX = 0;
       mouseRef.current.targetY = 0;
     };
@@ -182,46 +190,63 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
+      if (document.hidden) return;
       timeRef.current += 0.016; // ~60fps
 
       // Smooth mouse tracking
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.1;
       mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.1;
 
-      // Animate each sphere
+      // Hatching / incubating cycle - ช่วงฟักไข่ AI (4-5 วินาทีต่อรอบ)
+      const hatchCycle = timeRef.current * 0.25;
+      const hatchPulse = Math.sin(hatchCycle) * 0.12 + Math.sin(hatchCycle * 2) * 0.04;
+
+      // Animate each sphere - AI hatching movement
       spheresRef.current.forEach((sphere, index) => {
         const originalPos = (sphere as any).originalPosition;
         const originalScale = (sphere as any).originalScale;
-        
-        // Breathing animation (slower, flowing)
-        const breathe = Math.sin(timeRef.current * idleSpeed * 0.6) * 0.06;
-        const newScale = originalScale * (1 + breathe);
+        const phase = index * 0.4;
+
+        // Hatching breathing - ขยายหดเหมือนกำลังฟัก (heartbeat + slow pulse)
+        const breathe = Math.sin(timeRef.current * idleSpeed * 0.5 + phase) * 0.04;
+        const newScale = originalScale * (1 + hatchPulse + breathe);
         sphere.scale.set(newScale, newScale, newScale);
 
-        // Floating animation (slower, wave-like flow)
-        const floatY = Math.sin(timeRef.current * 0.18 + index) * 0.14;
-        const floatX = Math.cos(timeRef.current * 0.15 + index * 0.7) * 0.1;
-        const floatZ = Math.sin(timeRef.current * 0.12 + index * 0.5) * 0.1;
-        sphere.position.y = originalPos.y + floatY;
-        sphere.position.x = originalPos.x + floatX;
-        sphere.position.z = originalPos.z + floatZ;
+        // Formation wave - เคลื่อนตัวเหมือนกำลังก่อตัว (radial pulse)
+        const formWave = Math.sin(hatchCycle + phase) * 0.08;
+        const radialX = originalPos.x * formWave;
+        const radialY = originalPos.y * formWave;
+        const radialZ = originalPos.z * formWave;
 
-        // Mouse interaction - subtle attraction (stronger for more movement)
-        const mouseInfluence = isHovering ? hoverStrength * 0.25 : 0;
-        sphere.position.x += (mouseRef.current.x * mouseInfluence - (sphere.position.x - originalPos.x - floatX) * 0.03);
-        sphere.position.z += (mouseRef.current.y * mouseInfluence - (sphere.position.z - originalPos.z - floatZ) * 0.03);
+        // Floating animation - ลอยนุ่มนวล
+        const floatY = Math.sin(timeRef.current * 0.2 + index) * 0.12;
+        const floatX = Math.cos(timeRef.current * 0.16 + index * 0.7) * 0.09;
+        const floatZ = Math.sin(timeRef.current * 0.14 + index * 0.5) * 0.09;
 
-        // Gentle rotation (slowly increases over time)
+        sphere.position.y = originalPos.y + floatY + radialY;
+        sphere.position.x = originalPos.x + floatX + radialX;
+        sphere.position.z = originalPos.z + floatZ + radialZ;
+
+        // Mouse interaction
+        const mouseInfluence = isHoveringRef.current ? hoverStrength * 0.25 : 0;
+        sphere.position.x += (mouseRef.current.x * mouseInfluence - (sphere.position.x - originalPos.x - floatX - radialX) * 0.03);
+        sphere.position.z += (mouseRef.current.y * mouseInfluence - (sphere.position.z - originalPos.z - floatZ - radialZ) * 0.03);
+
+        // Gentle rotation - หมุนเหมือนเดิม
         const rotRamp = 0.0003 + Math.min(timeRef.current * 0.000015, 0.0008);
         sphere.rotation.x += rotRamp * (0.4 + Math.sin(timeRef.current * 0.2 + index) * 0.2);
         sphere.rotation.y += rotRamp * (0.8 + Math.cos(timeRef.current * 0.15 + index) * 0.2);
       });
 
-      // Group rotation - slowly increases over time (องศาเพิ่มขึ้นช้าๆ)
+      // Group rotation - หมุนเหมือนเดิม
       if (blobGroup) {
         const groupRotRamp = 0.00015 + Math.min(timeRef.current * 0.000008, 0.0005);
         blobGroup.rotation.x += groupRotRamp;
         blobGroup.rotation.y += groupRotRamp * 1.5;
+
+        // Whole blob hatching pulse - ทั้งก้อนขยายหดเหมือนไข่ฟัก
+        const wholePulse = Math.sin(hatchCycle * 0.5) * 0.02;
+        blobGroup.scale.set(1 + wholePulse, 1 + wholePulse, 1 + wholePulse);
       }
 
       renderer.render(scene, camera);
@@ -249,14 +274,14 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       containerRef.current?.removeEventListener('mouseleave', handleMouseLeave);
       envMap.dispose();
       chromeMaterial.dispose();
+      sphereGeometry.dispose();
       renderer.dispose();
       spheresRef.current.forEach((sphere) => {
-        sphere.geometry.dispose();
         (sphere.material as THREE.Material).dispose();
       });
       containerRef.current?.removeChild(renderer.domElement);
     };
-  }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, isHovering]);
+  }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength]);
 
   return (
     <div

@@ -25,7 +25,7 @@ import Settings from "./pages/Settings";
 import AdminTools from "./pages/AdminTools";
 import { useEffect } from "react";
 import { logApiBaseUrlOnce } from "./lib/api";
-import NeuralNetworkBackground from "./components/NeuralNetworkBackground";
+import CosmicBackground from "./components/CosmicBackground";
 
 function ApiKeysRoute() {
   return <ApiKeys />;
@@ -103,7 +103,7 @@ function App() {
             } as any}
             />
             <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607]">
-              <NeuralNetworkBackground />
+              <CosmicBackground />
               <div className="relative z-10">
                 <Router />
               </div>

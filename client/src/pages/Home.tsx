@@ -18,8 +18,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen text-foreground overflow-hidden" ref={containerRef}>
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-[#050607]/80 backdrop-blur-md border-b border-[rgba(255,255,255,0.06)]">
+      {/* Navigation - Resend-style sharp border */}
+      <nav className="fixed top-0 w-full z-50 bg-[#050607]/95 backdrop-blur-md border-b-2 border-[rgba(255,255,255,0.15)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <Logo size="navbar" />
@@ -35,8 +35,8 @@ export default function Home() {
 
           <div className="hidden md:flex items-center gap-4">
             <LanguageSwitcher />
-            <Button variant="outline" className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12]" onClick={() => window.location.href = "/login"}>{t('navigation.signIn')}</Button>
-            <Button className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black" onClick={() => window.location.href = "/signup"}>{t('navigation.getStarted')}</Button>
+            <Button variant="outline" className="border-2 border-[rgba(255,255,255,0.25)] text-white hover:bg-[#0b0e12] rounded-lg" onClick={() => window.location.href = "/login"}>{t('navigation.signIn')}</Button>
+            <Button className="btn-metallic rounded-lg" onClick={() => window.location.href = "/signup"}>{t('navigation.getStarted')}</Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -50,14 +50,14 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#0b0e12] border-t border-[rgba(255,255,255,0.06)] p-4 space-y-4">
+          <div className="md:hidden bg-[#0b0e12] border-t-2 border-[rgba(255,255,255,0.15)] p-4 space-y-4">
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Product</a>
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Docs</a>
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Pricing</a>
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Company</a>
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1 border-[rgba(255,255,255,0.06)] text-white">Sign In</Button>
-              <Button className="flex-1 bg-[#c0c0c0] text-black">Get Started</Button>
+              <Button className="flex-1 btn-metallic">Get Started</Button>
             </div>
           </div>
         )}
@@ -115,12 +115,12 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-white h-12 px-8 text-base font-semibold w-full sm:w-auto">
+                <Button className="btn-metallic h-12 px-8 text-base font-semibold w-full sm:w-auto rounded-lg">
                   Get Started
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12] h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center">
+                <Button variant="outline" className="bg-transparent border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center rounded-lg">
                   View Docs <ArrowRight size={18} />
                 </Button>
               </motion.div>
@@ -140,15 +140,22 @@ export default function Home() {
         </motion.div>
 
         <div className="max-w-7xl mx-auto">
-          <motion.h2 
-            className="text-4xl font-bold text-white text-center mb-16"
+          {/* Resend-style section header */}
+          <motion.div 
+            className="text-center mb-16"
             variants={scrollFadeInVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            Powerful Platform, Intuitive Interface
-          </motion.h2>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Powerful Platform, Intuitive Interface
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+              A modern platform that makes it easy to build, orchestrate, and optimize AI systems. 
+              Everything you need — one that <em className="text-gray-300">just works</em>.
+            </p>
+          </motion.div>
 
           {/* Showcase Grid */}
           <motion.div 
@@ -158,15 +165,15 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            {/* Dashboard Preview */}
+            {/* Dashboard Preview - Resend-style sharp box */}
             <motion.div 
-              className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[#c0c0c0]/25 overflow-hidden neon-glow"
+              className="p-6 rounded-xl bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.18)] overflow-hidden hover:border-[rgba(255,255,255,0.25)] transition-colors"
               variants={scrollSlideInLeftVariants}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
             >
-              <div className="bg-[#050607] rounded-lg overflow-hidden border border-[rgba(255,255,255,0.06)]">
+              <div className="bg-[#050607] rounded-lg overflow-hidden border-2 border-[rgba(255,255,255,0.12)]">
                 {/* Dashboard Header */}
-                <div className="bg-[#0b0e12] border-b border-[rgba(255,255,255,0.06)] px-6 py-4 flex justify-between items-center">
+                <div className="bg-[#0b0e12] border-b-2 border-[rgba(255,255,255,0.12)] px-6 py-4 flex justify-between items-center">
                   <h3 className="text-white font-semibold">Dashboard</h3>
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -184,11 +191,11 @@ export default function Home() {
                   <p className="text-sm text-gray-400">Here you can track your AI systems and manage your workflows</p>
                   
                   <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="p-4 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)]">
+                    <div className="p-4 rounded-lg bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.12)]">
                       <p className="text-xs text-gray-400 mb-2">Credits Remaining</p>
                       <p className="text-2xl font-bold text-white">270,750</p>
                     </div>
-                    <div className="p-4 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)]">
+                    <div className="p-4 rounded-lg bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.12)]">
                       <p className="text-xs text-gray-400 mb-2">Quick actions</p>
                       <p className="text-xs text-blue-400">+ Add Credits</p>
                     </div>
@@ -197,13 +204,13 @@ export default function Home() {
                   <div className="mt-6 space-y-2">
                     <p className="text-xs text-gray-400">Recent Projects list</p>
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center text-xs py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)]">
                         <span className="text-gray-300">Deployment</span>
-                        <span className="text-green-400">Running</span>
+                        <span className="px-2 py-0.5 rounded text-green-400 border border-green-500/50 bg-green-500/10">Running</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center text-xs py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)]">
                         <span className="text-gray-300">Analytics</span>
-                        <span className="text-yellow-400">Paused</span>
+                        <span className="px-2 py-0.5 rounded text-yellow-400 border border-yellow-500/50 bg-yellow-500/10">Paused</span>
                       </div>
                     </div>
                   </div>
@@ -213,13 +220,13 @@ export default function Home() {
 
             {/* Chat Builder Preview */}
             <motion.div 
-              className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[#c0c0c0]/25 overflow-hidden neon-glow"
+              className="p-6 rounded-xl bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.18)] overflow-hidden hover:border-[rgba(255,255,255,0.25)] transition-colors"
               variants={scrollSlideInRightVariants}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
             >
-              <div className="bg-[#050607] rounded-lg overflow-hidden border border-[rgba(255,255,255,0.06)]">
+              <div className="bg-[#050607] rounded-lg overflow-hidden border-2 border-[rgba(255,255,255,0.12)]">
                 {/* Chat Header */}
-                <div className="bg-[#0b0e12] border-b border-[rgba(255,255,255,0.06)] px-6 py-4 flex justify-between items-center">
+                <div className="bg-[#0b0e12] border-b-2 border-[rgba(255,255,255,0.12)] px-6 py-4 flex justify-between items-center">
                   <h3 className="text-white font-semibold">Chat Builder</h3>
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -232,12 +239,12 @@ export default function Home() {
                 <div className="p-6 space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-start">
-                      <div className="max-w-xs px-4 py-2 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] text-xs text-gray-300">
+                      <div className="max-w-xs px-4 py-2 rounded-lg bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.12)] text-xs text-gray-300">
                         Hello! I'm your AI assistant
                       </div>
                     </div>
                     <div className="flex justify-end">
-                      <div className="max-w-xs px-4 py-2 rounded-lg bg-[#c0c0c0] text-xs text-white">
+                      <div className="max-w-xs px-4 py-2 rounded-lg bg-[#1a1d22] border-2 border-[#c0c0c0]/50 text-xs text-white">
                         I want to create a chatbot
                       </div>
                     </div>
@@ -246,11 +253,11 @@ export default function Home() {
                   <div className="mt-6 space-y-2">
                     <p className="text-xs text-gray-400">Generated API Spec</p>
                     <div className="space-y-2">
-                      <div className="p-2 rounded bg-[#c0c0c0]/20 border border-[#c0c0c0] text-xs">
+                      <div className="p-3 rounded-lg bg-[#0b0e12] border-2 border-[#c0c0c0]/50 text-xs">
                         <span className="text-[#c0c0c0] font-semibold">POST</span>
                         <span className="text-gray-300 ml-2">/api/chat</span>
                       </div>
-                      <div className="p-2 rounded bg-[#a8a8a8]/20 border border-[#a8a8a8] text-xs">
+                      <div className="p-3 rounded-lg bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.15)] text-xs">
                         <span className="text-[#a8a8a8] font-semibold">GET</span>
                         <span className="text-gray-300 ml-2">/api/history</span>
                       </div>
@@ -262,13 +269,13 @@ export default function Home() {
 
             {/* Credits Preview */}
             <motion.div 
-              className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[#c0c0c0]/25 overflow-hidden neon-glow"
+              className="p-6 rounded-xl bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.18)] overflow-hidden hover:border-[rgba(255,255,255,0.25)] transition-colors"
               variants={scrollScaleInVariants}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
             >
-              <div className="bg-[#050607] rounded-lg overflow-hidden border border-[rgba(255,255,255,0.06)]">
+              <div className="bg-[#050607] rounded-lg overflow-hidden border-2 border-[rgba(255,255,255,0.12)]">
                 {/* Credits Header */}
-                <div className="bg-[#0b0e12] border-b border-[rgba(255,255,255,0.06)] px-6 py-4 flex justify-between items-center">
+                <div className="bg-[#0b0e12] border-b-2 border-[rgba(255,255,255,0.12)] px-6 py-4 flex justify-between items-center">
                   <h3 className="text-white font-semibold">Credits usage</h3>
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -286,9 +293,9 @@ export default function Home() {
 
                   <div className="mt-6 space-y-2">
                     <p className="text-xs text-gray-400">Free Trial Ending</p>
-                    <div className="p-3 rounded-lg bg-[#a8a8a8]/20 border border-[#a8a8a8]">
+                    <div className="p-3 rounded-lg bg-[#1a1d22] border-2 border-white/20">
                       <p className="text-xs text-white">Your free trial ends in 7 days</p>
-                      <button className="mt-2 text-xs px-3 py-1 rounded bg-[#a8a8a8] text-white hover:bg-[#7c3aed] transition">
+                      <button className="mt-2 text-xs px-3 py-1.5 rounded-lg border-2 border-[#c0c0c0] bg-[#c0c0c0]/20 text-[#c0c0c0] hover:bg-[#c0c0c0]/30 transition">
                         Upgrade Now
                       </button>
                     </div>
@@ -296,12 +303,12 @@ export default function Home() {
 
                   <div className="mt-6">
                     <p className="text-xs text-gray-400 mb-2">Credits Transactions Table</p>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between text-gray-300">
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-center py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)] text-gray-300">
                         <span>Feb 10, 2026</span>
                         <span className="text-red-400">-15,234</span>
                       </div>
-                      <div className="flex justify-between text-gray-300">
+                      <div className="flex justify-between items-center py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)] text-gray-300">
                         <span>Feb 09, 2026</span>
                         <span className="text-red-400">-12,456</span>
                       </div>
@@ -313,20 +320,20 @@ export default function Home() {
 
             {/* Features Overview */}
             <motion.div 
-              className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[#c0c0c0]/25 overflow-hidden neon-glow"
+              className="p-6 rounded-xl bg-[#0b0e12] border-2 border-[rgba(255,255,255,0.18)] overflow-hidden hover:border-[rgba(255,255,255,0.25)] transition-colors"
               variants={scrollFadeInVariants}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
             >
               <div className="space-y-6">
                 <h3 className="text-xl font-bold text-white">How It Works</h3>
                 
                 <div className="space-y-4">
                   <motion.div 
-                    className="flex items-start gap-4"
+                    className="flex items-start gap-4 p-3 rounded-lg border-2 border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.15)] transition-colors"
                     variants={staggerItemVariants}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-[#c0c0c0] flex items-center justify-center flex-shrink-0">
-                      <MessageSquare className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg border-2 border-[#c0c0c0]/50 bg-[#c0c0c0]/10 flex items-center justify-center flex-shrink-0">
+                      <MessageSquare className="w-5 h-5 text-[#c0c0c0]" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold text-sm">Design Your Flow</h4>
@@ -335,11 +342,11 @@ export default function Home() {
                   </motion.div>
 
                   <motion.div 
-                    className="flex items-start gap-4"
+                    className="flex items-start gap-4 p-3 rounded-lg border-2 border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.15)] transition-colors"
                     variants={staggerItemVariants}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-[#a8a8a8] flex items-center justify-center flex-shrink-0">
-                      <Zap className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg border-2 border-[rgba(255,255,255,0.2)] bg-[#1a1d22] flex items-center justify-center flex-shrink-0">
+                      <Zap className="w-5 h-5 text-gray-300" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold text-sm">Deploy Instantly</h4>
@@ -348,11 +355,11 @@ export default function Home() {
                   </motion.div>
 
                   <motion.div 
-                    className="flex items-start gap-4"
+                    className="flex items-start gap-4 p-3 rounded-lg border-2 border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.15)] transition-colors"
                     variants={staggerItemVariants}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-[#c0c0c0] flex items-center justify-center flex-shrink-0">
-                      <BarChart3 className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg border-2 border-[#c0c0c0]/50 bg-[#c0c0c0]/10 flex items-center justify-center flex-shrink-0">
+                      <BarChart3 className="w-5 h-5 text-[#c0c0c0]" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold text-sm">Monitor & Scale</h4>
@@ -361,13 +368,13 @@ export default function Home() {
                   </motion.div>
                 </div>
 
-                <div className="pt-4 border-t border-[rgba(255,255,255,0.06)]">
+                <div className="pt-4 border-t-2 border-[rgba(255,255,255,0.12)]">
                   <p className="text-xs text-gray-400 mb-3">Use Cases</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="text-xs text-gray-300">✓ Intelligent Chatbots</div>
-                    <div className="text-xs text-gray-300">✓ Document Processing</div>
-                    <div className="text-xs text-gray-300">✓ Computer Vision</div>
-                    <div className="text-xs text-gray-300">✓ Predictive Analytics</div>
+                    <div className="text-xs text-gray-300 py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)]">✓ Intelligent Chatbots</div>
+                    <div className="text-xs text-gray-300 py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)]">✓ Document Processing</div>
+                    <div className="text-xs text-gray-300 py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)]">✓ Computer Vision</div>
+                    <div className="text-xs text-gray-300 py-2 px-3 rounded-md border border-[rgba(255,255,255,0.08)]">✓ Predictive Analytics</div>
                   </div>
                 </div>
               </div>
@@ -376,10 +383,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-[#c0c0c0]/5 to-transparent">
+      {/* CTA Section - Resend-style box */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="max-w-4xl mx-auto text-center"
+          className="max-w-4xl mx-auto text-center p-12 rounded-xl border-2 border-[rgba(255,255,255,0.18)] bg-[#0b0e12]"
           variants={scrollFadeInVariants}
           initial="hidden"
           whileInView="visible"
@@ -390,12 +397,12 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-white h-12 px-8 text-base font-semibold">
+              <Button className="btn-metallic h-12 px-8 text-base font-semibold rounded-lg">
                 Get Started Free
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button variant="outline" className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12] h-12 px-8 text-base font-semibold">
+              <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold rounded-lg">
                 View Documentation
               </Button>
             </motion.div>
@@ -403,9 +410,9 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - Resend-style sharp border */}
       <motion.footer 
-        className="border-t border-[rgba(255,255,255,0.06)] py-12 px-4 sm:px-6 lg:px-8"
+        className="border-t-2 border-[rgba(255,255,255,0.15)] py-12 px-4 sm:px-6 lg:px-8"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -445,7 +452,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="border-t border-[rgba(255,255,255,0.06)] pt-8 flex justify-between items-center text-sm text-gray-400">
+          <div className="border-t-2 border-[rgba(255,255,255,0.12)] pt-8 flex justify-between items-center text-sm text-gray-400">
             <p>© 2026 ALEXZA AI. All rights reserved.</p>
             <p>All systems operational</p>
           </div>
