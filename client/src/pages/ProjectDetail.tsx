@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ApiKeys from "@/pages/ApiKeys";
@@ -27,6 +28,7 @@ interface ProjectDetailData {
 }
 
 export default function ProjectDetail() {
+  const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const [project, setProject] = useState<ProjectDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function ProjectDetail() {
   const [routingModeSaving, setRoutingModeSaving] = useState(false);
 
   const projectId = useMemo(() => {
-    const match = location.match(/^\/app\/projects\/([^/]+)(?:\/|$)/);
+    const match = location.match(/^\/app\/projects\/([^/]+)$/);
     return match?.[1] ? decodeURIComponent(match[1]) : "";
   }, [location]);
 
@@ -331,11 +333,11 @@ export default function ProjectDetail() {
               className="border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.06)]"
             >
               <ArrowLeft size={16} className="mr-2" />
-              Back
+              {t("projectDetail.back")}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-white">{project?.name || "Project Detail"}</h1>
-              <p className="text-gray-400 mt-1">{project?.description || "Loading project..."}</p>
+              <h1 className="text-3xl font-bold text-white">{project?.name || t("projectDetail.projectDetail")}</h1>
+              <p className="text-gray-400 mt-1">{project?.description || t("projectDetail.loadingProject")}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -348,7 +350,7 @@ export default function ProjectDetail() {
               className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
             >
               <MessageSquare size={16} className="mr-2" />
-              Open ChatBuilder
+              {t("projectDetail.openChatBuilder")}
             </Button>
             <Button
               variant="outline"
@@ -360,7 +362,7 @@ export default function ProjectDetail() {
               className="border-[rgba(255,255,255,0.16)] text-white hover:bg-[rgba(255,255,255,0.08)] disabled:opacity-50"
             >
               <Play size={16} className="mr-2" />
-              Playground
+              {t("projectDetail.playground")}
             </Button>
             <Button
               variant="outline"
@@ -369,7 +371,7 @@ export default function ProjectDetail() {
               className="border-[rgba(255,255,255,0.16)] text-white hover:bg-[rgba(255,255,255,0.08)] disabled:opacity-50"
             >
               <Pencil size={16} className="mr-2" />
-              Edit
+              {t("projectDetail.edit")}
             </Button>
             <Button
               variant="outline"
@@ -378,7 +380,7 @@ export default function ProjectDetail() {
               className="border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200 disabled:opacity-50"
             >
               <Trash2 size={16} className="mr-2" />
-              Delete Project
+              {t("projectDetail.deleteProject")}
             </Button>
           </div>
         </div>
@@ -388,44 +390,44 @@ export default function ProjectDetail() {
         <div className="max-w-7xl mx-auto space-y-6">
           {isLoading && (
             <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6">
-              <p className="text-gray-400">Loading project...</p>
+              <p className="text-gray-400">{t("projectDetail.loadingProject")}</p>
             </div>
           )}
 
           {!isLoading && !project && (
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 flex items-center gap-3">
               <AlertCircle size={18} className="text-red-400" />
-              <p className="text-red-300">Project data is unavailable.</p>
+              <p className="text-red-300">{t("projectDetail.projectUnavailable")}</p>
             </div>
           )}
 
           {!isLoading && project && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList className="bg-[#0b0e12] border border-[rgba(255,255,255,0.08)]">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="keys">API Keys</TabsTrigger>
-                <TabsTrigger value="usage">Usage</TabsTrigger>
-                <TabsTrigger value="actions">Actions / APIs</TabsTrigger>
+                <TabsTrigger value="overview">{t("projectDetail.overview")}</TabsTrigger>
+                <TabsTrigger value="keys">{t("projectDetail.apiKeys")}</TabsTrigger>
+                <TabsTrigger value="usage">{t("projectDetail.usage")}</TabsTrigger>
+                <TabsTrigger value="actions">{t("projectDetail.actionsApis")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6 space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-400">Project Information</h3>
+                    <h3 className="text-sm font-semibold text-gray-400">{t("projectDetail.projectInformation")}</h3>
                     <div>
-                      <p className="text-xs text-gray-500">Name</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.name")}</p>
                       <p className="text-white mt-1">{project.name}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Description</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.description")}</p>
                       <p className="text-white mt-1">{project.description || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Runtime</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.runtime")}</p>
                       <p className="text-white mt-1">ALEXZA Managed Runtime</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Routing Mode</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.routingMode")}</p>
                       <select
                         value={project.routingMode ?? "quality"}
                         onChange={async (e) => {
@@ -438,9 +440,9 @@ export default function ProjectDetail() {
                               { method: "PATCH", body: { routingMode: mode } }
                             );
                             setProject((p) => (p ? { ...p, routingMode: mode } : p));
-                            showSuccessToast("Routing mode updated");
+                            showSuccessToast(t("projectDetail.routingModeUpdated"));
                           } catch (err) {
-                            showErrorToast("Failed to update routing mode");
+                            showErrorToast(t("projectDetail.routingModeUpdateFailed"));
                           } finally {
                             setRoutingModeSaving(false);
                           }
@@ -448,32 +450,32 @@ export default function ProjectDetail() {
                         disabled={routingModeSaving}
                         className="mt-1 w-full max-w-xs px-3 py-2 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white text-sm focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
                       >
-                        <option value="quality">Quality (Best results)</option>
-                        <option value="balanced">Balanced (Cost / Quality)</option>
-                        <option value="cheap">Cheap (Lowest cost)</option>
+                        <option value="quality">{t("projectDetail.quality")}</option>
+                        <option value="balanced">{t("projectDetail.balanced")}</option>
+                        <option value="cheap">{t("projectDetail.cheap")}</option>
                       </select>
                       <p className="text-xs text-gray-500 mt-1">
-                        Quality: Best models with fallback. Balanced: Mid-tier models. Cheap: Lowest cost, simpler models.
+                        {t("projectDetail.routingDesc")}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Status</p>
-                      <p className="text-white mt-1 capitalize">{project.status || "active"}</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.status")}</p>
+                      <p className="text-white mt-1 capitalize">{project.status === "paused" ? t("projectDetail.paused") : t("projectDetail.active")}</p>
                     </div>
                   </div>
 
                   <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6 space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-400">Timestamps</h3>
+                    <h3 className="text-sm font-semibold text-gray-400">{t("projectDetail.timestamps")}</h3>
                     <div>
-                      <p className="text-xs text-gray-500">Created</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.created")}</p>
                       <p className="text-white mt-1">{formatDate(project.createdAt)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Updated</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.updated")}</p>
                       <p className="text-white mt-1">{formatDate(project.updatedAt)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Project ID</p>
+                      <p className="text-xs text-gray-500">{t("projectDetail.projectId")}</p>
                       <p className="text-white mt-1 font-mono text-sm break-all">{project.id}</p>
                     </div>
                   </div>
@@ -502,11 +504,30 @@ export default function ProjectDetail() {
 
               <TabsContent value="actions">
                 <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#050607] p-6 space-y-6">
+                  <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-4 space-y-2">
+                    <p className="text-sm font-medium text-gray-300">
+                      {t("routing.projectMode")}:{" "}
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                          project.routingMode === "cheap"
+                            ? "bg-slate-500/20 text-slate-300"
+                            : project.routingMode === "balanced"
+                              ? "bg-amber-500/20 text-amber-200"
+                              : "bg-emerald-500/20 text-emerald-200"
+                        }`}
+                      >
+                        {t(`routing.mode.${(project.routingMode ?? "quality") as "cheap" | "balanced" | "quality"}`)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {t(`routing.description.${(project.routingMode ?? "quality") as "cheap" | "balanced" | "quality"}`)}
+                    </p>
+                  </div>
                   <div className="flex items-center justify-between flex-wrap gap-3">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-400">Actions / APIs</h3>
+                      <h3 className="text-sm font-semibold text-gray-400">{t("projectDetail.actionsApisTitle")}</h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        Actions are created in Chat Builder and called via the runtime endpoint.
+                        {t("projectDetail.actionsDesc")}
                       </p>
                     </div>
                     <Button
@@ -517,7 +538,7 @@ export default function ProjectDetail() {
                       className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)] shrink-0"
                     >
                       <RefreshCw size={14} className={`mr-1 ${actionsLoading ? "animate-spin" : ""}`} />
-                      {actionsLoading ? "Loading..." : "Reload"}
+                      {actionsLoading ? t("projectDetail.loading") : t("projectDetail.reload")}
                     </Button>
                   </div>
                   {actionsError ? (
@@ -529,19 +550,19 @@ export default function ProjectDetail() {
                         onClick={() => void loadActions()}
                         className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
                       >
-                        Retry
+                        {t("projectDetail.retry")}
                       </Button>
                     </div>
                   ) : actionsLoading && actions.length === 0 ? (
-                    <p className="text-gray-500">Loading actions...</p>
+                    <p className="text-gray-500">{t("projectDetail.loadingActions")}</p>
                   ) : actions.length === 0 ? (
                     <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-8 text-center space-y-4">
-                      <p className="text-gray-400">No actions yet.</p>
+                      <p className="text-gray-400">{t("projectDetail.noActionsYet")}</p>
                       <Button
                         onClick={() => setLocation(`/app/projects/${project.id}/ai`)}
                         className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
                       >
-                        Create Action in ChatBuilder
+                        {t("projectDetail.createActionInChatBuilder")}
                       </Button>
                       <p className="text-sm">
                         <button
@@ -549,7 +570,7 @@ export default function ProjectDetail() {
                           onClick={() => setLocation(`/app/projects/${project.id}/ai`)}
                           className="text-[#c0c0c0] hover:underline"
                         >
-                          Open ChatBuilder
+                          {t("projectDetail.openChatBuilderLink")}
                         </button>
                       </p>
                     </div>
@@ -582,7 +603,7 @@ const data = await res.json();`;
                                 <p className="font-mono text-white font-medium">{action.actionName}</p>
                                 <p className="text-xs text-gray-500 mt-1">{action.description || "-"}</p>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                  Updated: {formatDate(action.updatedAt)}
+                                  {t("projectDetail.updatedLabel")}: {formatDate(action.updatedAt)}
                                 </p>
                               </div>
                               <div className="flex gap-2">
@@ -592,7 +613,7 @@ const data = await res.json();`;
                                   className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
                                   onClick={() => openTestModal(action)}
                                 >
-                                  <PlayCircle size={14} className="mr-1" /> Test
+                                  <PlayCircle size={14} className="mr-1" /> {t("projectDetail.test")}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -600,7 +621,7 @@ const data = await res.json();`;
                                   className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
                                   onClick={() => copyEndpoint(action.actionName)}
                                 >
-                                  <Copy size={14} className="mr-1" /> Copy endpoint
+                                  <Copy size={14} className="mr-1" /> {t("projectDetail.copyEndpoint")}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -613,7 +634,7 @@ const data = await res.json();`;
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-xs text-gray-500 font-medium">Endpoint</p>
+                              <p className="text-xs text-gray-500 font-medium">{t("projectDetail.endpoint")}</p>
                               <code className="block text-xs text-gray-300 bg-[#050607] p-2 rounded font-mono break-all">
                                 {endpoint}
                               </code>
@@ -624,7 +645,7 @@ const data = await res.json();`;
                                   className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
                                   onClick={() => copySnippet(curlSnippet)}
                                 >
-                                  <Terminal size={12} className="mr-1" /> cURL
+                                  <Terminal size={12} className="mr-1" /> {t("projectDetail.curl")}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -632,7 +653,7 @@ const data = await res.json();`;
                                   className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
                                   onClick={() => copySnippet(jsSnippet)}
                                 >
-                                  <Copy size={12} className="mr-1" /> JS fetch
+                                  <Copy size={12} className="mr-1" /> {t("projectDetail.jsFetch")}
                                 </Button>
                               </div>
                             </div>
@@ -648,7 +669,7 @@ const data = await res.json();`;
                         onClick={() => setLocation(`/app/projects/${project.id}/ai`)}
                         className="text-[#c0c0c0] hover:underline"
                       >
-                        Open ChatBuilder
+                        {t("projectDetail.openChatBuilderLink")}
                       </button>
                     </p>
                   )}
@@ -664,10 +685,10 @@ const data = await res.json();`;
         onOpenChange={(open) => {
           if (!open) setDeleteActionName(null);
         }}
-        title="Delete Action"
-        description={`Delete action "${deleteActionName}"? This cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t("projectDetail.deleteAction")}
+        description={t("projectDetail.deleteActionConfirm", { name: deleteActionName })}
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         isDangerous={true}
         isLoading={isDeletingAction}
         onConfirm={handleDeleteAction}
@@ -679,21 +700,21 @@ const data = await res.json();`;
           setShowDeleteConfirm(open);
           if (!open) setDeleteConfirmName("");
         }}
-        title="Delete Project"
+        title={t("projectDetail.deleteProject")}
         description={
           project
-            ? `Type "${project.name}" to confirm deletion.`
-            : "Type project name to confirm deletion."
+            ? t("projectDetail.deleteProjectConfirm", { name: project.name })
+            : t("projectDetail.deleteProjectPlaceholder")
         }
-        confirmText="Delete"
-        cancelText="Cancel"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         isDangerous={true}
         isLoading={isDeleting}
         confirmDisabled={!canDelete}
         onConfirm={handleDeleteProject}
       >
         <div className="space-y-2">
-          <label className="text-sm text-gray-300">Project Name</label>
+          <label className="text-sm text-gray-300">{t("projectDetail.projectName")}</label>
           <input
             type="text"
             value={deleteConfirmName}
@@ -713,8 +734,8 @@ const data = await res.json();`;
             setTestResult(null);
           }
         }}
-        title={testAction ? `Test: ${testAction.actionName}` : "Test Action"}
-        description="Run the action with a JSON payload. Use an API key from this project."
+        title={testAction ? `${t("projectDetail.testAction")}: ${testAction.actionName}` : t("projectDetail.testAction")}
+        description={t("projectDetail.testActionDesc")}
         size="lg"
         footer={
           <>
@@ -724,14 +745,14 @@ const data = await res.json();`;
               disabled={testRunning}
               className="border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.08)]"
             >
-              Close
+              {t("common.close")}
             </Button>
             <Button
               onClick={handleTestRun}
               disabled={testRunning || !testApiKey.trim()}
               className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
             >
-              {testRunning ? "Running..." : "Run"}
+              {testRunning ? t("projectDetail.running") : t("projectDetail.run")}
             </Button>
           </>
         }
@@ -739,17 +760,17 @@ const data = await res.json();`;
         {testAction && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">API Key</label>
+              <label className="text-sm text-gray-300">{t("projectDetail.rawApiKey")}</label>
               <input
                 type="password"
                 value={testApiKey}
                 onChange={(e) => setTestApiKey(e.target.value)}
-                placeholder="Paste your project API key"
+                placeholder={t("projectDetail.pasteApiKey")}
                 className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">JSON Payload</label>
+              <label className="text-sm text-gray-300">{t("projectDetail.jsonPayload")}</label>
               <div className="flex gap-2">
                 <textarea
                   value={testPayload}
@@ -767,7 +788,7 @@ const data = await res.json();`;
                   onClick={handleValidatePayload}
                   className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)] self-start shrink-0"
                 >
-                  Validate
+                  {t("projectDetail.validate")}
                 </Button>
               </div>
               {validateError && (
@@ -796,8 +817,8 @@ const data = await res.json();`;
       <Modal
         open={showEditModal}
         onOpenChange={setShowEditModal}
-        title="Edit Project"
-        description="Update your project details"
+        title={t("projectDetail.editProject")}
+        description={t("projectDetail.editProjectDesc")}
         size="md"
         footer={
           <>
@@ -808,7 +829,7 @@ const data = await res.json();`;
               onClick={() => setShowEditModal(false)}
               className="border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.08)]"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -816,14 +837,14 @@ const data = await res.json();`;
               disabled={!canSaveEdit}
               className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
             >
-              {isSavingEdit ? "Saving..." : "Save"}
+              {isSavingEdit ? t("projectDetail.saving") : t("common.save")}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-gray-300">Name</label>
+            <label className="text-sm text-gray-300">{t("projectDetail.name")}</label>
             <input
               type="text"
               value={editName}
@@ -831,12 +852,12 @@ const data = await res.json();`;
               className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
             />
             {editName.trim().length > 0 && editName.trim().length < 2 && (
-              <p className="text-xs text-red-400">Name must be at least 2 characters.</p>
+              <p className="text-xs text-red-400">{t("projectDetail.nameMinChars")}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300">Description</label>
+            <label className="text-sm text-gray-300">{t("projectDetail.description")}</label>
             <textarea
               value={editDescription}
               onChange={(event) => setEditDescription(event.target.value)}
@@ -846,7 +867,7 @@ const data = await res.json();`;
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300">Model</label>
+            <label className="text-sm text-gray-300">{t("playground.model")}</label>
             <input
               type="text"
               value={editModel}
@@ -856,7 +877,7 @@ const data = await res.json();`;
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300">Status</label>
+            <label className="text-sm text-gray-300">{t("projectDetail.status")}</label>
             <select
               value={editStatus}
               onChange={(event) => setEditStatus(event.target.value === "paused" ? "paused" : "active")}

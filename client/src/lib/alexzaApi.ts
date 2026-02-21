@@ -88,6 +88,37 @@ export async function getCreditsBalance(): Promise<number> {
   return res.balanceCredits;
 }
 
+export interface EstimateResult {
+  estimatedTokens: number;
+  estimatedCredits: number;
+  routingMode: RoutingMode;
+}
+
+export async function estimateCost(params: {
+  projectId: string;
+  actionName: string;
+  input: unknown;
+}): Promise<EstimateResult> {
+  const res = await apiRequest<{
+    ok: true;
+    estimatedTokens: number;
+    estimatedCredits: number;
+    routingMode: RoutingMode;
+  }>("/api/estimate", {
+    method: "POST",
+    body: {
+      projectId: params.projectId,
+      actionName: params.actionName,
+      input: params.input,
+    },
+  });
+  return {
+    estimatedTokens: res.estimatedTokens,
+    estimatedCredits: res.estimatedCredits,
+    routingMode: res.routingMode,
+  };
+}
+
 export async function getProjects(): Promise<Project[]> {
   const res = await apiRequest<{ ok: true; projects: Project[] }>("/api/projects");
   return res.projects || [];

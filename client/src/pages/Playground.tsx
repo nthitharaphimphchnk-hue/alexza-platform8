@@ -1,10 +1,12 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
-import { getProjects, listActions, runAction } from "@/lib/alexzaApi";
+import { getProjects, listActions, runAction, estimateCost, getCreditsBalance } from "@/lib/alexzaApi";
 import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
 import type { Project, PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import { ArrowLeft, Play, MessageSquare, Key } from "lucide-react";
+import { ArrowLeft, Play, MessageSquare, Key, Calculator } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -23,7 +25,23 @@ interface RunUiError {
   nextResetAt?: string;
 }
 
+type RoutingMode = "cheap" | "balanced" | "quality";
+
+function getRoutingBadgeClass(mode: RoutingMode): string {
+  switch (mode) {
+    case "cheap":
+      return "bg-slate-500/20 text-slate-300 border-slate-500/30";
+    case "balanced":
+      return "bg-amber-500/20 text-amber-200 border-amber-500/30";
+    case "quality":
+      return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
+    default:
+      return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
+  }
+}
+
 export default function Playground() {
+  const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const [input, setInput] = useState("");
   const [payloadJson, setPayloadJson] = useState('{"input": "Hello"}');
@@ -41,6 +59,13 @@ export default function Playground() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedActionName, setSelectedActionName] = useState<string>("");
   const [validateError, setValidateError] = useState<string | null>(null);
+  const [estimate, setEstimate] = useState<{
+    estimatedTokens: number;
+    estimatedCredits: number;
+    routingMode: RoutingMode;
+  } | null>(null);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
   const projectIdFromUrl = useMemo(() => {
     const match = location.match(/^\/app\/projects\/([^/]+)\/playground$/);
@@ -97,6 +122,10 @@ export default function Playground() {
   }, [selectedActionName, actions]);
 
   useEffect(() => {
+    setEstimate(null);
+  }, [payloadJson, projectId, selectedActionName]);
+
+  useEffect(() => {
     if (!projectId) return;
     void (async () => {
       try {
@@ -116,6 +145,43 @@ export default function Playground() {
       }
     })();
   }, [projectId]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const bal = await getCreditsBalance();
+        setWalletBalance(bal);
+      } catch {
+        setWalletBalance(null);
+      }
+    })();
+  }, [projectId, isRunning]);
+
+  const handleEstimate = async () => {
+    if (!projectId || !selectedActionName) return;
+    const validation = validatePayloadLight(payloadJson);
+    if (!validation.valid) {
+      setValidateError(validation.error);
+      showErrorToast(validation.error);
+      return;
+    }
+    setValidateError(null);
+    setIsEstimating(true);
+    setEstimate(null);
+    try {
+      const result = await estimateCost({
+        projectId,
+        actionName: selectedActionName,
+        input: validation.payload,
+      });
+      setEstimate(result);
+      showSuccessToast(t("estimate.success"));
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : "Estimate failed");
+    } finally {
+      setIsEstimating(false);
+    }
+  };
 
   const handleRun = async () => {
     const trimmedApiKey = apiKey.trim();
@@ -220,9 +286,18 @@ export default function Playground() {
     }
   };
 
+  const insufficientCredits =
+    !useLegacy &&
+    estimate &&
+    walletBalance !== null &&
+    walletBalance < estimate.estimatedCredits;
+
   const canRun = useLegacy
     ? input.trim().length >= 1 && apiKey.trim().length >= 1
-    : projectId && selectedActionName && apiKey.trim().length >= 1;
+    : projectId &&
+      selectedActionName &&
+      apiKey.trim().length >= 1 &&
+      !insufficientCredits;
 
   return (
     <div className="min-h-screen text-foreground">
@@ -269,14 +344,34 @@ export default function Playground() {
             <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-4 flex flex-wrap gap-4">
               {projectId && (
                 <div className="w-full flex items-center gap-2 mb-2">
-                  <span className="text-xs text-gray-500">Routing:</span>
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-[rgba(255,255,255,0.08)] text-gray-300">
-                    {(() => {
-                      const p = projects.find((x) => x.id === projectId);
-                      const mode = p?.routingMode ?? "quality";
-                      return mode === "cheap" ? "Cheap" : mode === "balanced" ? "Balanced" : "Quality";
-                    })()}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 cursor-help">
+                        <span className="text-xs text-gray-500">{t("routing.mode.label")}:</span>
+                        <span
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium border ${getRoutingBadgeClass(
+                            (() => {
+                              const p = projects.find((x) => x.id === projectId);
+                              const mode = (p?.routingMode ?? "quality") as RoutingMode;
+                              return ["cheap", "balanced", "quality"].includes(mode) ? mode : "quality";
+                            })()
+                          )}`}
+                        >
+                          {(() => {
+                            const p = projects.find((x) => x.id === projectId);
+                            const mode = (p?.routingMode ?? "quality") as RoutingMode;
+                            const m = ["cheap", "balanced", "quality"].includes(mode) ? mode : "quality";
+                            return t(`routing.mode.${m}`);
+                          })()}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[240px]">
+                      <p className="font-medium mb-1">{t("routing.mode.cheap")}: {t("routing.mode.description.cheap")}</p>
+                      <p className="font-medium mb-1">{t("routing.mode.balanced")}: {t("routing.mode.description.balanced")}</p>
+                      <p className="font-medium">{t("routing.mode.quality")}: {t("routing.mode.description.quality")}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
               <div className="space-y-1 min-w-[180px]">
@@ -424,6 +519,40 @@ export default function Playground() {
                     <p className="text-sm text-amber-200 font-medium">Validation error</p>
                     <p className="text-xs text-amber-100 mt-1">{validateError}</p>
                   </div>
+                )}
+              </div>
+            )}
+
+            {!useLegacy && projectId && selectedActionName && (
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleEstimate}
+                  disabled={isEstimating}
+                  className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+                >
+                  <Calculator size={16} className="mr-2" />
+                  {isEstimating ? t("estimate.loading") : t("estimate.button")}
+                </Button>
+                {estimate && (
+                  <div className="flex items-center gap-4 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] px-4 py-2">
+                    <span className="text-sm text-gray-400">{t("estimate.tokens")}: {estimate.estimatedTokens}</span>
+                    <span className="text-sm text-gray-400">{t("estimate.credits")}: {estimate.estimatedCredits}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${getRoutingBadgeClass(estimate.routingMode)}`}
+                    >
+                      {t(`routing.mode.${estimate.routingMode}`)}
+                    </span>
+                    <span className="text-sm font-medium text-white">
+                      {t("estimate.costLabel")}: {estimate.estimatedCredits} {t("estimate.creditsUnit")}
+                    </span>
+                  </div>
+                )}
+                {insufficientCredits && (
+                  <p className="text-sm text-amber-400">
+                    {t("estimate.insufficientCredits", { needed: estimate?.estimatedCredits ?? 0, balance: walletBalance ?? 0 })}
+                  </p>
                 )}
               </div>
             )}

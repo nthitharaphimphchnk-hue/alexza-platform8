@@ -370,6 +370,18 @@ export default function AppShell({
               {children}
             </div>
           </motion.main>
+
+          {import.meta.env.MODE !== "production" && (
+            <button
+              type="button"
+              onClick={() => {
+                throw new Error("Sentry Frontend Test Error");
+              }}
+              className="fixed bottom-4 right-4 z-50 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200 hover:bg-amber-500/20"
+            >
+              Test Sentry Frontend
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -258,6 +258,31 @@ curl -i -b cookies.txt http://localhost:3002/api/usage/summary?days=7
 curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/usage/summary?days=7
 ```
 
+## Monitoring (Sentry + Logging)
+
+### Sentry
+
+Set these in `.env.local` (backend) and ensure `VITE_*` vars are set at build time (frontend):
+
+- `SENTRY_DSN` — Backend DSN from [sentry.io](https://sentry.io)
+- `SENTRY_ENVIRONMENT` — Defaults to `NODE_ENV`
+- `SENTRY_TRACES_SAMPLE_RATE` — Default `0.1`
+- `SENTRY_PROFILES_SAMPLE_RATE` — Default `0`
+- `VITE_SENTRY_DSN` — Frontend DSN (build-time)
+- `VITE_SENTRY_ENVIRONMENT` — Frontend environment (build-time)
+
+With DSNs empty, the app runs normally; Sentry is disabled.
+
+### Slow request tracking
+
+- `SLOW_REQUEST_MS` — Default `2000`. Requests exceeding this (on `/api/*` and `/v1/*`) trigger a warn log and Sentry breadcrumb.
+
+### Recommended Sentry alert rules
+
+- Error rate spike (e.g. >5% in 5 min)
+- New issue created
+- Slow requests (filter by `slow_request=true` tag)
+
 ## Deploy to Render
 
 This project is set up for a single Render Web Service that builds client + server and runs the server in production.
@@ -290,6 +315,14 @@ Frontend build-time:
 - `VITE_API_BASE_URL` (optional when serving frontend + backend from same domain; can be left empty)
 - `VITE_ANALYTICS_ENDPOINT` (optional)
 - `VITE_ANALYTICS_WEBSITE_ID` (optional)
+- `VITE_SENTRY_DSN` (optional, for frontend error monitoring)
+- `VITE_SENTRY_ENVIRONMENT` (optional, defaults to build mode)
+
+Monitoring (optional):
+
+- `SENTRY_DSN` (backend error monitoring)
+- `SENTRY_ENVIRONMENT` (defaults to `NODE_ENV`)
+- `SLOW_REQUEST_MS` (default 2000, ms threshold for slow request logging)
 
 Networking/cookies (required for production auth):
 

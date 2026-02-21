@@ -1,3 +1,4 @@
+import "./sentry";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -25,6 +26,12 @@ import { billingRouter, runBillingUserMigration } from "./billing";
 import { runRoutingModeMigration } from "./projects";
 import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
+import { estimateRouter } from "./estimate";
+import { requestIdMiddleware } from "./middleware/requestId";
+import { requestLogger } from "./middleware/requestLogger";
+import { slowRequestMiddleware } from "./middleware/slowRequest";
+import * as Sentry from "@sentry/node";
+import { logger } from "./utils/logger";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -119,6 +126,10 @@ async function startServer() {
           callback(new Error("Not allowed by CORS"));
         };
 
+  app.use(requestIdMiddleware);
+  app.use(requestLogger);
+  app.use(slowRequestMiddleware);
+
   app.use(
     cors({
       origin: corsOrigin,
@@ -157,6 +168,7 @@ async function startServer() {
   app.use("/api", actionsRouter);
   app.use("/api", usageRouter);
   app.use("/api", creditsRouter);
+  app.use("/api", estimateRouter);
   app.use("/api", onboardingRouter);
   app.use("/api", billingRouter);
   app.use("/api", notificationsRouter);
@@ -193,10 +205,13 @@ async function startServer() {
     });
   });
   if (process.env.NODE_ENV !== "production") {
-    console.log("Mounted /api/projects routes OK");
+    logger.info("Mounted /api/projects routes OK");
   }
 
   if (process.env.NODE_ENV !== "production") {
+    app.get("/api/debug/sentry-error", (_req, _res) => {
+      throw new Error("Sentry Backend Test Error");
+    });
     app.get("/api/debug/session", async (req, res) => {
       const token = req.cookies?.[getSessionCookieName()];
       if (!token || typeof token !== "string") {
@@ -289,16 +304,20 @@ async function startServer() {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 
+  Sentry.setupExpressErrorHandler(app);
+
   app.use(
     (
       err: unknown,
-      _req: express.Request,
+      req: express.Request,
       res: express.Response,
       _next: express.NextFunction
     ) => {
-      const requestId = randomUUID();
+      const requestId = (req as express.Request & { requestId?: string }).requestId ?? randomUUID();
       const safeMsg = process.env.NODE_ENV === "production" ? "Unexpected server error" : sanitizeForLog(err);
-      console.error(`[${requestId}] Unhandled server error:`, safeMsg);
+      logger.error({ err: safeMsg, requestId, route: req.path, method: req.method }, "Unhandled server error");
+      Sentry.setTag("requestId", requestId);
+      res.setHeader("x-request-id", requestId);
       res.status(500).json({
         ok: false,
         error: { code: "INTERNAL_ERROR", message: "Unexpected server error" },
@@ -319,11 +338,17 @@ async function startServer() {
   server.listen(port, () => {
     const hasOpenRouterKey = Boolean(process.env.OPENROUTER_API_KEY?.trim());
     const runtimeDefaultProvider = hasOpenRouterKey ? "openrouter" : "openai";
-    console.log(`Server running on http://localhost:${port}/`);
-    console.log(`NODE_ENV=${process.env.NODE_ENV ?? "development"}`);
-    console.log(`cookieName=${cookieName}`);
-    console.log(`corsOrigin=${corsOriginLog}`);
-    console.log(`Runtime Provider: hasOpenRouterKey=${hasOpenRouterKey} runtimeDefaultProvider=${runtimeDefaultProvider}`);
+    const sentryDsn = (process.env.SENTRY_DSN ?? "").trim();
+    logger.info({
+      msg: "Server started",
+      port,
+      nodeEnv: process.env.NODE_ENV ?? "development",
+      cookieName,
+      corsOrigin: corsOriginLog,
+      hasOpenRouterKey,
+      runtimeDefaultProvider,
+      sentryEnabled: Boolean(sentryDsn),
+    });
   });
 }
 

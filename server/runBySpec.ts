@@ -11,11 +11,10 @@ import { getDb } from "./db";
 import {
   InsufficientCreditsError,
   MonthlyQuotaExceededError,
-  RUN_COST_CREDITS,
-  TOKENS_PER_CREDIT,
   deductCreditsForUsage,
   refundCreditsFromRun,
 } from "./credits";
+import { estimateTokensFromInput, calculateCredits } from "./utils/tokenEstimator";
 import { MAX_CREDITS_PER_REQUEST, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
 import { rateLimitByIp } from "./middleware/rateLimitByIp";
@@ -327,10 +326,16 @@ router.post(
       const executionProvider = getExecutionProvider();
       const modelList = resolveModelList(action, executionProvider, routingMode);
 
+      const estimatedTokens = estimateTokensFromInput(prompt);
+      const estimatedCredits = Math.min(
+        Math.max(1, calculateCredits(routingMode, estimatedTokens)),
+        MAX_CREDITS_PER_REQUEST
+      );
+
       try {
         await deductCreditsForUsage({
           userId: req.apiKey.ownerUserId,
-          costCredits: MAX_CREDITS_PER_REQUEST,
+          costCredits: estimatedCredits,
           reason: `Reserve for run: ${actionName}`,
           relatedRunId: requestId,
         });
@@ -379,14 +384,14 @@ router.post(
       const totalTokens = result.usage?.total_tokens ?? null;
       const creditsCharged =
         typeof totalTokens === "number"
-          ? Math.max(RUN_COST_CREDITS, Math.ceil(totalTokens / TOKENS_PER_CREDIT))
-          : RUN_COST_CREDITS;
+          ? Math.max(1, calculateCredits(routingMode, totalTokens))
+          : estimatedCredits;
 
       const cappedCredits = Math.min(creditsCharged, MAX_CREDITS_PER_REQUEST);
-      if (cappedCredits < MAX_CREDITS_PER_REQUEST) {
+      if (estimatedCredits > cappedCredits) {
         await refundCreditsFromRun({
           userId: req.apiKey.ownerUserId,
-          amountCredits: MAX_CREDITS_PER_REQUEST - cappedCredits,
+          amountCredits: estimatedCredits - cappedCredits,
           reason: `Refund excess reserve: ${actionName}`,
           relatedRunId: requestId,
         });
