@@ -12,7 +12,7 @@ export interface RunLogDoc {
   ownerUserId: ObjectId;
   apiKeyId: ObjectId;
   actionName: string;
-  status: "success" | "error";
+  status: "success" | "error" | "failed_insufficient_credits";
   statusCode: number;
   latencyMs: number;
   /** SERVER_ONLY - internal debug */
@@ -34,7 +34,7 @@ export interface LogRunParams {
   ownerUserId: ObjectId;
   apiKeyId: ObjectId;
   actionName: string;
-  status: "success" | "error";
+  status: "success" | "error" | "failed_insufficient_credits";
   statusCode: number;
   latencyMs: number;
   upstreamProvider?: string;

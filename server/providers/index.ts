@@ -61,18 +61,41 @@ export async function runProvider(params: RunProviderParams): Promise<RunProvide
   throw new Error(`Unknown provider: ${params.provider}`);
 }
 
-/** Transient errors that warrant trying next model */
-function isTransientError(err: unknown): boolean {
+/** Non-transient: do not retry, return neutral error */
+function isNonTransientError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message.toLowerCase();
+  const status = (err as Error & { status?: number }).status;
+  // 400 validation, 401 auth, 404 model-not-found
+  if (status === 400 || status === 401 || status === 404) return true;
   return (
-    msg.includes("timeout") ||
+    msg.includes("invalid") ||
+    msg.includes("validation") ||
+    msg.includes("unauthorized") ||
+    msg.includes("not found") ||
+    (msg.includes("model") && msg.includes("does not exist"))
+  );
+}
+
+/** Transient errors: timeout, 5xx, network -> try next model */
+function isTransientError(err: unknown): boolean {
+  if (isNonTransientError(err)) return false;
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  const status = (err as Error & { status?: number }).status;
+  const isTimeout = (err as Error & { isTimeout?: boolean }).isTimeout;
+  if (isTimeout || msg.includes("timeout") || msg.includes("abort")) return true;
+  if (status && status >= 500) return true;
+  return (
     msg.includes("rate limit") ||
     msg.includes("503") ||
     msg.includes("502") ||
     msg.includes("429") ||
     msg.includes("overloaded") ||
-    msg.includes("capacity")
+    msg.includes("capacity") ||
+    msg.includes("econnreset") ||
+    msg.includes("network") ||
+    msg.includes("fetch failed")
   );
 }
 
@@ -114,6 +137,10 @@ export async function runWithFallback(
       return result;
     } catch (err) {
       lastError = err;
+      if (process.env.NODE_ENV !== "production" || process.env.ADMIN_API_KEY) {
+        const reason = err instanceof Error ? err.message : String(err);
+        console.log(`[Providers] runWithFallback failure (internal): ${reason}`);
+      }
       const idx = models.indexOf(model);
       if (isTransientError(err) && idx >= 0 && idx < models.length - 1) {
         if (process.env.NODE_ENV !== "production") {

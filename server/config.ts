@@ -10,6 +10,18 @@ export const RATE_LIMIT_REQUESTS_PER_MINUTE = readPositiveIntFromEnv(
   "RATE_LIMIT_REQUESTS_PER_MINUTE",
   30
 );
+
+/** Per API key: Free plan */
+export const RATE_LIMIT_FREE_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_FREE_PER_MIN", 30);
+
+/** Per API key: Pro plan */
+export const RATE_LIMIT_PRO_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_PRO_PER_MIN", 120);
+
+/** Per IP: safety net (applies to all requests) */
+export const RATE_LIMIT_IP_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_IP_PER_MIN", 60);
+
+/** Upstream provider timeout (ms) */
+export const UPSTREAM_TIMEOUT_MS = readPositiveIntFromEnv("UPSTREAM_TIMEOUT_MS", 30_000);
 export const MAX_INPUT_CHARS = readPositiveIntFromEnv("MAX_INPUT_CHARS", 12000);
 export const MAX_ESTIMATED_TOKENS = readPositiveIntFromEnv("MAX_ESTIMATED_TOKENS", 8000);
 export const MAX_CREDITS_PER_REQUEST = readPositiveIntFromEnv("MAX_CREDITS_PER_REQUEST", 50);

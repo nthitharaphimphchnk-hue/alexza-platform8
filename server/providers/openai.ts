@@ -3,6 +3,7 @@
  */
 
 import OpenAI from "openai";
+import { UPSTREAM_TIMEOUT_MS } from "../config";
 
 let cachedClient: OpenAI | null = null;
 
@@ -12,7 +13,7 @@ function getClient(): OpenAI {
     throw new Error("OPENAI_API_KEY is not configured");
   }
   if (!cachedClient) {
-    cachedClient = new OpenAI({ apiKey });
+    cachedClient = new OpenAI({ apiKey, timeout: UPSTREAM_TIMEOUT_MS });
   }
   return cachedClient;
 }
@@ -36,15 +37,18 @@ export interface OpenAIRunResponse {
 export async function runOpenAI(params: OpenAIRunParams): Promise<OpenAIRunResponse> {
   const client = getClient();
 
-  const response = await client.chat.completions.create({
-    model: params.model,
-    messages: params.messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    })),
-    temperature: params.temperature ?? 0.7,
-    max_tokens: params.maxTokens ?? 2048,
-  });
+  const response = await client.chat.completions.create(
+    {
+      model: params.model,
+      messages: params.messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      temperature: params.temperature ?? 0.7,
+      max_tokens: params.maxTokens ?? 2048,
+    },
+    { timeout: UPSTREAM_TIMEOUT_MS }
+  );
 
   const choice = response.choices?.[0];
   const output = choice?.message?.content ?? "";

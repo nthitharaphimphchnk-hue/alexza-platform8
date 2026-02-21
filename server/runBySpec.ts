@@ -14,11 +14,11 @@ import {
   RUN_COST_CREDITS,
   TOKENS_PER_CREDIT,
   deductCreditsForUsage,
-  getWalletBalanceCredits,
+  refundCreditsFromRun,
 } from "./credits";
-import { getUserBillingState } from "./billing";
 import { MAX_CREDITS_PER_REQUEST, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
+import { rateLimitByIp } from "./middleware/rateLimitByIp";
 import { rateLimitByApiKey } from "./middleware/rateLimitByApiKey";
 import { logUsage } from "./usage";
 import { logRun } from "./runLogs";
@@ -139,6 +139,7 @@ function normalizeRequestBody(
 
 router.post(
   "/v1/projects/:projectId/run/:actionName",
+  rateLimitByIp,
   requireApiKey,
   rateLimitByApiKey,
   async (req, res) => {
@@ -174,9 +175,14 @@ router.post(
       inputTokens?: number | null;
       outputTokens?: number | null;
       totalTokens?: number | null;
+      actionDoc?: ProjectActionDoc | null;
     }) => {
       if (!req.apiKey) return;
       try {
+        const execProvider = getExecutionProvider();
+        const modelList = params.actionDoc
+          ? resolveModelList(params.actionDoc, execProvider)
+          : [];
         await logUsage({
           projectId: req.apiKey.projectId,
           ownerUserId: req.apiKey.ownerUserId,
@@ -184,8 +190,8 @@ router.post(
           endpoint: params.endpoint ?? `/v1/projects/${projectIdRaw}/run/${actionName}`,
           statusCode: params.statusCode,
           status: params.status,
-          provider: params.provider ?? getExecutionProvider(),
-          model: params.model ?? resolveModelList(action, getExecutionProvider())[0] ?? "default",
+          provider: params.provider ?? execProvider,
+          model: params.model ?? modelList[0] ?? "default",
           inputTokens: params.inputTokens ?? null,
           outputTokens: params.outputTokens ?? null,
           totalTokens: params.totalTokens ?? null,
@@ -203,7 +209,7 @@ router.post(
         .findOne({ projectId, actionName });
 
       if (!action) {
-        await safeLogUsage({ statusCode: 404, status: "error" });
+        await safeLogUsage({ statusCode: 404, status: "error", actionDoc: null });
         await logRun({
           requestId,
           projectId: req.apiKey.projectId,
@@ -295,49 +301,47 @@ router.post(
         return runError(res, 400, "REQUEST_TOO_LARGE", "Input too long", requestId);
       }
 
-      const balanceCredits = await getWalletBalanceCredits(req.apiKey.ownerUserId);
-      const billingState = await getUserBillingState(req.apiKey.ownerUserId);
-
-      if (balanceCredits < RUN_COST_CREDITS) {
-        const execProvider = getExecutionProvider();
-        const models = resolveModelList(action, execProvider);
-        await safeLogUsage({ statusCode: 402, status: "error", provider: execProvider, model: models[0] ?? "default" });
-        await logRun({
-          requestId,
-          projectId: req.apiKey.projectId,
-          ownerUserId: req.apiKey.ownerUserId,
-          apiKeyId: req.apiKey._id,
-          actionName,
-          status: "error",
-          statusCode: 402,
-          latencyMs: Date.now() - startMs,
-          upstreamProvider: getExecutionProvider(),
-          upstreamModel: resolveModelList(action, getExecutionProvider())[0] ?? "default",
-        });
-        return runError(res, 402, "INSUFFICIENT_CREDITS", "Insufficient credits", requestId);
-      }
-
-      if (billingState.monthlyCreditsUsed + RUN_COST_CREDITS > billingState.monthlyCreditsAllowance) {
-        const execProvider = getExecutionProvider();
-        const models = resolveModelList(action, execProvider);
-        await safeLogUsage({ statusCode: 402, status: "error", provider: execProvider, model: models[0] ?? "default" });
-        await logRun({
-          requestId,
-          projectId: req.apiKey.projectId,
-          ownerUserId: req.apiKey.ownerUserId,
-          apiKeyId: req.apiKey._id,
-          actionName,
-          status: "error",
-          statusCode: 402,
-          latencyMs: Date.now() - startMs,
-          upstreamProvider: getExecutionProvider(),
-          upstreamModel: resolveModelList(action, getExecutionProvider())[0] ?? "default",
-        });
-        return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded", requestId);
-      }
-
       const executionProvider = getExecutionProvider();
       const modelList = resolveModelList(action, executionProvider);
+
+      try {
+        await deductCreditsForUsage({
+          userId: req.apiKey.ownerUserId,
+          costCredits: MAX_CREDITS_PER_REQUEST,
+          reason: `Reserve for run: ${actionName}`,
+          relatedRunId: requestId,
+        });
+      } catch (err) {
+        if (err instanceof MonthlyQuotaExceededError) {
+          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action });
+          await logRun({
+            requestId,
+            projectId: req.apiKey.projectId,
+            ownerUserId: req.apiKey.ownerUserId,
+            apiKeyId: req.apiKey._id,
+            actionName,
+            status: "failed_insufficient_credits",
+            statusCode: 402,
+            latencyMs: Date.now() - startMs,
+          });
+          return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded", requestId);
+        }
+        if (err instanceof InsufficientCreditsError) {
+          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action });
+          await logRun({
+            requestId,
+            projectId: req.apiKey.projectId,
+            ownerUserId: req.apiKey.ownerUserId,
+            apiKeyId: req.apiKey._id,
+            actionName,
+            status: "failed_insufficient_credits",
+            statusCode: 402,
+            latencyMs: Date.now() - startMs,
+          });
+          return runError(res, 402, "INSUFFICIENT_CREDITS", "Not enough credits", requestId);
+        }
+        throw err;
+      }
 
       const result = await runWithFallback({
         provider: executionProvider,
@@ -355,61 +359,14 @@ router.post(
           ? Math.max(RUN_COST_CREDITS, Math.ceil(totalTokens / TOKENS_PER_CREDIT))
           : RUN_COST_CREDITS;
 
-      if (creditsCharged > MAX_CREDITS_PER_REQUEST) {
-        await safeLogUsage({
-          statusCode: 400,
-          status: "error",
-          provider: executionProvider,
-          model: resolvedModel,
-          totalTokens,
-        });
-        await logRun({
-          requestId,
-          projectId: req.apiKey.projectId,
-          ownerUserId: req.apiKey.ownerUserId,
-          apiKeyId: req.apiKey._id,
-          actionName,
-          status: "error",
-          statusCode: 400,
-          latencyMs: Date.now() - startMs,
-          upstreamProvider: executionProvider,
-          upstreamModel: resolvedModel,
-        });
-        return runError(res, 400, "COST_CAP_EXCEEDED", "Request cost too high", requestId);
-      }
-
-      let nextBalanceCredits = balanceCredits;
-      try {
-        const deduction = await deductCreditsForUsage({
+      const cappedCredits = Math.min(creditsCharged, MAX_CREDITS_PER_REQUEST);
+      if (cappedCredits < MAX_CREDITS_PER_REQUEST) {
+        await refundCreditsFromRun({
           userId: req.apiKey.ownerUserId,
-          costCredits: creditsCharged,
-          reason: `Run action: ${actionName}`,
+          amountCredits: MAX_CREDITS_PER_REQUEST - cappedCredits,
+          reason: `Refund excess reserve: ${actionName}`,
           relatedRunId: requestId,
-          provider: executionProvider,
-          model: resolvedModel,
-          totalTokens,
         });
-        nextBalanceCredits = deduction.balanceCredits;
-      } catch (error) {
-        if (error instanceof MonthlyQuotaExceededError) {
-          await safeLogUsage({
-            statusCode: 402,
-            status: "error",
-            provider: executionProvider,
-            model: resolvedModel,
-          });
-          return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded", requestId);
-        }
-        if (error instanceof InsufficientCreditsError) {
-          await safeLogUsage({
-            statusCode: 402,
-            status: "error",
-            provider: executionProvider,
-            model: resolvedModel,
-          });
-          return runError(res, 402, "INSUFFICIENT_CREDITS", "Insufficient credits", requestId);
-        }
-        throw error;
       }
 
       await safeLogUsage({
@@ -443,10 +400,10 @@ router.post(
         ok: true,
         requestId,
         output: result.output,
-        creditsCharged,
+        creditsCharged: cappedCredits,
         usage: {
           tokens: totalTokens ?? undefined,
-          creditsCharged,
+          creditsCharged: cappedCredits,
         },
         latencyMs,
       });

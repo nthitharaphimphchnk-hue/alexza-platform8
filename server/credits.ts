@@ -118,6 +118,10 @@ export async function getWalletBalanceCredits(userId: ObjectId): Promise<number>
   return typeof user?.walletBalanceCredits === "number" ? user.walletBalanceCredits : 0;
 }
 
+/**
+ * Atomic deduction: only succeeds if walletBalanceCredits >= cost.
+ * Use for reserving credits before upstream call.
+ */
 export async function deductCreditsForUsage(params: {
   userId: ObjectId;
   costCredits: number;
@@ -180,6 +184,33 @@ export async function deductCreditsForUsage(params: {
   return {
     balanceCredits: typeof next.walletBalanceCredits === "number" ? next.walletBalanceCredits : 0,
   };
+}
+
+/**
+ * Refund credits (e.g. when reserved > actual cost).
+ * Atomic: adds back to wallet and decrements monthlyCreditsUsed.
+ */
+export async function refundCreditsFromRun(params: {
+  userId: ObjectId;
+  amountCredits: number;
+  reason: string;
+  relatedRunId?: string;
+}): Promise<void> {
+  if (params.amountCredits <= 0) return;
+  await ensureCreditsCollections();
+  const db = await getDb();
+  const users = db.collection<UserWalletDoc>("users");
+  await users.updateOne(
+    { _id: params.userId },
+    { $inc: { walletBalanceCredits: params.amountCredits, monthlyCreditsUsed: -params.amountCredits } }
+  );
+  await createCreditTransaction({
+    userId: params.userId,
+    type: "refund",
+    amountCredits: params.amountCredits,
+    reason: params.reason,
+    relatedRunId: params.relatedRunId,
+  });
 }
 
 function canUseManualTopup(req: Request): boolean {
