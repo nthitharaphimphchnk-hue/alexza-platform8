@@ -4,7 +4,7 @@ import { getProjects, listActions, runAction } from "@/lib/alexzaApi";
 import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
 import type { Project, PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import { ArrowLeft, Play } from "lucide-react";
+import { ArrowLeft, Play, MessageSquare, Key } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -301,6 +301,21 @@ export default function Playground() {
                     <option key={a.id} value={a.actionName}>{a.actionName}</option>
                   ))}
                 </select>
+                {projectId && actions.length === 0 && (
+                  <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+                    <p className="text-amber-200">No actions yet</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation(`/app/projects/${projectId}/ai`)}
+                      className="mt-2 border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                    >
+                      <MessageSquare size={14} className="mr-2" />
+                      Create in ChatBuilder
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -326,12 +341,27 @@ export default function Playground() {
             <div className="space-y-2">
               <label className="text-sm text-gray-300">Raw API Key</label>
               <input
-                type="text"
+                type="password"
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
                 placeholder="axza_..."
                 className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
               />
+              {!apiKey.trim() && projectId && (
+                <div className="flex items-center gap-2 text-sm text-amber-200/90">
+                  <Key size={14} />
+                  <span>Create API key in API Keys tab</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLocation(`/app/projects/${projectId}?tab=keys`)}
+                    className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15 shrink-0"
+                  >
+                    Open API Keys
+                  </Button>
+                </div>
+              )}
             </div>
 
             {useLegacy ? (
@@ -378,7 +408,10 @@ export default function Playground() {
                   </Button>
                 </div>
                 {validateError && (
-                  <p className="text-xs text-amber-400">{validateError}</p>
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2">
+                    <p className="text-sm text-amber-200 font-medium">Validation error</p>
+                    <p className="text-xs text-amber-100 mt-1">{validateError}</p>
+                  </div>
                 )}
               </div>
             )}

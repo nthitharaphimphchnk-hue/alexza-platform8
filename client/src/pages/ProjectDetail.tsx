@@ -4,7 +4,7 @@ import ApiKeys from "@/pages/ApiKeys";
 import UsageSummaryPanel from "@/components/usage/UsageSummaryPanel";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Modal from "@/components/Modal";
-import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle, MessageSquare, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { ApiError, apiRequest, API_BASE_URL } from "@/lib/api";
@@ -39,6 +39,7 @@ export default function ProjectDetail() {
   const [editStatus, setEditStatus] = useState<"active" | "paused">("active");
   const [actions, setActions] = useState<PublicAction[]>([]);
   const [actionsLoading, setActionsLoading] = useState(false);
+  const [actionsError, setActionsError] = useState<string | null>(null);
   const [showTestModal, setShowTestModal] = useState(false);
   const [testAction, setTestAction] = useState<PublicAction | null>(null);
   const [testPayload, setTestPayload] = useState('{"input": "Hello"}');
@@ -102,15 +103,23 @@ export default function ProjectDetail() {
   const loadActions = useCallback(async () => {
     if (!projectId) return;
     setActionsLoading(true);
+    setActionsError(null);
     try {
       const list = await listActions(projectId);
       setActions(list);
+      if (process.env.NODE_ENV === "development") {
+        console.log("[UI] fetchActions projectId=", projectId, "status=ok count=", list.length);
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
         setLocation("/login");
         return;
       }
       setActions([]);
+      setActionsError("Failed to load actions");
+      if (process.env.NODE_ENV === "development") {
+        console.log("[UI] fetchActions projectId=", projectId, "status=error");
+      }
     } finally {
       setActionsLoading(false);
     }
@@ -119,6 +128,14 @@ export default function ProjectDetail() {
   useEffect(() => {
     void loadProject();
   }, [loadProject]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const tab = params.get("tab");
+    if (tab === "keys" || tab === "actions" || tab === "overview" || tab === "usage") {
+      setActiveTab(tab);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     if (projectId && activeTab === "actions") void loadActions();
@@ -315,6 +332,17 @@ export default function ProjectDetail() {
           </div>
           <div className="flex items-center gap-3">
             <Button
+              onClick={() => {
+                if (!project) return;
+                setLocation(`/app/projects/${project.id}/ai`);
+              }}
+              disabled={!project || isLoading}
+              className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
+            >
+              <MessageSquare size={16} className="mr-2" />
+              Open ChatBuilder
+            </Button>
+            <Button
               variant="outline"
               onClick={() => {
                 if (!project) return;
@@ -434,14 +462,57 @@ export default function ProjectDetail() {
 
               <TabsContent value="actions">
                 <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#050607] p-6 space-y-6">
-                  <h3 className="text-sm font-semibold text-gray-400">Actions / APIs</h3>
-                  <p className="text-sm text-gray-500">
-                    Actions are created in Chat Builder and called via the runtime endpoint.
-                  </p>
-                  {actionsLoading ? (
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-400">Actions / APIs</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Actions are created in Chat Builder and called via the runtime endpoint.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void loadActions()}
+                      disabled={actionsLoading}
+                      className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)] shrink-0"
+                    >
+                      <RefreshCw size={14} className={`mr-1 ${actionsLoading ? "animate-spin" : ""}`} />
+                      {actionsLoading ? "Loading..." : "Reload"}
+                    </Button>
+                  </div>
+                  {actionsError ? (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-center justify-between gap-4">
+                      <p className="text-sm text-amber-200">{actionsError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void loadActions()}
+                        className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  ) : actionsLoading && actions.length === 0 ? (
                     <p className="text-gray-500">Loading actions...</p>
                   ) : actions.length === 0 ? (
-                    <p className="text-gray-500">No actions yet. Create one in Chat Builder.</p>
+                    <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-8 text-center space-y-4">
+                      <p className="text-gray-400">No actions yet.</p>
+                      <Button
+                        onClick={() => setLocation(`/app/projects/${project.id}/ai`)}
+                        className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
+                      >
+                        Create Action in ChatBuilder
+                      </Button>
+                      <p className="text-sm">
+                        <button
+                          type="button"
+                          onClick={() => setLocation(`/app/projects/${project.id}/ai`)}
+                          className="text-[#c0c0c0] hover:underline"
+                        >
+                          Open ChatBuilder
+                        </button>
+                      </p>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {actions.map((action) => {
@@ -529,6 +600,17 @@ const data = await res.json();`;
                         );
                       })}
                     </div>
+                  )}
+                  {!actionsError && actions.length > 0 && (
+                    <p className="text-sm">
+                      <button
+                        type="button"
+                        onClick={() => setLocation(`/app/projects/${project.id}/ai`)}
+                        className="text-[#c0c0c0] hover:underline"
+                      >
+                        Open ChatBuilder
+                      </button>
+                    </p>
                   )}
                 </div>
               </TabsContent>

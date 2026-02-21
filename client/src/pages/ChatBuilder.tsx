@@ -18,6 +18,7 @@ import { useLocation } from "wouter";
 import { ApiError } from "@/lib/api";
 import { getProjects, createThread, listThreads, listMessages, sendMessage, listActions, applyAction, getFriendlyMessage } from "@/lib/alexzaApi";
 import type { Project, PublicProposedAction } from "@/lib/alexzaApi";
+import { toast } from "sonner";
 import { showSuccessToast, showErrorToast } from "@/lib/toast";
 
 interface Thread {
@@ -124,6 +125,12 @@ export default function ChatBuilder() {
   }, [projectId, setLocation]);
 
   useEffect(() => {
+    if (projectId && process.env.NODE_ENV === "development") {
+      console.log("[UI] ChatBuilder open projectId=", projectId);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
 
@@ -206,7 +213,16 @@ export default function ChatBuilder() {
         outputSchema: action.outputSchema,
         promptTemplate: action.instruction || `User: {{input}}`,
       });
-      showSuccessToast("Action saved", `${action.actionName} applied`);
+      if (process.env.NODE_ENV === "development") {
+        console.log("[UI] appliedAction projectId=", projectId, "actionName=", action.actionName);
+      }
+      toast.success("Action added", {
+        duration: 5000,
+        action: {
+          label: "Go to Actions/APIs",
+          onClick: () => setLocation(`/app/projects/${projectId}?tab=actions`),
+        },
+      });
       setProposedActions((prev) => prev.filter((a) => a.actionName !== action.actionName));
       void loadActions();
     } catch (e) {
@@ -273,7 +289,10 @@ export default function ChatBuilder() {
       <main className="flex-1 flex flex-col">
         <div className="border-b border-[rgba(255,255,255,0.06)] bg-[#050607]/80 backdrop-blur-md px-8 py-4 flex justify-between items-center gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-white">Chat Builder</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Chat Builder</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Type what API you want. Then Apply to Project.</p>
+            </div>
             <select
               value={projectId}
               onChange={(e) => {
@@ -398,7 +417,7 @@ export default function ChatBuilder() {
             <div className="flex-1 overflow-auto p-6 space-y-4">
               {proposedActions.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs text-gray-400 font-medium">Proposed (จาก AI)</p>
+                  <p className="text-xs text-gray-400 font-medium">Proposed (from AI)</p>
                   {proposedActions.map((action) => (
                     <motion.div
                       key={action.actionName}
@@ -406,25 +425,30 @@ export default function ChatBuilder() {
                       variants={itemVariants}
                       whileHover={{ scale: 1.02 }}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="space-y-2">
                         <div>
-                          <code className="text-xs text-[#c0c0c0] font-mono">{action.actionName}</code>
+                          <code className="text-sm text-[#c0c0c0] font-mono">{action.actionName}</code>
                           <p className="text-xs text-gray-400 mt-1">{action.description}</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleApply(action)}
-                          disabled={isApplying === action.actionName}
-                          className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black text-xs"
-                        >
-                          {isApplying === action.actionName ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : (
-                            <>
-                              <Plus size={14} className="mr-1" /> Apply
-                            </>
+                          {action.inputSchema && typeof action.inputSchema === "object" && (
+                            <pre className="text-[10px] text-gray-500 mt-2 overflow-x-auto max-h-20 overflow-y-auto bg-[#050607] p-2 rounded">
+                              {JSON.stringify(action.inputSchema, null, 2)}
+                            </pre>
                           )}
-                        </Button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApply(action)}
+                            disabled={isApplying === action.actionName}
+                            className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black text-xs"
+                          >
+                            {isApplying === action.actionName ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              "Apply to Project"
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}

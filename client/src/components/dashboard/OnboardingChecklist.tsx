@@ -34,11 +34,12 @@ export default function OnboardingChecklist() {
         for (const step of STEP_KEYS) {
           if (projects.length > 0) {
             if (step === "dashboard.createProject") next[step] = "/app/projects";
-            else if (step === "dashboard.createApiKey") next[step] = `/app/projects/${projects[0].id}/keys`;
+            else if (step === "dashboard.createApiKey") next[step] = `/app/projects/${projects[0].id}?tab=keys`;
             else if (step === "dashboard.openChatBuilder") next[step] = `/app/projects/${projects[0].id}/ai`;
             else next[step] = `/app/projects/${projects[0].id}/playground`;
           } else {
-            next[step] = "/app/projects";
+            if (step === "dashboard.createProject") next[step] = "/app/projects";
+            else next[step] = "/app/projects";
           }
         }
         setHrefs(next);
