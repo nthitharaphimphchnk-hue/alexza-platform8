@@ -5,11 +5,14 @@
 
 import { API_BASE_URL, ApiError, apiRequest } from "./api";
 
+export type RoutingMode = "cheap" | "balanced" | "quality";
+
 export interface Project {
   id: string;
   name: string;
   description: string;
   status: string;
+  routingMode?: RoutingMode;
   createdAt: string;
   updatedAt: string;
 }

@@ -27,7 +27,12 @@ import { sanitizeForResponse } from "./utils/sanitize";
 import {
   QUALITY_MODELS,
   QUALITY_MODELS_OPENAI,
+  BALANCED_MODELS,
+  BALANCED_MODELS_OPENAI,
+  CHEAP_MODELS,
+  CHEAP_MODELS_OPENAI,
 } from "./modelRegistry";
+import type { RoutingMode } from "./modelRegistry";
 import type { ProjectActionDoc } from "./models/types";
 import type { ProviderType } from "./models/types";
 
@@ -40,7 +45,10 @@ function getExecutionProvider(): ProviderType {
   return "openai";
 }
 
-function getQualityModels(provider: ProviderType): string[] {
+function getModelsForMode(mode: RoutingMode, provider: ProviderType): string[] {
+  const m = mode ?? "quality";
+  if (m === "cheap") return provider === "openrouter" ? CHEAP_MODELS : CHEAP_MODELS_OPENAI;
+  if (m === "balanced") return provider === "openrouter" ? BALANCED_MODELS : BALANCED_MODELS_OPENAI;
   return provider === "openrouter" ? QUALITY_MODELS : QUALITY_MODELS_OPENAI;
 }
 
@@ -51,15 +59,16 @@ function toOpenAIModelId(model: string): string {
 
 function resolveModelList(
   action: ProjectActionDoc,
-  provider: ProviderType
+  provider: ProviderType,
+  routingMode: RoutingMode
 ): string[] {
-  const qualityModels = getQualityModels(provider);
+  const modeModels = getModelsForMode(routingMode, provider);
   const fallbacks =
     action.fallbackModels && Array.isArray(action.fallbackModels) && action.fallbackModels.length > 0
       ? action.fallbackModels.filter((m): m is string => typeof m === "string")
-      : qualityModels.slice(1);
+      : modeModels.slice(1);
 
-  const primary = action.model?.trim() || qualityModels[0];
+  const primary = action.model?.trim() || modeModels[0];
   const models = [primary, ...fallbacks];
   if (provider === "openai") {
     return models.map(toOpenAIModelId);
@@ -176,13 +185,15 @@ router.post(
       outputTokens?: number | null;
       totalTokens?: number | null;
       actionDoc?: ProjectActionDoc | null;
+      routingMode?: RoutingMode;
     }) => {
       if (!req.apiKey) return;
       try {
         const execProvider = getExecutionProvider();
+        const mode = params.routingMode ?? "quality";
         const modelList = params.actionDoc
-          ? resolveModelList(params.actionDoc, execProvider)
-          : [];
+          ? resolveModelList(params.actionDoc, execProvider, mode)
+          : getModelsForMode(mode, execProvider);
         await logUsage({
           projectId: req.apiKey.projectId,
           ownerUserId: req.apiKey.ownerUserId,
@@ -204,12 +215,24 @@ router.post(
 
     try {
       const db = await getDb();
-      const action = await db
-        .collection<ProjectActionDoc>("project_actions")
-        .findOne({ projectId, actionName });
+      const [project, action] = await Promise.all([
+        db.collection<{ routingMode?: RoutingMode }>("projects").findOne(
+          { _id: projectId },
+          { projection: { routingMode: 1 } }
+        ),
+        db.collection<ProjectActionDoc>("project_actions").findOne({ projectId, actionName }),
+      ]);
+
+      const routingMode: RoutingMode = project?.routingMode && ["cheap", "balanced", "quality"].includes(project.routingMode)
+        ? project.routingMode
+        : "quality";
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[Runtime] routingMode=${routingMode}`);
+      }
 
       if (!action) {
-        await safeLogUsage({ statusCode: 404, status: "error", actionDoc: null });
+        await safeLogUsage({ statusCode: 404, status: "error", actionDoc: null, routingMode });
         await logRun({
           requestId,
           projectId: req.apiKey.projectId,
@@ -228,7 +251,7 @@ router.post(
 
       const normResult = normalizeRequestBody(body, schema && typeof schema === "object" ? schema : null);
       if ("error" in normResult) {
-        await safeLogUsage({ statusCode: 400, status: "error" });
+        await safeLogUsage({ statusCode: 400, status: "error", actionDoc: action, routingMode });
         await logRun({
           requestId,
           projectId: req.apiKey.projectId,
@@ -250,7 +273,7 @@ router.post(
         try {
           validate = ajv.compile(schema);
         } catch (schemaErr) {
-          await safeLogUsage({ statusCode: 500, status: "error" });
+          await safeLogUsage({ statusCode: 500, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
             projectId: req.apiKey.projectId,
@@ -270,7 +293,7 @@ router.post(
             firstErr?.instancePath && firstErr?.message
               ? `${firstErr.instancePath}: ${firstErr.message}`
               : "Body must be { input: {...} }";
-          await safeLogUsage({ statusCode: 400, status: "error" });
+          await safeLogUsage({ statusCode: 400, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
             projectId: req.apiKey.projectId,
@@ -287,7 +310,7 @@ router.post(
 
       const prompt = substituteVariables(action.promptTemplate, variables);
       if (prompt.length > MAX_INPUT_CHARS) {
-        await safeLogUsage({ statusCode: 400, status: "error" });
+        await safeLogUsage({ statusCode: 400, status: "error", actionDoc: action, routingMode });
         await logRun({
           requestId,
           projectId: req.apiKey.projectId,
@@ -302,7 +325,7 @@ router.post(
       }
 
       const executionProvider = getExecutionProvider();
-      const modelList = resolveModelList(action, executionProvider);
+      const modelList = resolveModelList(action, executionProvider, routingMode);
 
       try {
         await deductCreditsForUsage({
@@ -313,7 +336,7 @@ router.post(
         });
       } catch (err) {
         if (err instanceof MonthlyQuotaExceededError) {
-          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action });
+          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
             projectId: req.apiKey.projectId,
@@ -327,7 +350,7 @@ router.post(
           return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded", requestId);
         }
         if (err instanceof InsufficientCreditsError) {
-          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action });
+          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
             projectId: req.apiKey.projectId,
@@ -409,7 +432,7 @@ router.post(
       });
     } catch (error) {
       const latencyMs = Date.now() - startMs;
-      await safeLogUsage({ statusCode: 502, status: "error" });
+      await safeLogUsage({ statusCode: 502, status: "error", actionDoc: undefined, routingMode: "quality" });
       await logRun({
         requestId,
         projectId: req.apiKey.projectId,

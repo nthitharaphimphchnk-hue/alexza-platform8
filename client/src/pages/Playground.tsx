@@ -267,6 +267,18 @@ export default function Playground() {
 
           {!useLegacy && (
             <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-4 flex flex-wrap gap-4">
+              {projectId && (
+                <div className="w-full flex items-center gap-2 mb-2">
+                  <span className="text-xs text-gray-500">Routing:</span>
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-[rgba(255,255,255,0.08)] text-gray-300">
+                    {(() => {
+                      const p = projects.find((x) => x.id === projectId);
+                      const mode = p?.routingMode ?? "quality";
+                      return mode === "cheap" ? "Cheap" : mode === "balanced" ? "Balanced" : "Quality";
+                    })()}
+                  </span>
+                </div>
+              )}
               <div className="space-y-1 min-w-[180px]">
                 <label className="text-xs text-gray-500">Project</label>
                 <select

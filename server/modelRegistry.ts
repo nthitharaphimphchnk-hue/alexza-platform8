@@ -23,10 +23,20 @@ export const BALANCED_MODELS: string[] = [
   "anthropic/claude-3-haiku",
 ];
 
-/** Cheap: lowest cost (optional, not wired yet) */
+/** Cheap: lowest cost */
 export const CHEAP_MODELS: string[] = [
   "openai/gpt-4o-mini",
   "meta-llama/llama-3.2-3b-instruct:free",
 ];
 
-export type RoutingPolicy = "quality" | "balanced" | "cheap";
+/** Cheap models when using OpenAI provider directly */
+export const CHEAP_MODELS_OPENAI: string[] = [
+  "gpt-4o-mini",
+];
+
+/** Balanced models when using OpenAI provider directly */
+export const BALANCED_MODELS_OPENAI: string[] = [
+  "gpt-4o-mini",
+];
+
+export type RoutingMode = "cheap" | "balanced" | "quality";

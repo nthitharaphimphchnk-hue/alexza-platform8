@@ -3,12 +3,15 @@ import { ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 
+export type RoutingMode = "cheap" | "balanced" | "quality";
+
 interface ProjectDoc {
   ownerUserId: ObjectId;
   name: string;
   description?: string;
   model?: string;
   status: "active" | "paused";
+  routingMode?: RoutingMode;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +34,7 @@ let projectsIndexesReady: Promise<void> | null = null;
 
 function toProjectResponse(project: WithId<ProjectDoc>) {
   const id = project._id.toString();
+  const routingMode = project.routingMode ?? "quality";
   return {
     id,
     _id: id,
@@ -39,6 +43,7 @@ function toProjectResponse(project: WithId<ProjectDoc>) {
     description: project.description ?? "",
     model: project.model ?? "",
     status: project.status,
+    routingMode,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   };
@@ -62,6 +67,18 @@ async function ensureProjectsIndexes() {
     })();
   }
   return projectsIndexesReady;
+}
+
+export async function runRoutingModeMigration() {
+  const db = await getDb();
+  const projects = db.collection<ProjectDoc>("projects");
+  const result = await projects.updateMany(
+    { routingMode: { $exists: false } },
+    { $set: { routingMode: "quality" as RoutingMode } }
+  );
+  if (result.modifiedCount > 0 && process.env.NODE_ENV !== "production") {
+    console.log(`[Projects] routingMode migration: ${result.modifiedCount} projects set to quality`);
+  }
 }
 
 router.post("/projects", requireAuth, async (req, res, next) => {
@@ -104,6 +121,7 @@ router.post("/projects", requireAuth, async (req, res, next) => {
       description,
       model,
       status: "active",
+      routingMode: "quality",
       createdAt: now,
       updatedAt: now,
     });
@@ -145,6 +163,50 @@ router.get("/projects", requireAuth, async (req, res, next) => {
       ok: true,
       projects: rows.map(toProjectResponse),
     });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+const ROUTING_MODES: RoutingMode[] = ["cheap", "balanced", "quality"];
+
+router.patch("/projects/:id/settings", requireAuth, async (req, res, next) => {
+  try {
+    await ensureProjectsIndexes();
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+
+    const projectId = parseProjectId(req.params.id);
+    if (!projectId) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    const body = req.body as { routingMode?: unknown };
+    const routingModeRaw = body.routingMode;
+    if (routingModeRaw === undefined) {
+      return res.status(400).json(validationError("routingMode is required"));
+    }
+    if (typeof routingModeRaw !== "string" || !ROUTING_MODES.includes(routingModeRaw as RoutingMode)) {
+      return res.status(400).json(
+        validationError(`routingMode must be one of: ${ROUTING_MODES.join(", ")}`)
+      );
+    }
+    const routingMode = routingModeRaw as RoutingMode;
+
+    const db = await getDb();
+    const projects = db.collection<ProjectDoc>("projects");
+    const updated = await projects.findOneAndUpdate(
+      { _id: projectId, ownerUserId: req.user._id },
+      { $set: { routingMode, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    return res.json({ ok: true, project: toProjectResponse(updated) });
   } catch (error) {
     return next(error);
   }

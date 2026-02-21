@@ -22,6 +22,7 @@ import { actionsRouter } from "./actions";
 import { usageRouter } from "./usageRoutes";
 import { creditsRouter } from "./credits";
 import { billingRouter, runBillingUserMigration } from "./billing";
+import { runRoutingModeMigration } from "./projects";
 import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
 
@@ -86,6 +87,7 @@ function extractRegisteredRoutes(app: express.Express): string[] {
 async function startServer() {
   await runBillingUserMigration();
   await runLowCreditsEmailMigration();
+  await runRoutingModeMigration();
   const app = express();
   const server = createServer(app);
 

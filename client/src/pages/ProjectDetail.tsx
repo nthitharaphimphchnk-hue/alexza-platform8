@@ -13,12 +13,15 @@ import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSc
 import type { PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showProjectDeletedToast, showSuccessToast, showCopyToClipboardToast } from "@/lib/toast";
 
+type RoutingMode = "cheap" | "balanced" | "quality";
+
 interface ProjectDetailData {
   id: string;
   name: string;
   description: string;
   model: string;
   status: "active" | "paused";
+  routingMode: RoutingMode;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,9 +58,10 @@ export default function ProjectDetail() {
   const [validateError, setValidateError] = useState<string | null>(null);
   const [deleteActionName, setDeleteActionName] = useState<string | null>(null);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
+  const [routingModeSaving, setRoutingModeSaving] = useState(false);
 
   const projectId = useMemo(() => {
-    const match = location.match(/^\/app\/projects\/([^/]+)$/);
+    const match = location.match(/^\/app\/projects\/([^/]+)(?:\/|$)/);
     return match?.[1] ? decodeURIComponent(match[1]) : "";
   }, [location]);
 
@@ -74,12 +78,16 @@ export default function ProjectDetail() {
       );
 
       const raw = response.project || {};
+      const rm = raw.routingMode;
+      const routingMode: RoutingMode =
+        rm === "cheap" || rm === "balanced" || rm === "quality" ? rm : "quality";
       setProject({
         id: String(raw.id ?? ""),
         name: typeof raw.name === "string" ? raw.name : "Untitled",
         description: typeof raw.description === "string" ? raw.description : "",
         model: typeof raw.model === "string" ? raw.model : "",
         status: raw.status === "paused" ? "paused" : "active",
+        routingMode,
         createdAt: String(raw.createdAt ?? ""),
         updatedAt: String(raw.updatedAt ?? ""),
       });
@@ -415,6 +423,38 @@ export default function ProjectDetail() {
                     <div>
                       <p className="text-xs text-gray-500">Runtime</p>
                       <p className="text-white mt-1">ALEXZA Managed Runtime</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Routing Mode</p>
+                      <select
+                        value={project.routingMode ?? "quality"}
+                        onChange={async (e) => {
+                          const mode = e.target.value as RoutingMode;
+                          if (!projectId || routingModeSaving) return;
+                          setRoutingModeSaving(true);
+                          try {
+                            await apiRequest<{ ok: true; project: Record<string, unknown> }>(
+                              `/api/projects/${projectId}/settings`,
+                              { method: "PATCH", body: { routingMode: mode } }
+                            );
+                            setProject((p) => (p ? { ...p, routingMode: mode } : p));
+                            showSuccessToast("Routing mode updated");
+                          } catch (err) {
+                            showErrorToast("Failed to update routing mode");
+                          } finally {
+                            setRoutingModeSaving(false);
+                          }
+                        }}
+                        disabled={routingModeSaving}
+                        className="mt-1 w-full max-w-xs px-3 py-2 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white text-sm focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
+                      >
+                        <option value="quality">Quality (Best results)</option>
+                        <option value="balanced">Balanced (Cost / Quality)</option>
+                        <option value="cheap">Cheap (Lowest cost)</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Quality: Best models with fallback. Balanced: Mid-tier models. Cheap: Lowest cost, simpler models.
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Status</p>
