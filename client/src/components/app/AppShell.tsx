@@ -1,6 +1,8 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
   Bell,
   ChevronRight,
@@ -45,12 +47,12 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const navItems = [
-  { label: "Dashboard", href: "/app/dashboard", icon: Home },
-  { label: "Projects", href: "/app/projects", icon: FileText },
-  { label: "Credits", href: "/app/billing/credits", icon: Zap },
-  { label: "Billing", href: "/app/billing/plans", icon: CreditCard },
-  { label: "Settings", href: "/app/settings", icon: Settings },
+const navKeys = [
+  { key: "navigation.dashboard", href: "/app/dashboard", icon: Home },
+  { key: "navigation.projects", href: "/app/projects", icon: FileText },
+  { key: "navigation.credits", href: "/app/billing/credits", icon: Zap },
+  { key: "navigation.billing", href: "/app/billing/plans", icon: CreditCard },
+  { key: "navigation.settings", href: "/app/settings", icon: Settings },
 ];
 
 const mockNotifications = [
@@ -68,6 +70,7 @@ export default function AppShell({
   actions,
   children,
 }: AppShellProps) {
+  const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const [mode, setMode] = useState<Mode>("Production");
   const [lowCreditsBalance, setLowCreditsBalance] = useState<number | null>(null);
@@ -181,7 +184,7 @@ export default function AppShell({
           </div>
 
           <nav className="flex-1 space-y-1 px-4 py-6">
-            {navItems.map((item) => {
+            {navKeys.map((item) => {
               const Icon = item.icon;
               return (
                 <button
@@ -194,14 +197,14 @@ export default function AppShell({
                   }`}
                 >
                   <Icon size={18} />
-                  <span>{item.label}</span>
+                  <span>{t(item.key)}</span>
                   {item.href === "/app/billing/credits" && isLowCredits ? (
                     <span
                       className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         isZeroCredits ? "bg-red-500/25 text-red-200" : "bg-amber-500/25 text-amber-200"
                       }`}
                     >
-                      {isZeroCredits ? "Top up" : "Low"}
+                      {isZeroCredits ? t("appShell.topUp") : t("appShell.low")}
                     </span>
                   ) : null}
                 </button>
@@ -240,14 +243,15 @@ export default function AppShell({
                 <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   type="text"
-                  placeholder="Search projects, keys, events..."
+                  placeholder={t("appShell.searchPlaceholder")}
                   className="h-10 w-full rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-[rgba(192,192,192,0.45)] focus:outline-none"
                 />
               </div>
 
               <div className="flex items-center justify-start gap-2 xl:justify-end">
+                <LanguageSwitcher />
                 <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 px-3 py-1.5 text-xs text-gray-300">
-                  Environment:
+                  {t("appShell.environment")}:
                   <span className={`ml-2 font-semibold ${mode === "Production" ? "text-[#c0c0c0]" : "text-cyan-300"}`}>
                     {mode}
                   </span>
@@ -256,11 +260,11 @@ export default function AppShell({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="border-[rgba(255,255,255,0.08)] text-white">
-                      Switch Mode
+                      {t("appShell.switchMode")}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-[#0b0e12] text-gray-200">
-                    <DropdownMenuLabel>Application Mode</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t("appShell.applicationMode")}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => updateMode("Production")}>Production</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => updateMode("Test")}>Test</DropdownMenuItem>
@@ -274,7 +278,7 @@ export default function AppShell({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-80 bg-[#0b0e12] text-gray-200">
-                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t("appShell.notifications")}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {mockNotifications.map((notification) => (
                       <DropdownMenuItem key={notification.id} className="flex items-start justify-between gap-2 py-2">
@@ -295,13 +299,13 @@ export default function AppShell({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-[#0b0e12] text-gray-200">
-                    <DropdownMenuLabel>Account</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t("appShell.account")}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setLocation("/app/settings")}>Profile Settings</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/app/billing/plans")}>Billing</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/app/admin/tools")}>Admin Tools</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/app/settings")}>{t("appShell.profileSettings")}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/app/billing/plans")}>{t("navigation.billing")}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/app/admin/tools")}>{t("appShell.adminTools")}</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => void handleSignOut()}>Sign Out</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void handleSignOut()}>{t("appShell.signOut")}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -337,7 +341,7 @@ export default function AppShell({
                     className="mb-3 inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-sm text-gray-200 transition hover:border-[rgba(192,192,192,0.4)] hover:text-white"
                   >
                     <span aria-hidden>←</span>
-                    {backLabel}
+                    {backLabel || t("common.back")}
                   </button>
                   <h1 className="text-3xl font-semibold text-white">{title}</h1>
                   {subtitle ? <p className="mt-1 text-sm text-gray-400">{subtitle}</p> : null}

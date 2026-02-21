@@ -23,10 +23,26 @@ pnpm build
 pnpm start
 ```
 
-Set these env values in `.env.local` for OpenAI:
+Set these env values in `.env.local`:
 
 ```bash
-OPENAI_API_KEY="your_openai_api_key"
+# Auth (required for signup/login)
+SESSION_SECRET="your_session_secret"
+
+# MongoDB
+MONGODB_URI="mongodb://..."
+MONGODB_DB="alexza"
+
+# Builder AI (Chat Builder)
+OPENAI_API_KEY="..."
+BUILDER_MODEL="gpt-4o-mini"
+
+# Execution Gateway (ALEXZA Managed Runtime)
+OPENROUTER_API_KEY="..."
+OPENROUTER_BASE_URL="..."  # optional
+EXECUTION_DEFAULT_MODEL="..."  # optional
+
+# Legacy /v1/run
 OPENAI_MODEL="gpt-4o-mini"
 ```
 
@@ -91,6 +107,43 @@ curl -i -b cookies.txt http://localhost:3002/api/projects
 curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>
 ```
 
+## Builder AI (Threads, Messages, Actions)
+
+Use an authenticated cookie session (`cookies.txt`) and a project id:
+
+```bash
+# 1) Create thread
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/threads \
+  -H "Content-Type: application/json" \
+  -d '{"title":"New chat"}'
+
+# 2) List threads
+curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/threads
+
+# 3) List messages
+curl -i -b cookies.txt http://localhost:3002/api/threads/<thread_id>/messages
+
+# 4) Send message (creates user msg, calls Builder AI, returns assistant + proposedActions)
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/threads/<thread_id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"content":"อยากได้ API สรุปข้อความ"}'
+
+# 5) Apply action (upsert)
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/actions \
+  -H "Content-Type: application/json" \
+  -d '{"actionName":"summarize_text","description":"...","inputSchema":{"type":"object","properties":{"input":{"type":"string"}},"required":["input"]}}'
+
+# 6) List actions
+curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/actions
+
+# 7) Delete action
+curl -i -b cookies.txt -X DELETE http://localhost:3002/api/projects/<project_id>/actions/<action_name>
+```
+
+- `actionName` must be URL-safe (a-z, 0-9, underscore, hyphen).
+- `inputSchema` must be valid JSON schema.
+- Responses never include provider/model/gateway info.
+
 ## API Keys Smoke Test
 
 Use a valid project id from the projects API.
@@ -110,7 +163,34 @@ curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects
 
 After refresh, raw key cannot be retrieved again from list endpoints.
 
-## Run Endpoint Smoke Test (`/v1/run`)
+## Run Endpoint Smoke Tests
+
+### Recommended: Run by Action (`/v1/projects/:projectId/run/:actionName`)
+
+1. Create a project and API key (see Projects + API Keys smoke tests).
+2. Use Chat Builder in the app to define an action (or create one via `POST /api/projects/<project_id>/actions`).
+3. Run the action:
+
+```bash
+curl -i -X POST "http://localhost:3002/v1/projects/<project_id>/run/<action_name>" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <raw_api_key>" \
+  -d '{"input":"Hello from curl"}'
+```
+
+Expected success response shape:
+
+```json
+{ "ok": true, "requestId": "...", "output": "...", "usage": { "tokens": 0, "creditsCharged": 1 }, "latencyMs": 100 }
+```
+
+Smoke test (creates user, project, key, action, then runs):
+
+```bash
+pnpm tsx scripts/smoke-run-by-action.ts
+```
+
+### Legacy: Single Run (`/v1/run`) — Deprecated
 
 Use the raw API key returned from `POST /api/projects/<project_id>/keys`.
 
@@ -199,8 +279,11 @@ Backend/runtime:
 - `MONGODB_DB`
 - `SESSION_SECRET`
 - `SESSION_COOKIE_NAME` (optional, defaults to `alexza_session`)
-- `OPENAI_API_KEY` (if using `/v1/run`)
-- `OPENAI_MODEL` (optional)
+- `OPENAI_API_KEY` (Builder AI + legacy `/v1/run`)
+- `OPENROUTER_API_KEY` (ALEXZA Managed Runtime)
+- `OPENROUTER_BASE_URL` (optional)
+- `BUILDER_MODEL` (optional)
+- `EXECUTION_DEFAULT_MODEL` (optional)
 
 Frontend build-time:
 
@@ -208,9 +291,10 @@ Frontend build-time:
 - `VITE_ANALYTICS_ENDPOINT` (optional)
 - `VITE_ANALYTICS_WEBSITE_ID` (optional)
 
-Networking/cookies:
+Networking/cookies (required for production auth):
 
-- `CORS_ORIGIN` (recommended in production; comma-separated allowlist, e.g. `https://your-app.onrender.com`)
+- `CLIENT_URL` (recommended) — frontend origin, e.g. `https://your-app.onrender.com` (enables cross-origin cookies)
+- `CORS_ORIGIN` (alternative) — comma-separated allowlist, e.g. `https://your-app.onrender.com`
 - `TRUST_PROXY=1` (recommended on Render so secure cookies work behind proxy)
 
 ### Deployment checklist

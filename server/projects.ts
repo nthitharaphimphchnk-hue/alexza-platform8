@@ -202,9 +202,19 @@ router.delete("/projects/:id", requireAuth, async (req, res, next) => {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
 
+    const threadIds = await db
+      .collection("chat_threads")
+      .find({ projectId })
+      .project({ _id: 1 })
+      .toArray()
+      .then((rows) => rows.map((r) => r._id));
+
     await Promise.all([
       db.collection("api_keys").deleteMany({ projectId }),
       db.collection("usage_logs").deleteMany({ projectId }),
+      db.collection("project_actions").deleteMany({ projectId }),
+      db.collection("chat_messages").deleteMany({ threadId: { $in: threadIds } }),
+      db.collection("chat_threads").deleteMany({ projectId }),
     ]);
 
     return res.json({ ok: true });

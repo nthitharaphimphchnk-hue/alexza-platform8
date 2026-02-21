@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Mail, Lock, User, Building2, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mail, Lock, User, Building2, AlertCircle, CheckCircle } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion } from "framer-motion";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { useLocation } from "wouter";
@@ -8,7 +10,6 @@ import { validateSignupForm, getFieldError, hasFieldError } from "@/lib/validati
 import { useState } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
 import { ApiError, apiRequest } from "@/lib/api";
-import Logo from "@/components/Logo";
 
 /**
  * ALEXZA AI Signup Page
@@ -26,6 +27,7 @@ interface SignupFormData {
 }
 
 export default function Signup() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -79,10 +81,16 @@ export default function Signup() {
   });
 
   return (
-    <div className="min-h-screen text-foreground flex flex-col items-center justify-center px-4 py-8">
-      <div className="flex justify-center mb-6">
-        <Logo size="auth" />
+    <div className="min-h-screen text-foreground flex flex-col items-center justify-center px-4 py-8 relative">
+      {/* Back button + Language */}
+      <div className="fixed top-6 left-6 right-6 z-50 flex items-center justify-between">
+        <a href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm">
+          <ArrowLeft size={20} />
+          <span>{t("navigation.backToHome")}</span>
+        </a>
+        <LanguageSwitcher />
       </div>
+
       <motion.div
         className="w-full max-w-md"
         variants={containerVariants}
@@ -90,8 +98,8 @@ export default function Signup() {
         animate="visible"
       >
         <motion.div className="text-center mb-12" variants={itemVariants}>
-          <h1 className="text-3xl font-bold text-white">Create your account</h1>
-          <p className="text-gray-400 mt-2">Join ALEXZA AI</p>
+          <h1 className="text-3xl font-bold text-white">{t("auth.signup.title")}</h1>
+          <p className="text-gray-400 mt-2">{t("auth.signup.joinUs")}</p>
         </motion.div>
 
         {/* Success Message */}
@@ -102,7 +110,7 @@ export default function Signup() {
             animate={{ opacity: 1, y: 0 }}
           >
             <CheckCircle size={20} className="text-[#c0c0c0]" />
-            <p className="text-sm text-[#c0c0c0]">Account created! Redirecting...</p>
+            <p className="text-sm text-[#c0c0c0]">{t("auth.signup.accountCreated")}</p>
           </motion.div>
         )}
 
@@ -110,7 +118,7 @@ export default function Signup() {
         <motion.form onSubmit={form.handleSubmit} className="space-y-4" variants={itemVariants}>
           {/* Email */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Email Address</label>
+            <label className="text-sm font-medium text-gray-300">{t("auth.signup.email")}</label>
             <div className="relative">
               <Mail size={18} className="absolute left-3 top-3 text-gray-500" />
               <input
@@ -137,7 +145,7 @@ export default function Signup() {
 
           {/* Company */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Company (Optional)</label>
+            <label className="text-sm font-medium text-gray-300">{t("auth.signup.company")}</label>
             <div className="relative">
               <Building2 size={18} className="absolute left-3 top-3 text-gray-500" />
               <input
@@ -145,7 +153,7 @@ export default function Signup() {
                 name="company"
                 value={form.values.company}
                 onChange={form.handleChange}
-                placeholder="Your company"
+                placeholder={t("auth.signup.companyPlaceholder")}
                 disabled={form.isSubmitting}
                 className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600 focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition disabled:opacity-50"
               />
@@ -154,7 +162,7 @@ export default function Signup() {
 
           {/* Password */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Password</label>
+            <label className="text-sm font-medium text-gray-300">{t("auth.signup.password")}</label>
             <div className="relative">
               <Lock size={18} className="absolute left-3 top-3 text-gray-500" />
               <input
@@ -178,13 +186,13 @@ export default function Signup() {
               </div>
             )}
             {form.values.password && !hasFieldError(form.errors, "password") && (
-              <p className="text-xs text-[#c0c0c0] mt-1">✓ Password is strong</p>
+              <p className="text-xs text-[#c0c0c0] mt-1">{t("auth.signup.passwordStrong")}</p>
             )}
           </div>
 
           {/* Confirm Password */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Confirm Password</label>
+            <label className="text-sm font-medium text-gray-300">{t("auth.signup.confirmPassword")}</label>
             <div className="relative">
               <Lock size={18} className="absolute left-3 top-3 text-gray-500" />
               <input
@@ -213,13 +221,13 @@ export default function Signup() {
           <label className="flex items-start gap-2 text-sm text-gray-400">
             <input type="checkbox" className="rounded mt-1" disabled={form.isSubmitting} />
             <span>
-              I agree to the{" "}
+              {t("auth.signup.agreeToTermsPrefix")}{" "}
               <a href="#" className="text-[#c0c0c0] hover:text-white transition">
-                Terms of Service
+                {t("auth.signup.termsOfService")}
               </a>{" "}
-              and{" "}
+              {t("auth.signup.agreeToTermsAnd")}{" "}
               <a href="#" className="text-[#c0c0c0] hover:text-white transition">
-                Privacy Policy
+                {t("auth.signup.privacyPolicy")}
               </a>
             </span>
           </label>
@@ -237,7 +245,7 @@ export default function Signup() {
               </>
             ) : (
               <>
-                Create Account <ArrowRight size={18} />
+                {t("auth.signup.createAccount")} <ArrowRight size={18} />
               </>
             )}
           </Button>
@@ -250,7 +258,7 @@ export default function Signup() {
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-2 bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607] text-gray-500">
-              Or sign up with
+              {t("auth.signup.orSignUpWith")}
             </span>
           </div>
         </motion.div>
@@ -275,9 +283,9 @@ export default function Signup() {
 
         {/* Login Link */}
         <motion.p className="text-center text-gray-400 mt-8" variants={itemVariants}>
-          Already have an account?{" "}
+          {t("auth.signup.haveAccount")}{" "}
           <a href="/login" className="text-[#c0c0c0] hover:text-white transition font-semibold">
-            Sign in
+            {t("auth.signup.signIn")}
           </a>
         </motion.p>
       </motion.div>

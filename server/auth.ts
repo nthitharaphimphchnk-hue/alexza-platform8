@@ -14,6 +14,7 @@ import {
   hashSessionToken,
   verifyPassword,
 } from "./utils/crypto";
+import { getDbLogContext, maskEmail } from "./utils/sanitize";
 
 interface UserDoc {
   email: string;
@@ -206,13 +207,22 @@ router.post("/auth/login", async (req, res, next) => {
     const users = db.collection<UserDoc>("users");
     const user = (await users.findOne({ email: payload.email })) as WithId<UserDoc> | null;
 
+    const ctx = getDbLogContext();
+    const masked = maskEmail(payload.email);
+
     if (!user) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+      console.log(
+        `[Auth] login failed result=USER_NOT_FOUND email=${masked} db=${ctx.dbName} hostHash=${ctx.uriHostHash}`
+      );
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: "Invalid credentials." });
     }
 
     const isValidPassword = await verifyPassword(payload.password, user.passwordHash);
     if (!isValidPassword) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+      console.log(
+        `[Auth] login failed result=PASSWORD_MISMATCH email=${masked} db=${ctx.dbName} hostHash=${ctx.uriHostHash}`
+      );
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: "Invalid credentials." });
     }
 
     await createSessionAndSetCookie(user._id, res);

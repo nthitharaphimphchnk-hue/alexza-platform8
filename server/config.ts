@@ -13,3 +13,9 @@ export const RATE_LIMIT_REQUESTS_PER_MINUTE = readPositiveIntFromEnv(
 export const MAX_INPUT_CHARS = readPositiveIntFromEnv("MAX_INPUT_CHARS", 12000);
 export const MAX_ESTIMATED_TOKENS = readPositiveIntFromEnv("MAX_ESTIMATED_TOKENS", 8000);
 export const MAX_CREDITS_PER_REQUEST = readPositiveIntFromEnv("MAX_CREDITS_PER_REQUEST", 50);
+
+/** Free plan: max actions per project */
+export const MAX_ACTIONS_PER_PROJECT_FREE = readPositiveIntFromEnv(
+  "MAX_ACTIONS_PER_PROJECT_FREE",
+  3
+);

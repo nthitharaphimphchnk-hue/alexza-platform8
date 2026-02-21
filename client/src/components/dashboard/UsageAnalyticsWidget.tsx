@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from "react-i18next";
 import {
   AreaChart,
   Area,
@@ -23,16 +24,17 @@ const MOCK_DATA = [
 const totalRequests = MOCK_DATA.reduce((s, d) => s + d.requests, 0);
 
 export default function UsageAnalyticsWidget() {
+  const { t } = useTranslation();
   return (
     <section className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-6 backdrop-blur">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Total Requests (Last 7 Days)</h2>
+        <h2 className="text-lg font-semibold text-white">{t("dashboard.totalRequests")}</h2>
       </div>
       <div className="mb-4">
         <p className="text-3xl font-bold text-white">
           {(totalRequests / 1000).toFixed(1)}K
         </p>
-        <p className="text-sm text-gray-500">Requests</p>
+        <p className="text-sm text-gray-500">{t("dashboard.requests")}</p>
       </div>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">

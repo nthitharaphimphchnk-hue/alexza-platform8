@@ -157,7 +157,7 @@ export default function Home() {
             viewport={{ once: true, margin: "-80px" }}
           >
             {[
-              { icon: Network, title: "Multi-LLM Routing", desc: "Seamlessly switch between OpenAI, Anthropic, and local models with intelligent routing logic.", color: "mono" as const },
+              { icon: Network, title: "ALEXZA Managed Runtime", desc: "Unified AI runtime with intelligent routing. Build once, run anywhere.", color: "mono" as const },
               { icon: GitBranch, title: "Visual Flow Builder", desc: "Design complex AI agent workflows with our intuitive drag-and-drop interface.", color: "mono" as const },
               { icon: Gauge, title: "Real-time Optimization", desc: "Monitor performance, track costs, and optimize latency automatically.", color: "mono" as const },
             ].map((item, i) => {

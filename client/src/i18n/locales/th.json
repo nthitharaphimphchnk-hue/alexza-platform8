@@ -12,7 +12,8 @@
     "create": "สร้าง",
     "edit": "แก้ไข",
     "close": "ปิด",
-    "search": "ค้นหา"
+    "search": "ค้นหา",
+    "back": "กลับ"
   },
   "navigation": {
     "product": "สินค้า",
@@ -28,7 +29,24 @@
     "usage": "การใช้งาน",
     "credits": "เครดิต",
     "billing": "การเรียกเก็บเงิน",
-    "settings": "ตั้งค่า"
+    "settings": "ตั้งค่า",
+    "backToHome": "กลับหน้าแรก",
+    "backToProjects": "กลับไปโปรเจกต์",
+    "newProject": "โปรเจกต์ใหม่",
+    "openUsage": "เปิดการใช้งาน"
+  },
+  "appShell": {
+    "searchPlaceholder": "ค้นหาโปรเจกต์ คีย์ เหตุการณ์...",
+    "environment": "สภาพแวดล้อม",
+    "switchMode": "สลับโหมด",
+    "applicationMode": "โหมดแอป",
+    "notifications": "การแจ้งเตือน",
+    "account": "บัญชี",
+    "profileSettings": "ตั้งค่าโปรไฟล์",
+    "adminTools": "เครื่องมือผู้ดูแล",
+    "signOut": "ออกจากระบบ",
+    "low": "ต่ำ",
+    "topUp": "เติมเครดิต"
   },
   "home": {
     "title": "ALEXZA AI — แพลตฟอร์มการจัดการโซลูชัน AI",
@@ -45,26 +63,67 @@
   "auth": {
     "login": {
       "title": "เข้าสู่ระบบบัญชีของคุณ",
+      "welcomeBack": "ยินดีต้อนรับกลับสู่ ALEXZA AI",
       "email": "ที่อยู่อีเมล",
       "password": "รหัสผ่าน",
       "rememberMe": "จำฉันไว้",
       "forgotPassword": "ลืมรหัสผ่าน?",
       "signIn": "เข้าสู่ระบบ",
+      "signingIn": "กำลังเข้าสู่ระบบ...",
       "orContinueWith": "หรือดำเนินการต่อด้วย",
       "noAccount": "ยังไม่มีบัญชี?",
-      "signUp": "สมัครสมาชิก"
+      "signUp": "สมัครสมาชิก",
+      "loginSuccess": "เข้าสู่ระบบสำเร็จ! กำลังเปลี่ยนหน้า..."
     },
     "signup": {
       "title": "สร้างบัญชีของคุณ",
+      "joinUs": "ร่วมเป็นส่วนหนึ่งของ ALEXZA AI",
       "email": "ที่อยู่อีเมล",
       "password": "รหัสผ่าน",
       "confirmPassword": "ยืนยันรหัสผ่าน",
       "company": "บริษัท (ไม่จำเป็น)",
+      "companyPlaceholder": "บริษัทของคุณ",
       "agreeToTerms": "ฉันยอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว",
+      "agreeToTermsPrefix": "ฉันยอมรับ",
+      "agreeToTermsAnd": "และ",
+      "termsOfService": "ข้อกำหนดการให้บริการ",
+      "privacyPolicy": "นโยบายความเป็นส่วนตัว",
       "createAccount": "สร้างบัญชี",
+      "creatingAccount": "กำลังสร้างบัญชี...",
       "haveAccount": "มีบัญชีอยู่แล้ว?",
-      "signIn": "เข้าสู่ระบบ"
+      "signIn": "เข้าสู่ระบบ",
+      "orSignUpWith": "หรือสมัครด้วย",
+      "accountCreated": "สร้างบัญชีสำเร็จ! กำลังเปลี่ยนหน้า...",
+      "passwordStrong": "✓ รหัสผ่านแข็งแรง"
     }
+  },
+  "dashboard": {
+    "title": "แดชบอร์ด",
+    "subtitle": "ภาพรวมการจัดการ AI แบบเรียลไทม์",
+    "gettingStarted": "เริ่มต้นใช้งาน",
+    "createProject": "สร้างโปรเจกต์",
+    "createApiKey": "สร้าง API Key",
+    "openChatBuilder": "เปิด ChatBuilder และ Apply Action",
+    "testInPlayground": "ทดสอบ Action ใน Playground",
+    "apiLatency": "ความหน่วง API",
+    "gatewayHealth": "สถานะ Gateway",
+    "modelCluster": "Model Cluster",
+    "creditsRemaining": "เครดิตคงเหลือ",
+    "healthy": "ปกติ",
+    "operational": "ทำงานปกติ",
+    "online": "ออนไลน์",
+    "budgetSafe": "งบประมาณปลอดภัย",
+    "status": "สถานะ",
+    "creditsBalance": "ยอดเครดิต",
+    "last24hUsage": "การใช้งาน 24 ชม.",
+    "calls": "ครั้ง",
+    "errors": "ข้อผิดพลาด",
+    "systemStatus": "สถานะระบบ",
+    "allSystemsNormal": "ระบบทำงานปกติ",
+    "overview": "ภาพรวม",
+    "activityFeed": "ฟีดกิจกรรม",
+    "totalRequests": "คำขอทั้งหมด (7 วันล่าสุด)",
+    "requests": "คำขอ"
   },
   "pricing": {
     "title": "แผนราคา",
@@ -81,6 +140,8 @@
     "newProject": "โปรเจกต์ใหม่",
     "search": "ค้นหาโปรเจกต์...",
     "noProjects": "ไม่พบโปรเจกต์",
+    "untitled": "ไม่มีชื่อ",
+    "noDescription": "ไม่มีคำอธิบาย",
     "createModal": {
       "title": "สร้างโปรเจกต์",
       "name": "ชื่อโปรเจกต์",
@@ -89,6 +150,12 @@
       "create": "สร้าง",
       "cancel": "ยกเลิก"
     }
+  },
+  "projectDetail": {
+    "chatBuilder": "Chat Builder",
+    "apiKeys": "API Keys",
+    "playground": "Playground",
+    "usage": "การใช้งาน"
   },
   "apiKeys": {
     "title": "API Keys",

@@ -6,16 +6,23 @@ import { createServer } from "http";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
+import { sanitizeForLog } from "./utils/sanitize";
 import { authRouter } from "./auth";
 import { getDb, pingDb } from "./db";
 import { keysRouter } from "./keys";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
 import { projectsRouter } from "./projects";
 import { runRouter } from "./run";
+import { runBySpecRouter } from "./runBySpec";
+import { adminRunLogsRouter } from "./adminRunLogs";
+import { builderRouter } from "./builder";
+import { actionsRouter } from "./actions";
 import { usageRouter } from "./usageRoutes";
 import { creditsRouter } from "./credits";
 import { billingRouter, runBillingUserMigration } from "./billing";
+import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -81,18 +88,23 @@ async function startServer() {
   await runLowCreditsEmailMigration();
   const app = express();
   const server = createServer(app);
+
+  // Trust proxy (required for Render; secure cookies work behind proxy)
   const trustProxyRaw = process.env.TRUST_PROXY;
   if (trustProxyRaw !== undefined) {
     const parsedTrustProxy = Number.parseInt(trustProxyRaw, 10);
-    app.set("trust proxy", Number.isNaN(parsedTrustProxy) ? trustProxyRaw : parsedTrustProxy);
-  } else if (process.env.NODE_ENV === "production") {
+    app.set("trust proxy", Number.isNaN(parsedTrustProxy) ? 1 : parsedTrustProxy);
+  } else {
     app.set("trust proxy", 1);
   }
 
-  const allowedOrigins = (process.env.CORS_ORIGIN || "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  // CORS: prefer CLIENT_URL, then CORS_ORIGIN (comma-separated)
+  const clientUrl = (process.env.CLIENT_URL || "").trim();
+  const corsOriginEnv = (process.env.CORS_ORIGIN || "").trim();
+  const allowedOrigins = [
+    ...(clientUrl ? [clientUrl] : []),
+    ...corsOriginEnv.split(",").map((o) => o.trim()).filter(Boolean),
+  ];
   const corsOrigin: CorsOptions["origin"] =
     allowedOrigins.length === 0
       ? true
@@ -130,21 +142,25 @@ async function startServer() {
 
   app.get("/api/health/openai", (_req, res) => {
     const configured = Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0);
-    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
     if (!configured) {
       return res.json({ ok: true, configured: false });
     }
-    return res.json({ ok: true, configured: true, model });
+    return res.json({ ok: true, configured: true });
   });
 
   app.use("/api", authRouter);
   app.use("/api", projectsRouter);
   app.use("/api", keysRouter);
+  app.use("/api", builderRouter);
+  app.use("/api", actionsRouter);
   app.use("/api", usageRouter);
   app.use("/api", creditsRouter);
+  app.use("/api", onboardingRouter);
   app.use("/api", billingRouter);
   app.use("/api", notificationsRouter);
+  app.use("/api", adminRunLogsRouter);
   app.use(runRouter);
+  app.use(runBySpecRouter);
 
   app.get("/api/_debug/routes", (req, res) => {
     if (!canAccessDebugRoutes(req)) {
@@ -278,11 +294,13 @@ async function startServer() {
       res: express.Response,
       _next: express.NextFunction
     ) => {
-      console.error("Unhandled server error:", err);
+      const requestId = randomUUID();
+      const safeMsg = process.env.NODE_ENV === "production" ? "Unexpected server error" : sanitizeForLog(err);
+      console.error(`[${requestId}] Unhandled server error:`, safeMsg);
       res.status(500).json({
         ok: false,
-        error: "INTERNAL_ERROR",
-        message: "Unexpected server error",
+        error: { code: "INTERNAL_ERROR", message: "Unexpected server error" },
+        requestId,
       });
     }
   );
@@ -290,8 +308,20 @@ async function startServer() {
   const configuredPort = Number.parseInt(process.env.PORT ?? "3002", 10);
   const port = Number.isNaN(configuredPort) ? 3002 : configuredPort;
 
+  const cookieName = getSessionCookieName();
+  const corsOriginLog =
+    allowedOrigins.length === 0
+      ? "any (no CLIENT_URL/CORS_ORIGIN)"
+      : allowedOrigins.join(", ");
+
   server.listen(port, () => {
+    const hasOpenRouterKey = Boolean(process.env.OPENROUTER_API_KEY?.trim());
+    const runtimeDefaultProvider = hasOpenRouterKey ? "openrouter" : "openai";
     console.log(`Server running on http://localhost:${port}/`);
+    console.log(`NODE_ENV=${process.env.NODE_ENV ?? "development"}`);
+    console.log(`cookieName=${cookieName}`);
+    console.log(`corsOrigin=${corsOriginLog}`);
+    console.log(`Runtime Provider: hasOpenRouterKey=${hasOpenRouterKey} runtimeDefaultProvider=${runtimeDefaultProvider}`);
   });
 }
 

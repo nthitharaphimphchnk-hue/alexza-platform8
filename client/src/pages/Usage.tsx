@@ -371,75 +371,11 @@ export default function Usage() {
       )}
 
       {!isLoading && !errorMessage && (
-        <section className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-300">Top Models</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-500">
-                    <th className="px-2 py-2">Model</th>
-                    <th className="px-2 py-2">Calls</th>
-                    <th className="px-2 py-2">Tokens</th>
-                    <th className="px-2 py-2">Errors</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(data?.byModel ?? []).map((row) => (
-                    <tr key={`model-${row.model}`} className="border-b border-[rgba(255,255,255,0.05)] text-gray-200">
-                      <td className="px-2 py-2">{row.model || "-"}</td>
-                      <td className="px-2 py-2">{row.calls.toLocaleString()}</td>
-                      <td className="px-2 py-2">{row.totalTokens.toLocaleString()}</td>
-                      <td className="px-2 py-2">{row.errors.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                  {(data?.byModel?.length ?? 0) === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-2 py-4 text-center text-gray-500">
-                        No model data
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-300">Top Providers</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-500">
-                    <th className="px-2 py-2">Provider</th>
-                    <th className="px-2 py-2">Calls</th>
-                    <th className="px-2 py-2">Tokens</th>
-                    <th className="px-2 py-2">Errors</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(data?.byProvider ?? []).map((row) => (
-                    <tr
-                      key={`provider-${row.provider}`}
-                      className="border-b border-[rgba(255,255,255,0.05)] text-gray-200"
-                    >
-                      <td className="px-2 py-2">{row.provider || "-"}</td>
-                      <td className="px-2 py-2">{row.calls.toLocaleString()}</td>
-                      <td className="px-2 py-2">{row.totalTokens.toLocaleString()}</td>
-                      <td className="px-2 py-2">{row.errors.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                  {(data?.byProvider?.length ?? 0) === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-2 py-4 text-center text-gray-500">
-                        No provider data
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5">
+          <h3 className="mb-3 text-sm font-semibold text-gray-300">ALEXZA Managed Runtime</h3>
+          <p className="text-gray-400 text-sm">
+            Usage is tracked by endpoint and project. Runtime details are managed internally.
+          </p>
         </section>
       )}
 

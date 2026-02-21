@@ -24,7 +24,7 @@ export default function Billing() {
     {
       id: 2,
       type: "usage",
-      description: "API usage - Chat completions",
+      description: "ALEXZA Managed Runtime usage",
       amount: "-1,250",
       date: "Feb 4, 2026",
       cost: "-$6.25",
@@ -32,7 +32,7 @@ export default function Billing() {
     {
       id: 3,
       type: "usage",
-      description: "API usage - Embeddings",
+      description: "ALEXZA Managed Runtime usage",
       amount: "-850",
       date: "Feb 3, 2026",
       cost: "-$4.25",
@@ -60,11 +60,11 @@ export default function Billing() {
         >
           <motion.div variants={itemVariants}>
             <h1 className="text-3xl font-bold text-white">Billing & Credits</h1>
-            <p className="text-gray-400 mt-2">Manage your account credits and billing</p>
+            <p className="text-gray-400 mt-2">ALEXZA Credits, usage, and monthly allowance</p>
           </motion.div>
           <motion.div variants={itemVariants}>
             <Button className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold flex items-center gap-2">
-              <Plus size={18} /> Buy Credits
+              <Plus size={18} /> Buy ALEXZA Credits
             </Button>
           </motion.div>
         </motion.div>
@@ -93,7 +93,7 @@ export default function Billing() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-white">270,750</p>
-              <p className="text-xs text-gray-500 mt-2">Credits remaining</p>
+              <p className="text-xs text-gray-500 mt-2" title="Credits are used for processing in ALEXZA Managed Runtime.">ALEXZA Credits remaining</p>
             </motion.div>
 
             {/* Monthly Usage */}
@@ -108,7 +108,7 @@ export default function Billing() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-white">2,100</p>
-              <p className="text-xs text-gray-500 mt-2">Credits used</p>
+              <p className="text-xs text-gray-500 mt-2">ALEXZA Credits used this month</p>
             </motion.div>
 
             {/* Estimated Cost */}

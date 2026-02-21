@@ -1,9 +1,12 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import AppNotFound from "@/pages/AppNotFound";
+import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CreditsProvider } from "./contexts/CreditsContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from "sonner";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
@@ -31,6 +34,10 @@ function ApiKeysRoute() {
   return <ApiKeys />;
 }
 
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute>{children}</ProtectedRoute>;
+}
+
 function Router() {
   return (
     <Switch>
@@ -40,29 +47,104 @@ function Router() {
       <Route path={"/docs"} component={Docs} />
       <Route path={"/login"} component={Login} />
       <Route path={"/signup"} component={Signup} />
-      
-      {/* App Routes */}
-      <Route path={"/app"} component={Dashboard} />
-      <Route path={"/app/dashboard"} component={Dashboard} />
-      <Route path={"/app/projects"} component={Projects} />
-      <Route path={"/app/projects/:id"} component={ProjectDetail} />
-      <Route path={"/app/projects/:id/ai"} component={ChatBuilder} />
-      <Route path={"/app/projects/:id/keys"} component={ApiKeysRoute} />
-      <Route path={"/app/projects/:id/playground"} component={Playground} />
-      <Route path={"/app/playground"} component={Playground} />
-      <Route path={"/app/usage"} component={Usage} />
-      <Route path={"/app/billing/credits"} component={Wallet} />
-      <Route path={"/app/billing/plans"} component={BillingPlans} />
-      <Route path={"/app/settings"} component={Settings} />
-      <Route path={"/app/admin/tools"} component={AdminTools} />
-      
-      {/* Legacy Routes */}
-      <Route path={"/dashboard"} component={Dashboard} />
-      <Route path={"/chat-builder"} component={ChatBuilder} />
-      <Route path={"/credits"} component={Credits} />
-      
+
+      {/* Protected App Routes - explicit full paths */}
+      <Route path={"/app/dashboard"}>
+        <AppLayout>
+          <Dashboard />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/projects/:id/ai"}>
+        <AppLayout>
+          <ChatBuilder />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/projects/:id/keys"}>
+        <AppLayout>
+          <ApiKeysRoute />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/projects/:id/playground"}>
+        <AppLayout>
+          <Playground />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/projects/:id"}>
+        <AppLayout>
+          <ProjectDetail />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/projects"}>
+        <AppLayout>
+          <Projects />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/playground"}>
+        <AppLayout>
+          <Playground />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/usage"}>
+        <AppLayout>
+          <Usage />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/billing/credits"}>
+        <AppLayout>
+          <Wallet />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/billing/plans"}>
+        <AppLayout>
+          <BillingPlans />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/settings"}>
+        <AppLayout>
+          <Settings />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/admin/tools"}>
+        <AppLayout>
+          <AdminTools />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/chatbuilder"}>
+        <AppLayout>
+          <Redirect to={"/app/projects"} />
+        </AppLayout>
+      </Route>
+      <Route path={"/app"}>
+        <AppLayout>
+          <Redirect to={"/app/dashboard"} />
+        </AppLayout>
+      </Route>
+      {/* Catch-all: unknown /app/* -> AppNotFound (not public 404) */}
+      <Route path={"/app/*"}>
+        <AppLayout>
+          <AppNotFound />
+        </AppLayout>
+      </Route>
+
+      {/* Legacy Routes (protected) */}
+      <Route path={"/dashboard"}>
+        <AppLayout>
+          <Dashboard />
+        </AppLayout>
+      </Route>
+      <Route path={"/chat-builder"}>
+        <AppLayout>
+          <Redirect to={"/app/projects"} />
+        </AppLayout>
+      </Route>
+      <Route path={"/credits"}>
+        <AppLayout>
+          <Credits />
+        </AppLayout>
+      </Route>
+
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      {/* NotFound MUST be last */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -84,8 +166,9 @@ function App() {
         defaultTheme="dark"
         // switchable
       >
-        <CreditsProvider>
-          <TooltipProvider>
+        <AuthProvider>
+          <CreditsProvider>
+            <TooltipProvider>
             <Toaster
             position="bottom-right"
             theme="dark"
@@ -108,8 +191,9 @@ function App() {
                 <Router />
               </div>
             </div>
-          </TooltipProvider>
-        </CreditsProvider>
+            </TooltipProvider>
+          </CreditsProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

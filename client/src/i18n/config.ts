@@ -12,6 +12,7 @@ i18n
       en: { translation: en },
       th: { translation: th },
     },
+    supportedLngs: ['en', 'th'],
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
@@ -19,6 +20,7 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
+      lookupLocalStorage: 'i18nextLng',
     },
   });
 

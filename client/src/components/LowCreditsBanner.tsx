@@ -9,10 +9,10 @@ type LowCreditsBannerProps = {
 
 export default function LowCreditsBanner({ balanceCredits, onAddCredits, onDismiss }: LowCreditsBannerProps) {
   const isZeroBalance = balanceCredits === 0;
-  const title = isZeroBalance ? "No credits remaining" : "Credits running low";
+  const title = isZeroBalance ? "No ALEXZA Credits remaining" : "ALEXZA Credits running low";
   const message = isZeroBalance
-    ? "You have 0 credits left. Top up now to restore uninterrupted service."
-    : `You have ${balanceCredits.toLocaleString()} credits left. Top up to avoid service interruption.`;
+    ? "You have 0 ALEXZA Credits left. Top up now to restore uninterrupted ALEXZA Managed Runtime service."
+    : `You have ${balanceCredits.toLocaleString()} ALEXZA Credits left. Top up to avoid service interruption.`;
 
   return (
     <div

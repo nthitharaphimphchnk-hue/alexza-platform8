@@ -235,8 +235,6 @@ router.get("/credits/transactions", requireAuth, async (req, res, next) => {
         reason: row.reason,
         relatedRunId: row.relatedRunId ?? null,
         usageLogId: row.usageLogId?.toString() ?? null,
-        provider: row.provider ?? null,
-        model: row.model ?? null,
         totalTokens: typeof row.totalTokens === "number" ? row.totalTokens : null,
         createdAt: row.createdAt,
       })),

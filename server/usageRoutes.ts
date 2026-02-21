@@ -353,18 +353,8 @@ async function getUsageSummary(ownerUserId: ObjectId, days: number, projectId?: 
       date: row.date || "",
       ...normalizeTokenRow(row),
     })),
-    byModel: byModelRaw.map((row) => ({
-      model: row.model || "",
-      calls: toNumber(row.calls),
-      totalTokens: toNumber(row.totalTokens),
-      errors: toNumber(row.errors),
-    })),
-    byProvider: byProviderRaw.map((row) => ({
-      provider: row.provider || "",
-      calls: toNumber(row.calls),
-      totalTokens: toNumber(row.totalTokens),
-      errors: toNumber(row.errors),
-    })),
+    byModel: [], // Hidden Gateway: provider/model never exposed to customers
+    byProvider: [],
     byEndpoint: byEndpointRaw.map((row) => ({
       endpoint: row.endpoint || "",
       ...normalizeMetricRow(row),

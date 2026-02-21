@@ -12,7 +12,8 @@
     "create": "Create",
     "edit": "Edit",
     "close": "Close",
-    "search": "Search"
+    "search": "Search",
+    "back": "Back"
   },
   "navigation": {
     "product": "Product",
@@ -28,7 +29,24 @@
     "usage": "Usage",
     "credits": "Credits",
     "billing": "Billing",
-    "settings": "Settings"
+    "settings": "Settings",
+    "backToHome": "Back to Home",
+    "backToProjects": "Back to Projects",
+    "newProject": "New Project",
+    "openUsage": "Open Usage"
+  },
+  "appShell": {
+    "searchPlaceholder": "Search projects, keys, events...",
+    "environment": "Environment",
+    "switchMode": "Switch Mode",
+    "applicationMode": "Application Mode",
+    "notifications": "Notifications",
+    "account": "Account",
+    "profileSettings": "Profile Settings",
+    "adminTools": "Admin Tools",
+    "signOut": "Sign Out",
+    "low": "Low",
+    "topUp": "Top up"
   },
   "home": {
     "title": "ALEXZA AI — Solution Orchestration Platform",
@@ -45,26 +63,66 @@
   "auth": {
     "login": {
       "title": "Sign in to your account",
+      "welcomeBack": "Welcome back to ALEXZA AI",
       "email": "Email Address",
       "password": "Password",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
       "signIn": "Sign In",
+      "signingIn": "Signing in...",
       "orContinueWith": "Or continue with",
       "noAccount": "Don't have an account?",
-      "signUp": "Sign up"
+      "signUp": "Sign up",
+      "loginSuccess": "Login successful! Redirecting..."
     },
     "signup": {
       "title": "Create your account",
+      "joinUs": "Join ALEXZA AI",
       "email": "Email Address",
       "password": "Password",
       "confirmPassword": "Confirm Password",
       "company": "Company (Optional)",
-      "agreeToTerms": "I agree to the Terms of Service and Privacy Policy",
+      "companyPlaceholder": "Your company",
+      "agreeToTermsPrefix": "I agree to the",
+      "agreeToTermsAnd": "and",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy",
       "createAccount": "Create Account",
+      "creatingAccount": "Creating account...",
       "haveAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "orSignUpWith": "Or sign up with",
+      "accountCreated": "Account created! Redirecting...",
+      "passwordStrong": "✓ Password is strong"
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Real-time AI orchestration visibility",
+    "gettingStarted": "Getting Started",
+    "createProject": "Create Project",
+    "createApiKey": "Create API Key",
+    "openChatBuilder": "Open ChatBuilder and Apply an Action",
+    "testInPlayground": "Test Action in Playground",
+    "apiLatency": "API Latency",
+    "gatewayHealth": "Gateway Health",
+    "modelCluster": "Model Cluster",
+    "creditsRemaining": "Credits Remaining",
+    "healthy": "Healthy",
+    "operational": "Operational",
+    "online": "Online",
+    "budgetSafe": "Budget Safe",
+    "status": "Status",
+    "creditsBalance": "Credits Balance",
+    "last24hUsage": "Last 24h Usage",
+    "calls": "calls",
+    "errors": "errors",
+    "systemStatus": "System Status",
+    "allSystemsNormal": "All Systems Normal",
+    "overview": "Overview",
+    "activityFeed": "Activity Feed",
+    "totalRequests": "Total Requests (Last 7 Days)",
+    "requests": "Requests"
   },
   "pricing": {
     "title": "Pricing Plans",
@@ -81,6 +139,8 @@
     "newProject": "New Project",
     "search": "Search projects...",
     "noProjects": "No projects found",
+    "untitled": "Untitled",
+    "noDescription": "No description provided.",
     "createModal": {
       "title": "Create Project",
       "name": "Project Name",
@@ -89,6 +149,12 @@
       "create": "Create",
       "cancel": "Cancel"
     }
+  },
+  "projectDetail": {
+    "chatBuilder": "Chat Builder",
+    "apiKeys": "API Keys",
+    "playground": "Playground",
+    "usage": "Usage"
   },
   "apiKeys": {
     "title": "API Keys",

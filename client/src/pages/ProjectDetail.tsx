@@ -4,11 +4,14 @@ import ApiKeys from "@/pages/ApiKeys";
 import UsageSummaryPanel from "@/components/usage/UsageSummaryPanel";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Modal from "@/components/Modal";
-import { ArrowLeft, AlertCircle, Pencil, Play, Trash2 } from "lucide-react";
+import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ApiError, apiRequest } from "@/lib/api";
-import { showErrorToast, showProjectDeletedToast, showSuccessToast } from "@/lib/toast";
+import { ApiError, apiRequest, API_BASE_URL } from "@/lib/api";
+import { listActions, deleteAction, runAction } from "@/lib/alexzaApi";
+import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
+import type { PublicAction } from "@/lib/alexzaApi";
+import { showErrorToast, showProjectDeletedToast, showSuccessToast, showCopyToClipboardToast } from "@/lib/toast";
 
 interface ProjectDetailData {
   id: string;
@@ -34,6 +37,23 @@ export default function ProjectDetail() {
   const [editDescription, setEditDescription] = useState("");
   const [editModel, setEditModel] = useState("");
   const [editStatus, setEditStatus] = useState<"active" | "paused">("active");
+  const [actions, setActions] = useState<PublicAction[]>([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testAction, setTestAction] = useState<PublicAction | null>(null);
+  const [testPayload, setTestPayload] = useState('{"input": "Hello"}');
+  const [testApiKey, setTestApiKey] = useState("");
+  const [testRunning, setTestRunning] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    output: string;
+    requestId?: string;
+    creditsCharged?: number;
+    latencyMs?: number;
+    usage?: unknown;
+  } | null>(null);
+  const [validateError, setValidateError] = useState<string | null>(null);
+  const [deleteActionName, setDeleteActionName] = useState<string | null>(null);
+  const [isDeletingAction, setIsDeletingAction] = useState(false);
 
   const projectId = useMemo(() => {
     const match = location.match(/^\/app\/projects\/([^/]+)$/);
@@ -79,9 +99,30 @@ export default function ProjectDetail() {
     }
   }, [projectId, setLocation]);
 
+  const loadActions = useCallback(async () => {
+    if (!projectId) return;
+    setActionsLoading(true);
+    try {
+      const list = await listActions(projectId);
+      setActions(list);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        setLocation("/login");
+        return;
+      }
+      setActions([]);
+    } finally {
+      setActionsLoading(false);
+    }
+  }, [projectId, setLocation]);
+
   useEffect(() => {
     void loadProject();
   }, [loadProject]);
+
+  useEffect(() => {
+    if (projectId && activeTab === "actions") void loadActions();
+  }, [projectId, activeTab, loadActions]);
 
   const formatDate = (value: string) => {
     const date = new Date(value);
@@ -133,6 +174,90 @@ export default function ProjectDetail() {
     setEditModel(project.model || "");
     setEditStatus(project.status === "paused" ? "paused" : "active");
     setShowEditModal(true);
+  };
+
+  const copyEndpoint = (actionName: string) => {
+    const url = `${API_BASE_URL}/v1/projects/${projectId}/run/${encodeURIComponent(actionName)}`;
+    navigator.clipboard.writeText(url);
+    showCopyToClipboardToast();
+  };
+
+  const copySnippet = (snippet: string) => {
+    navigator.clipboard.writeText(snippet);
+    showCopyToClipboardToast();
+  };
+
+  const handleDeleteAction = async () => {
+    if (!projectId || !deleteActionName) return;
+    setIsDeletingAction(true);
+    try {
+      await deleteAction(projectId, deleteActionName);
+      showSuccessToast("Action deleted", deleteActionName);
+      setDeleteActionName(null);
+      void loadActions();
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        setLocation("/login");
+        return;
+      }
+      showErrorToast("Failed to delete action");
+    } finally {
+      setIsDeletingAction(false);
+    }
+  };
+
+  const openTestModal = (action: PublicAction) => {
+    setTestAction(action);
+    setTestPayload(generateSamplePayload(action.inputSchema));
+    setTestApiKey("");
+    setTestResult(null);
+    setValidateError(null);
+    setShowTestModal(true);
+  };
+
+  const handleValidatePayload = () => {
+    const result = validatePayloadLight(testPayload);
+    if (result.valid) {
+      setValidateError(null);
+      showSuccessToast("Payload is valid");
+    } else {
+      setValidateError(result.error);
+      showErrorToast(result.error);
+    }
+  };
+
+  const handleTestRun = async () => {
+    if (!projectId || !testAction || !testApiKey.trim()) {
+      showErrorToast("Enter your API key to test");
+      return;
+    }
+    const validation = validatePayloadLight(testPayload);
+    if (!validation.valid) {
+      setValidateError(validation.error);
+      showErrorToast(validation.error);
+      return;
+    }
+    setValidateError(null);
+    setTestRunning(true);
+    setTestResult(null);
+    try {
+      const res = await runAction(projectId, testAction.actionName, validation.payload, testApiKey.trim());
+      setTestResult({
+        output: res.output,
+        requestId: res.requestId,
+        creditsCharged: res.usage?.creditsCharged,
+        latencyMs: res.latencyMs,
+        usage: res.usage,
+      });
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        showErrorToast("Invalid API key");
+        return;
+      }
+      showErrorToast("Test failed", e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setTestRunning(false);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -244,6 +369,7 @@ export default function ProjectDetail() {
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="keys">API Keys</TabsTrigger>
                 <TabsTrigger value="usage">Usage</TabsTrigger>
+                <TabsTrigger value="actions">Actions / APIs</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview">
@@ -259,8 +385,8 @@ export default function ProjectDetail() {
                       <p className="text-white mt-1">{project.description || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Model</p>
-                      <p className="text-white mt-1">{project.model || "-"}</p>
+                      <p className="text-xs text-gray-500">Runtime</p>
+                      <p className="text-white mt-1">ALEXZA Managed Runtime</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Status</p>
@@ -305,10 +431,125 @@ export default function ProjectDetail() {
                   />
                 </div>
               </TabsContent>
+
+              <TabsContent value="actions">
+                <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#050607] p-6 space-y-6">
+                  <h3 className="text-sm font-semibold text-gray-400">Actions / APIs</h3>
+                  <p className="text-sm text-gray-500">
+                    Actions are created in Chat Builder and called via the runtime endpoint.
+                  </p>
+                  {actionsLoading ? (
+                    <p className="text-gray-500">Loading actions...</p>
+                  ) : actions.length === 0 ? (
+                    <p className="text-gray-500">No actions yet. Create one in Chat Builder.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {actions.map((action) => {
+                        const endpoint = `POST ${API_BASE_URL}/v1/projects/${project.id}/run/${encodeURIComponent(action.actionName)}`;
+                        const samplePayloadStr = generateSamplePayload(action.inputSchema);
+                        const curlSnippet = `curl -X POST "${API_BASE_URL}/v1/projects/${project.id}/run/${encodeURIComponent(action.actionName)}" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -d '${samplePayloadStr.replace(/'/g, "'\\''")}'`;
+                        const jsBody = samplePayloadStr.replace(/\n/g, " ").replace(/\s+/g, " ");
+                        const jsSnippet = `const res = await fetch("${API_BASE_URL}/v1/projects/${project.id}/run/${encodeURIComponent(action.actionName)}", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "YOUR_API_KEY"
+  },
+  body: JSON.stringify(${jsBody})
+});
+const data = await res.json();`;
+                        return (
+                          <div
+                            key={action.id}
+                            className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-4 space-y-3"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-mono text-white font-medium">{action.actionName}</p>
+                                <p className="text-xs text-gray-500 mt-1">{action.description || "-"}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  Updated: {formatDate(action.updatedAt)}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                                  onClick={() => openTestModal(action)}
+                                >
+                                  <PlayCircle size={14} className="mr-1" /> Test
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                                  onClick={() => copyEndpoint(action.actionName)}
+                                >
+                                  <Copy size={14} className="mr-1" /> Copy endpoint
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-500/30 text-red-300 hover:bg-red-500/10"
+                                  onClick={() => setDeleteActionName(action.actionName)}
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-xs text-gray-500 font-medium">Endpoint</p>
+                              <code className="block text-xs text-gray-300 bg-[#050607] p-2 rounded font-mono break-all">
+                                {endpoint}
+                              </code>
+                              <div className="flex gap-2 flex-wrap">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+                                  onClick={() => copySnippet(curlSnippet)}
+                                >
+                                  <Terminal size={12} className="mr-1" /> cURL
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+                                  onClick={() => copySnippet(jsSnippet)}
+                                >
+                                  <Copy size={12} className="mr-1" /> JS fetch
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
             </Tabs>
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteActionName}
+        onOpenChange={(open) => {
+          if (!open) setDeleteActionName(null);
+        }}
+        title="Delete Action"
+        description={`Delete action "${deleteActionName}"? This cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={isDeletingAction}
+        onConfirm={handleDeleteAction}
+      />
 
       <ConfirmDialog
         open={showDeleteConfirm}
@@ -340,6 +581,95 @@ export default function ProjectDetail() {
           />
         </div>
       </ConfirmDialog>
+
+      <Modal
+        open={showTestModal}
+        onOpenChange={(open) => {
+          setShowTestModal(open);
+          if (!open) {
+            setTestAction(null);
+            setTestResult(null);
+          }
+        }}
+        title={testAction ? `Test: ${testAction.actionName}` : "Test Action"}
+        description="Run the action with a JSON payload. Use an API key from this project."
+        size="lg"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setShowTestModal(false)}
+              disabled={testRunning}
+              className="border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.08)]"
+            >
+              Close
+            </Button>
+            <Button
+              onClick={handleTestRun}
+              disabled={testRunning || !testApiKey.trim()}
+              className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
+            >
+              {testRunning ? "Running..." : "Run"}
+            </Button>
+          </>
+        }
+      >
+        {testAction && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">API Key</label>
+              <input
+                type="password"
+                value={testApiKey}
+                onChange={(e) => setTestApiKey(e.target.value)}
+                placeholder="Paste your project API key"
+                className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">JSON Payload</label>
+              <div className="flex gap-2">
+                <textarea
+                  value={testPayload}
+                  onChange={(e) => {
+                    setTestPayload(e.target.value);
+                    setValidateError(null);
+                  }}
+                  rows={6}
+                  className="flex-1 px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white font-mono text-sm placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
+                  placeholder='{"input": {"text": "Hello"}}'
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleValidatePayload}
+                  className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)] self-start shrink-0"
+                >
+                  Validate
+                </Button>
+              </div>
+              {validateError && (
+                <p className="text-xs text-amber-400">{validateError}</p>
+              )}
+            </div>
+            {testResult && (
+              <div className="space-y-2 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] p-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <p className="text-sm font-medium text-gray-400">Output</p>
+                  <div className="flex gap-3 text-xs text-gray-500">
+                    {testResult.requestId && <span>Request ID: {testResult.requestId}</span>}
+                    {testResult.creditsCharged != null && <span>Credits: {testResult.creditsCharged}</span>}
+                    {testResult.latencyMs != null && <span>Latency: {testResult.latencyMs} ms</span>}
+                  </div>
+                </div>
+                <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words font-mono">
+                  {testResult.output}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={showEditModal}

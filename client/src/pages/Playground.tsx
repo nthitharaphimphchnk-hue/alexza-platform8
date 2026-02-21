@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
+import { getProjects, listActions, runAction } from "@/lib/alexzaApi";
+import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
+import type { Project, PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { ArrowLeft, Play } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
 interface ProjectApiKeyItem {
@@ -23,17 +26,75 @@ interface RunUiError {
 export default function Playground() {
   const [location, setLocation] = useLocation();
   const [input, setInput] = useState("");
+  const [payloadJson, setPayloadJson] = useState('{"input": "Hello"}');
   const [apiKey, setApiKey] = useState("");
   const [output, setOutput] = useState("");
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [creditsCharged, setCreditsCharged] = useState<number | null>(null);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [keys, setKeys] = useState<ProjectApiKeyItem[]>([]);
   const [runError, setRunError] = useState<RunUiError | null>(null);
+  const [useLegacy, setUseLegacy] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [actions, setActions] = useState<PublicAction[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedActionName, setSelectedActionName] = useState<string>("");
+  const [validateError, setValidateError] = useState<string | null>(null);
 
-  const projectId = useMemo(() => {
+  const projectIdFromUrl = useMemo(() => {
     const match = location.match(/^\/app\/projects\/([^/]+)\/playground$/);
     return match?.[1] ? decodeURIComponent(match[1]) : "";
   }, [location]);
+
+  const projectId = selectedProjectId || projectIdFromUrl;
+
+  const loadProjects = useCallback(async () => {
+    try {
+      const list = await getProjects();
+      setProjects(list);
+    } catch {
+      setProjects([]);
+    }
+  }, []);
+
+  const loadActions = useCallback(async () => {
+    if (!projectId) {
+      setActions([]);
+      setSelectedActionName("");
+      return;
+    }
+    try {
+      const list = await listActions(projectId);
+      setActions(list);
+      setSelectedActionName((prev) => {
+        const stillExists = list.some((a) => a.actionName === prev);
+        return stillExists ? prev : list[0]?.actionName ?? "";
+      });
+    } catch {
+      setActions([]);
+      setSelectedActionName("");
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    void loadProjects();
+  }, [loadProjects]);
+
+  useEffect(() => {
+    if (projectIdFromUrl) setSelectedProjectId(projectIdFromUrl);
+  }, [projectIdFromUrl]);
+
+  useEffect(() => {
+    void loadActions();
+  }, [loadActions]);
+
+  useEffect(() => {
+    const action = actions.find((a) => a.actionName === selectedActionName);
+    if (action) {
+      setPayloadJson(generateSamplePayload(action.inputSchema));
+    }
+  }, [selectedActionName, actions]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -51,149 +112,117 @@ export default function Playground() {
           }))
         );
       } catch {
-        // Non-blocking: user can still manually paste raw API key.
+        // Non-blocking
       }
     })();
   }, [projectId]);
 
   const handleRun = async () => {
-    const trimmedInput = input.trim();
     const trimmedApiKey = apiKey.trim();
-    if (!trimmedInput) {
-      showErrorToast("Validation error", "Please enter input.");
-      setRunError({
-        code: "VALIDATION_ERROR",
-        message: "Please enter input.",
-      });
-      return;
-    }
     if (!trimmedApiKey) {
-      showErrorToast("Validation error", "Please paste your raw API key.");
-      setRunError({
-        code: "VALIDATION_ERROR",
-        message: "Please paste your raw API key.",
-      });
+      showErrorToast("Validation error", "Please paste your API key.");
+      setRunError({ code: "VALIDATION_ERROR", message: "Please paste your API key." });
       return;
     }
+
+    if (useLegacy) {
+      const trimmedInput = input.trim();
+      if (!trimmedInput) {
+        showErrorToast("Validation error", "Please enter input.");
+        setRunError({ code: "VALIDATION_ERROR", message: "Please enter input." });
+        return;
+      }
+      setIsRunning(true);
+      setRunError(null);
+      setRequestId(null);
+      setCreditsCharged(null);
+      try {
+        const startedAt = performance.now();
+        const response = await fetch(`${API_BASE_URL}/v1/run`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": trimmedApiKey },
+          body: JSON.stringify({ input: trimmedInput }),
+        });
+        const payload = await response.json();
+        const elapsed = Math.round(performance.now() - startedAt);
+        setLatencyMs(elapsed);
+        if (!response.ok) {
+          const errObj = payload?.error;
+          const message =
+            typeof errObj === "object" && typeof errObj?.message === "string"
+              ? errObj.message
+              : typeof payload?.message === "string"
+                ? payload.message
+                : `Run failed with status ${response.status}`;
+          throw new ApiError(message, response.status);
+        }
+        setOutput(typeof payload.output === "string" ? payload.output : "");
+        showSuccessToast("Run complete", `Latency ${elapsed} ms`);
+        setRunError(null);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          setRunError({ code: "UNAUTHORIZED", message: "Invalid or revoked API key." });
+          showErrorToast("Unauthorized", "Invalid API key");
+          return;
+        }
+        setRunError({ code: "RUN_ERROR", message: error instanceof Error ? error.message : "Run failed" });
+        showErrorToast("Run failed", error instanceof Error ? error.message : "Unknown error");
+      } finally {
+        setIsRunning(false);
+      }
+      return;
+    }
+
+    if (!projectId || !selectedActionName) {
+      showErrorToast("Validation error", "Select a project and action.");
+      setRunError({ code: "VALIDATION_ERROR", message: "Select a project and action." });
+      return;
+    }
+
+    const validation = validatePayloadLight(payloadJson);
+    if (!validation.valid) {
+      setValidateError(validation.error);
+      showErrorToast(validation.error);
+      setRunError({ code: "VALIDATION_ERROR", message: validation.error });
+      return;
+    }
+    setValidateError(null);
+    const payload = validation.payload;
 
     setIsRunning(true);
     setRunError(null);
+    setRequestId(null);
+    setCreditsCharged(null);
     try {
       const startedAt = performance.now();
-      const response = await fetch(`${API_BASE_URL}/v1/run`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": trimmedApiKey,
-        },
-        body: JSON.stringify({ input: trimmedInput }),
-      });
-      const payload = await response.json();
+      const res = await runAction(projectId, selectedActionName, payload, trimmedApiKey);
       const elapsed = Math.round(performance.now() - startedAt);
       setLatencyMs(elapsed);
-
-      if (!response.ok) {
-        const errorCode = typeof payload?.error === "string" ? payload.error : "UNKNOWN";
-        const message =
-          typeof payload?.message === "string"
-            ? payload.message
-            : payload?.error || `Run failed with status ${response.status}`;
-        if (errorCode === "MONTHLY_QUOTA_EXCEEDED") {
-          const nextResetAt =
-            typeof payload?.details?.nextResetAt === "string" ? payload.details.nextResetAt : undefined;
-          const resetText = nextResetAt
-            ? ` Next reset: ${new Date(nextResetAt).toLocaleString()}.`
-            : "";
-          const uiError: RunUiError = {
-            code: "MONTHLY_QUOTA_EXCEEDED",
-            message: "Monthly quota exceeded.",
-            hint: `Upgrade plan, wait for next reset, or reduce usage.${resetText}`,
-            nextResetAt,
-          };
-          setRunError(uiError);
-          showErrorToast("Monthly quota exceeded", uiError.hint);
-          return;
-        }
-        throw new ApiError(message, response.status, errorCode);
-      }
-
-      setOutput(typeof payload.output === "string" ? payload.output : "");
+      setOutput(res.output);
+      setRequestId(res.requestId ?? null);
+      setCreditsCharged(res.usage?.creditsCharged ?? null);
       showSuccessToast("Run complete", `Latency ${elapsed} ms`);
-      setRunError(null);
     } catch (error) {
-      if (error instanceof ApiError) {
-        if (error.status === 401) {
-          const uiError: RunUiError = {
-            code: "UNAUTHORIZED",
-            message: "Invalid or revoked API key.",
-          };
-          setRunError(uiError);
-          showErrorToast("Unauthorized", uiError.message);
-          return;
-        }
-        if (error.status === 402 || error.code === "INSUFFICIENT_CREDITS") {
-          const uiError: RunUiError = {
-            code: "INSUFFICIENT_CREDITS",
-            message: "Insufficient credits for this request.",
-            hint: "Top up your wallet and try again.",
-          };
-          setRunError(uiError);
-          showErrorToast("Insufficient credits", uiError.hint);
-          return;
-        }
-        if (error.status === 429 || error.code === "RATE_LIMITED") {
-          const uiError: RunUiError = {
-            code: "RATE_LIMITED",
-            message: "Too many requests. Try again later.",
-            hint: "Wait a moment before retrying.",
-            retryable: true,
-          };
-          setRunError(uiError);
-          showErrorToast("Rate limited", uiError.hint);
-          return;
-        }
-        if (error.code === "REQUEST_TOO_LARGE") {
-          const uiError: RunUiError = {
-            code: "REQUEST_TOO_LARGE",
-            message: "Input too long. Please shorten.",
-            hint: "Try splitting the prompt into smaller chunks.",
-          };
-          setRunError(uiError);
-          showErrorToast("Request too large", uiError.hint);
-          return;
-        }
-        if (error.code === "COST_CAP_EXCEEDED") {
-          const uiError: RunUiError = {
-            code: "COST_CAP_EXCEEDED",
-            message: "Request cost too high for current limits.",
-            hint: "Split this task into smaller runs or upgrade plan limits.",
-          };
-          setRunError(uiError);
-          showErrorToast("Cost cap exceeded", uiError.hint);
-          return;
-        }
-        if (error.code === "MONTHLY_QUOTA_EXCEEDED") {
-          const uiError: RunUiError = {
-            code: "MONTHLY_QUOTA_EXCEEDED",
-            message: "Monthly quota exceeded.",
-            hint: "Upgrade plan or wait until the next monthly reset.",
-          };
-          setRunError(uiError);
-          showErrorToast("Monthly quota exceeded", uiError.hint);
-          return;
-        }
+      if (error instanceof ApiError && error.status === 401) {
+        setRunError({ code: "UNAUTHORIZED", message: "Invalid or revoked API key." });
+        showErrorToast("Unauthorized", "Invalid API key");
+        return;
       }
-      const message = error instanceof Error ? error.message : "Failed to run";
-      setRunError({
-        code: "PROVIDER_ERROR",
-        message,
-        hint: "Please try again.",
-      });
-      showErrorToast("Run failed", message);
+      if (error instanceof ApiError && error.status === 402) {
+        setRunError({ code: "INSUFFICIENT_CREDITS", message: "Insufficient ALEXZA Credits.", hint: "Top up your wallet." });
+        showErrorToast("Insufficient credits", "Top up your wallet");
+        return;
+      }
+      setRunError({ code: "RUN_ERROR", message: error instanceof Error ? error.message : "Run failed" });
+      showErrorToast("Run failed", error instanceof Error ? error.message : "Unknown error");
     } finally {
       setIsRunning(false);
     }
   };
+
+  const canRun = useLegacy
+    ? input.trim().length >= 1 && apiKey.trim().length >= 1
+    : projectId && selectedActionName && apiKey.trim().length >= 1;
 
   return (
     <div className="min-h-screen text-foreground">
@@ -201,7 +230,9 @@ export default function Playground() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Playground</h1>
-            <p className="text-gray-400 mt-2">Run test requests against /v1/run using your API key</p>
+            <p className="text-gray-400 mt-2">
+              Run actions via ALEXZA Managed Runtime
+            </p>
           </div>
           <Button
             variant="outline"
@@ -222,6 +253,58 @@ export default function Playground() {
 
       <div className="p-8">
         <div className="max-w-5xl mx-auto space-y-6">
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useLegacy}
+                onChange={(e) => setUseLegacy(e.target.checked)}
+                className="rounded border-[rgba(255,255,255,0.2)]"
+              />
+              <span className="text-sm text-gray-400">Legacy Endpoint (Deprecated)</span>
+            </label>
+          </div>
+
+          {!useLegacy && (
+            <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-4 flex flex-wrap gap-4">
+              <div className="space-y-1 min-w-[180px]">
+                <label className="text-xs text-gray-500">Project</label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedProjectId(id);
+                    setSelectedActionName("");
+                    if (id) setLocation(`/app/projects/${id}/playground`);
+                  }}
+                  className="w-full px-3 py-2 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white text-sm"
+                >
+                  <option value="">Select project</option>
+                  {projectIdFromUrl && !projects.some((p) => p.id === projectIdFromUrl) && (
+                    <option value={projectIdFromUrl}>{projectIdFromUrl}</option>
+                  )}
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name || p.id}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1 min-w-[180px]">
+                <label className="text-xs text-gray-500">Action</label>
+                <select
+                  value={selectedActionName}
+                  onChange={(e) => setSelectedActionName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white text-sm"
+                  disabled={!projectId}
+                >
+                  <option value="">Select action</option>
+                  {actions.map((a) => (
+                    <option key={a.id} value={a.actionName}>{a.actionName}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           {projectId && keys.length > 0 && (
             <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-4">
               <p className="text-sm text-gray-300 mb-2">Project keys (prefix only):</p>
@@ -251,20 +334,58 @@ export default function Playground() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-gray-300">Input</label>
-              <textarea
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                rows={4}
-                placeholder="Type input to run..."
-                className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
-              />
-            </div>
+            {useLegacy ? (
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Input</label>
+                <textarea
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  rows={4}
+                  placeholder="Type input to run..."
+                  className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">JSON Payload</label>
+                <div className="flex gap-2">
+                  <textarea
+                    value={payloadJson}
+                    onChange={(event) => {
+                      setPayloadJson(event.target.value);
+                      setValidateError(null);
+                    }}
+                    rows={6}
+                    placeholder='{"input": {"text": "Hello"}}'
+                    className="flex-1 px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white font-mono text-sm placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const r = validatePayloadLight(payloadJson);
+                      if (r.valid) {
+                        setValidateError(null);
+                        showSuccessToast("Payload is valid");
+                      } else {
+                        setValidateError(r.error);
+                        showErrorToast(r.error);
+                      }
+                    }}
+                    className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)] self-start shrink-0"
+                  >
+                    Validate
+                  </Button>
+                </div>
+                {validateError && (
+                  <p className="text-xs text-amber-400">{validateError}</p>
+                )}
+              </div>
+            )}
 
             <Button
               type="button"
-              disabled={isRunning || input.trim().length < 1 || apiKey.trim().length < 1}
+              disabled={isRunning || !canRun}
               onClick={handleRun}
               className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
             >
@@ -333,11 +454,13 @@ export default function Playground() {
           </div>
 
           <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-white font-semibold">Output</h3>
-              <span className="text-xs text-gray-400">
-                Latency: {latencyMs !== null ? `${latencyMs} ms` : "-"}
-              </span>
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span>Latency: {latencyMs !== null ? `${latencyMs} ms` : "-"}</span>
+                {requestId && <span>Request ID: {requestId}</span>}
+                {creditsCharged !== null && <span>Credits: {creditsCharged}</span>}
+              </div>
             </div>
             <pre className="whitespace-pre-wrap text-sm text-gray-200 bg-[#050607] border border-[rgba(255,255,255,0.08)] rounded-lg p-4 min-h-[90px]">
               {output || "-"}

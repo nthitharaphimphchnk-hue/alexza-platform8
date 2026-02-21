@@ -48,9 +48,22 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   if (!response.ok) {
+    const err = payload?.error;
     const message =
-      payload?.message || payload?.error || `Request failed with status ${response.status}`;
-    throw new ApiError(message, response.status, payload?.error);
+      typeof err === "object" && typeof err?.message === "string"
+        ? err.message
+        : typeof payload?.message === "string"
+          ? payload.message
+          : typeof payload?.error === "string"
+            ? payload.error
+            : `Request failed with status ${response.status}`;
+    const code =
+      typeof err === "object" && typeof err?.code === "string"
+        ? err.code
+        : typeof payload?.error === "string"
+          ? payload.error
+          : undefined;
+    throw new ApiError(message, response.status, code);
   }
 
   return payload as T;

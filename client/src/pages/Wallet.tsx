@@ -22,8 +22,6 @@ interface CreditTransaction {
   reason: string;
   relatedRunId: string | null;
   usageLogId: string | null;
-  provider?: string | null;
-  model?: string | null;
   totalTokens?: number | null;
   createdAt: string;
 }
@@ -127,8 +125,6 @@ export default function Wallet() {
         dateText,
         amountCredits: tx.amountCredits,
         reason: tx.reason || "-",
-        provider: tx.type === "usage" ? tx.provider || "-" : "-",
-        model: tx.type === "usage" ? tx.model || "-" : "-",
         totalTokens:
           tx.type === "usage" && typeof tx.totalTokens === "number"
             ? tx.totalTokens.toLocaleString()
@@ -138,8 +134,6 @@ export default function Wallet() {
         details: {
           relatedRunId: tx.relatedRunId || "-",
           usageLogId: tx.usageLogId || "-",
-          provider: tx.provider || "-",
-          model: tx.model || "-",
           totalTokens:
             typeof tx.totalTokens === "number" && Number.isFinite(tx.totalTokens)
               ? tx.totalTokens.toLocaleString()
@@ -222,7 +216,7 @@ export default function Wallet() {
     <>
       <AppShell
         title="Credits & Wallet"
-        subtitle="Billing-grade credit controls and transaction ledger"
+        subtitle="ALEXZA Credits and ALEXZA Managed Runtime usage"
         backHref="/app/dashboard"
         backLabel="Back to Dashboard"
         breadcrumbs={[
@@ -289,7 +283,9 @@ export default function Wallet() {
               <p className="mt-2 text-5xl font-semibold text-white">
                 <AnimatedCounter value={balanceCredits} />
               </p>
-              <p className="mt-2 text-xs text-gray-500">Available for API inference and orchestration execution.</p>
+              <p className="mt-2 text-xs text-gray-500" title="Credits are used for processing in ALEXZA Managed Runtime.">
+                ALEXZA Credits — usage, monthly allowance.
+              </p>
             </div>
             <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]/80 p-4">
               <p className="text-xs text-gray-500">Budget Usage</p>
@@ -336,8 +332,6 @@ export default function Wallet() {
                 <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-500">
                   <th className="px-3 py-2">Type</th>
                   <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2">Provider</th>
-                  <th className="px-3 py-2">Model</th>
                   <th className="px-3 py-2">Tokens</th>
                   <th className="px-3 py-2">Credits Charged</th>
                   <th className="px-3 py-2">Amount</th>
@@ -367,8 +361,6 @@ export default function Wallet() {
                         </span>
                       </td>
                       <td className="px-3 py-2 text-gray-400">{row.dateText}</td>
-                      <td className="px-3 py-2 text-gray-300">{row.provider}</td>
-                      <td className="px-3 py-2 text-gray-300">{row.model}</td>
                       <td className="px-3 py-2 text-gray-300">{row.totalTokens}</td>
                       <td className="px-3 py-2 text-gray-200">{row.creditsCharged}</td>
                       <td className="px-3 py-2">
@@ -398,15 +390,12 @@ export default function Wallet() {
                     </tr>
                     {expandedRowId === row.id && (
                       <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                        <td colSpan={9} className="px-3 py-3">
+                        <td colSpan={7} className="px-3 py-3">
                           <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-[#050607] p-3 text-xs text-gray-300">
                             <div>Reason: {row.reason}</div>
                             <div>Run ID: {row.details.relatedRunId}</div>
                             <div>Usage Log ID: {row.details.usageLogId}</div>
-                            <div>
-                              Raw metadata: provider={row.details.provider}, model={row.details.model}, tokens=
-                              {row.details.totalTokens}
-                            </div>
+                            <div>Tokens: {row.details.totalTokens}</div>
                           </div>
                         </td>
                       </tr>
@@ -415,7 +404,7 @@ export default function Wallet() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-3 py-8 text-center text-gray-500">
+                    <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
                       No transactions yet.
                     </td>
                   </tr>

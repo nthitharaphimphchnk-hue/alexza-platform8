@@ -21,7 +21,7 @@ export default function ProjectOverview() {
     description: "AI-powered customer support automation",
     status: "Active",
     created: "2 weeks ago",
-    model: "GPT-4",
+    model: "ALEXZA",
     version: "v1.2.3",
     credits: "1,250/month",
     apiCalls: "12,450",

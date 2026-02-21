@@ -23,10 +23,14 @@ export function getSessionTtlMs(): number {
 }
 
 export function getSessionCookieOptions(): CookieOptions {
+  const isProduction = process.env.NODE_ENV === "production";
+  const isCrossOrigin =
+    Boolean(process.env.CLIENT_URL?.trim()) || Boolean(process.env.CORS_ORIGIN?.trim());
+
   return {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: isCrossOrigin ? "none" : "lax",
+    secure: isProduction || isCrossOrigin,
     path: "/",
     maxAge: SESSION_TTL_MS,
   };

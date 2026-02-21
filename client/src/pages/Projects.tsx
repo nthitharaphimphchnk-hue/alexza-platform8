@@ -278,7 +278,7 @@ export default function Projects() {
     initialValues: {
       name: "",
       description: "",
-      model: "GPT-4",
+      model: "ALEXZA",
     },
     validate: validateProjectForm,
     onSubmit: async (values) => {
@@ -514,9 +514,7 @@ export default function Projects() {
               disabled={form.isSubmitting}
               className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.06)] text-white focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition disabled:opacity-50"
             >
-              <option>GPT-4</option>
-              <option>GPT-3.5</option>
-              <option>Claude 3</option>
+              <option>ALEXZA</option>
             </select>
           </div>
         </form>

@@ -21,7 +21,6 @@ export default function LanguageSwitcher() {
 
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
-    localStorage.setItem('language', langCode);
     setIsOpen(false);
   };
 
@@ -33,7 +32,7 @@ export default function LanguageSwitcher() {
         title={t('common.language')}
       >
         <Globe size={18} />
-        <span className="text-sm font-medium uppercase">{i18n.language}</span>
+        <span className="text-sm font-medium uppercase">{i18n.language?.startsWith('th') ? 'TH' : 'EN'}</span>
       </button>
 
       <AnimatePresence>

@@ -1,8 +1,12 @@
+import { useTranslation } from "react-i18next";
 import AppShell from "@/components/app/AppShell";
 import AnimatedCounter from "@/components/app/AnimatedCounter";
 import ApiKeysWidget from "@/components/dashboard/ApiKeysWidget";
+import OnboardingChecklist from "@/components/dashboard/OnboardingChecklist";
+import StatusWidget from "@/components/dashboard/StatusWidget";
 import UsageAnalyticsWidget from "@/components/dashboard/UsageAnalyticsWidget";
 import { Button } from "@/components/ui/button";
+import { getCreditsBalance } from "@/lib/alexzaApi";
 import { Activity, Gauge, Plus, Server, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -10,42 +14,56 @@ import { useLocation } from "wouter";
 const activityFeed = [
   { id: "a1", title: "API call completed", detail: "Customer Support Bot • 208ms", tone: "ok" },
   { id: "a2", title: "New key created", detail: "Project: Document AI", tone: "info" },
-  { id: "a3", title: "Credits deducted", detail: "2,500 credits • GPT-4 Inference", tone: "warning" },
+  { id: "a3", title: "Credits deducted", detail: "2,500 ALEXZA Credits • Managed Runtime", tone: "warning" },
   { id: "a4", title: "Gateway warning", detail: "Latency spike on us-east", tone: "danger" },
 ];
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(true);
-  const [credits] = useState(270750);
+  const [credits, setCredits] = useState<number | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 650);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    const t = window.setTimeout(async () => {
+      try {
+        const bal = await getCreditsBalance();
+        if (!cancelled) setCredits(bal);
+      } catch {
+        if (!cancelled) setCredits(0);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, []);
 
   return (
     <AppShell
-      title="Dashboard"
-      subtitle="Real-time AI orchestration visibility"
+      title={t("dashboard.title")}
+      subtitle={t("dashboard.subtitle")}
       backHref="/app/projects"
-      backLabel="Back to Projects"
+      backLabel={t("navigation.backToProjects")}
       breadcrumbs={[
-        { label: "Dashboard", href: "/app/dashboard" },
-        { label: "Overview" },
+        { label: t("navigation.dashboard"), href: "/app/dashboard" },
+        { label: t("dashboard.overview") },
       ]}
       actions={
         <div className="flex gap-2">
           <Button onClick={() => setLocation("/app/projects")} className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
             <Plus size={16} className="mr-2" />
-            New Project
+            {t("navigation.newProject")}
           </Button>
           <Button
             variant="outline"
             onClick={() => setLocation("/app/usage")}
             className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
           >
-            Open Usage
+            {t("navigation.openUsage")}
           </Button>
         </div>
       }
@@ -57,12 +75,14 @@ export default function Dashboard() {
           ))}
         </div>
       ) : (
+        <>
+        <OnboardingChecklist />
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { label: "API Latency", value: "172ms", icon: Gauge, state: "Healthy" },
-            { label: "Gateway Health", value: "99.98%", icon: Server, state: "Operational" },
-            { label: "Model Cluster", value: "12/12", icon: Activity, state: "Online" },
-            { label: "Credits Remaining", value: <AnimatedCounter value={credits} />, icon: TriangleAlert, state: "Budget Safe" },
+            { label: t("dashboard.apiLatency"), value: "172ms", icon: Gauge, state: t("dashboard.healthy") },
+            { label: t("dashboard.gatewayHealth"), value: "99.98%", icon: Server, state: t("dashboard.operational") },
+            { label: t("dashboard.modelCluster"), value: "12/12", icon: Activity, state: t("dashboard.online") },
+            { label: t("dashboard.creditsRemaining"), value: credits !== null ? <AnimatedCounter value={credits} /> : "—", icon: TriangleAlert, state: t("dashboard.budgetSafe") },
           ].map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -77,18 +97,20 @@ export default function Dashboard() {
             );
           })}
         </div>
+        </>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <ApiKeysWidget />
+        <StatusWidget />
         <UsageAnalyticsWidget />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <section className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-6 backdrop-blur">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">System Status</h2>
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">All Systems Normal</span>
+            <h2 className="text-lg font-semibold text-white">{t("dashboard.systemStatus")}</h2>
+            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">{t("dashboard.allSystemsNormal")}</span>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-4">
@@ -107,7 +129,7 @@ export default function Dashboard() {
         </section>
 
         <section className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-6 backdrop-blur">
-          <h2 className="mb-4 text-lg font-semibold text-white">Activity Feed</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">{t("dashboard.activityFeed")}</h2>
           <div className="space-y-3">
             {activityFeed.map((item) => (
               <div key={item.id} className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-3">
