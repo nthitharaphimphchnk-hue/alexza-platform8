@@ -28,9 +28,11 @@ import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
 import { estimateRouter } from "./estimate";
 import { requestIdMiddleware } from "./middleware/requestId";
+import { sentryScopeMiddleware } from "./middleware/sentryScope";
 import { requestLogger } from "./middleware/requestLogger";
 import { slowRequestMiddleware } from "./middleware/slowRequest";
 import * as Sentry from "@sentry/node";
+import { sentryRelease } from "./sentry";
 import { logger } from "./utils/logger";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -127,6 +129,7 @@ async function startServer() {
         };
 
   app.use(requestIdMiddleware);
+  app.use(sentryScopeMiddleware);
   app.use(requestLogger);
   app.use(slowRequestMiddleware);
 
@@ -339,7 +342,10 @@ async function startServer() {
     const hasOpenRouterKey = Boolean(process.env.OPENROUTER_API_KEY?.trim());
     const runtimeDefaultProvider = hasOpenRouterKey ? "openrouter" : "openai";
     const sentryDsn = (process.env.SENTRY_DSN ?? "").trim();
-    logger.info({
+    const sentryEnabled = Boolean(sentryDsn);
+    const tracesSampleRate = Number.parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE ?? "0.1");
+
+    const logPayload: Record<string, unknown> = {
       msg: "Server started",
       port,
       nodeEnv: process.env.NODE_ENV ?? "development",
@@ -347,8 +353,15 @@ async function startServer() {
       corsOrigin: corsOriginLog,
       hasOpenRouterKey,
       runtimeDefaultProvider,
-      sentryEnabled: Boolean(sentryDsn),
-    });
+      sentryEnabled,
+    };
+
+    if (process.env.NODE_ENV !== "production") {
+      logPayload.tracesSampleRate = Number.isNaN(tracesSampleRate) ? 0.1 : tracesSampleRate;
+      logPayload.release = sentryRelease;
+    }
+
+    logger.info(logPayload);
   });
 }
 

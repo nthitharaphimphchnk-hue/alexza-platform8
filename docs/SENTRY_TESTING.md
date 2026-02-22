@@ -11,10 +11,13 @@ Alexza AI uses Sentry for:
 
 - Backend error tracking (Express)
 - Frontend error tracking (React)
+- Performance tracing (backend + frontend)
+- Release tracking
+- Source map upload (frontend builds)
 - Slow request detection
 - Production monitoring
 
-Sentry is enabled via environment variables.
+Sentry is enabled via environment variables. For release tracking and source maps, see [SENTRY_RELEASES_AND_SOURCEMAPS.md](./SENTRY_RELEASES_AND_SOURCEMAPS.md).
 
 ---
 

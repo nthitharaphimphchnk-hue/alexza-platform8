@@ -6,11 +6,23 @@ import "./i18n/config";
 
 const dsn = (import.meta.env.VITE_SENTRY_DSN as string)?.trim();
 if (dsn) {
+  const environment =
+    (import.meta.env.VITE_SENTRY_ENVIRONMENT as string)?.trim() || import.meta.env.MODE || "development";
+  const tracesSampleRate = Number.parseFloat(
+    (import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE as string) || "0.1"
+  );
+  const release =
+    (typeof __SENTRY_RELEASE__ !== "undefined" ? __SENTRY_RELEASE__ : null) ||
+    (import.meta.env.VITE_SENTRY_RELEASE as string)?.trim() ||
+    (import.meta.env.VITE_GIT_SHA as string)?.trim() ||
+    "dev-local";
+
   Sentry.init({
     dsn,
-    environment: (import.meta.env.VITE_SENTRY_ENVIRONMENT as string)?.trim() || import.meta.env.MODE || "development",
+    environment,
+    release,
     integrations: [Sentry.browserTracingIntegration()],
-    tracesSampleRate: 0.1,
+    tracesSampleRate: Number.isNaN(tracesSampleRate) ? 0.1 : Math.min(1, Math.max(0, tracesSampleRate)),
   });
 }
 

@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -5,6 +6,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+
+function getSentryRelease(): string {
+  const explicit = (process.env.SENTRY_RELEASE ?? "").trim();
+  if (explicit) return explicit;
+  const sha = (
+    process.env.RENDER_GIT_COMMIT ??
+    process.env.GIT_SHA ??
+    process.env.COMMIT_SHA ??
+    process.env.VITE_GIT_SHA ??
+    ""
+  ).trim();
+  if (sha) return sha;
+  return "dev-local";
+}
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,10 +165,34 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim();
+const sentryRelease = getSentryRelease();
+
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  // Sentry plugin last - uploads sourcemaps when SENTRY_AUTH_TOKEN is set
+  sentryVitePlugin({
+    org: process.env.SENTRY_ORG ?? "",
+    project: process.env.SENTRY_PROJECT ?? "",
+    authToken: sentryAuthToken,
+    release: { name: sentryRelease },
+    disable: !sentryAuthToken,
+    sourcemaps: {
+      filesToDeleteAfterUpload: ["./client/dist/**/*.map"],
+      urlPrefix: "~/",
+    },
+  }),
+];
 
 export default defineConfig({
   plugins,
+  define: {
+    __SENTRY_RELEASE__: JSON.stringify(sentryRelease),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -166,6 +205,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "client", "dist"),
     emptyOutDir: true,
+    sourcemap: true,
   },
   server: {
     port: 3000,
