@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest, ApiError } from "@/lib/api";
+import { useWalletBalance } from "@/hooks/useWallet";
 import { LOW_CREDITS_THRESHOLD } from "@/lib/creditsConfig";
 import LowCreditsBanner from "@/components/LowCreditsBanner";
 import {
@@ -73,7 +74,7 @@ export default function AppShell({
   const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const [mode, setMode] = useState<Mode>("Production");
-  const [lowCreditsBalance, setLowCreditsBalance] = useState<number | null>(null);
+  const { balanceCredits: lowCreditsBalance } = useWalletBalance();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [lowCreditsDismissKey, setLowCreditsDismissKey] = useState<string | null>(null);
   const [isLowCreditsDismissed, setIsLowCreditsDismissed] = useState(false);
@@ -87,39 +88,24 @@ export default function AppShell({
 
   useEffect(() => {
     let cancelled = false;
+    if (!location.startsWith("/app")) return;
 
-    const loadLowCredits = async () => {
-      if (!location.startsWith("/app")) return;
-
-      try {
-        const [meResponse, balanceResponse] = await Promise.all([
-          apiRequest<{ ok: boolean; user: { id: string } }>("/api/me"),
-          apiRequest<{ ok: boolean; balanceCredits: number }>("/api/credits/balance"),
-        ]);
+    apiRequest<{ ok: boolean; user: { id: string } }>("/api/me")
+      .then((meResponse) => {
         if (cancelled) return;
-
         const userId = meResponse?.user?.id;
         if (!userId) return;
         setCurrentUserId(userId);
-
         const dismissKey = `${LOW_CREDITS_DISMISS_PREFIX}:${userId}`;
         const dismissed = window.localStorage.getItem(dismissKey) === "1";
         setLowCreditsDismissKey(dismissKey);
         setIsLowCreditsDismissed(dismissed);
-        setLowCreditsBalance(balanceResponse.balanceCredits);
-      } catch (error) {
+      })
+      .catch((error) => {
         if (cancelled) return;
-        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
-          return;
-        }
-      }
-    };
-
-    void loadLowCredits();
-
-    return () => {
-      cancelled = true;
-    };
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) return;
+      });
+    return () => { cancelled = true; };
   }, [location]);
 
   const updateMode = (nextMode: Mode) => {
@@ -128,8 +114,7 @@ export default function AppShell({
   };
 
   const pageKey = useMemo(() => location, [location]);
-  const isLowCredits =
-    typeof lowCreditsBalance === "number" && lowCreditsBalance < LOW_CREDITS_THRESHOLD;
+  const isLowCredits = lowCreditsBalance < LOW_CREDITS_THRESHOLD;
   const isZeroCredits = lowCreditsBalance === 0;
 
   const isActive = (href: string) => {
@@ -322,7 +307,7 @@ export default function AppShell({
             <div className="mx-auto w-full max-w-7xl space-y-8">
               {isLowCredits && !isLowCreditsDismissed ? (
                 <LowCreditsBanner
-                  balanceCredits={lowCreditsBalance ?? 0}
+                  balanceCredits={lowCreditsBalance}
                   onAddCredits={() => setLocation("/app/billing/credits")}
                   onDismiss={
                     lowCreditsDismissKey

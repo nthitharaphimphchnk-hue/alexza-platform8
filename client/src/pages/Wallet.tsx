@@ -4,37 +4,26 @@ import Modal from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { ApiError, apiRequest } from "@/lib/api";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import { AlertCircle, ChevronDown, ChevronUp, Download, Plus, RefreshCw } from "lucide-react";
-import { Fragment } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWalletBalance, useWalletTransactions, invalidateWallet } from "@/hooks/useWallet";
+import { manualTopup } from "@/api/wallet";
+import { ChevronDown, ChevronUp, Download, Mail, Plus, RefreshCw } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 
 type FilterType = "all" | "topup" | "usage" | "bonus" | "monthly_reset";
 
-interface CreditsBalanceResponse {
-  ok: boolean;
-  balanceCredits: number;
-}
-
-interface CreditTransaction {
-  id: string;
-  type: "bonus" | "topup" | "usage" | "refund" | "monthly_reset_bonus";
-  amountCredits: number;
-  reason: string;
-  relatedRunId: string | null;
-  usageLogId: string | null;
-  totalTokens?: number | null;
-  createdAt: string;
-}
-
-interface CreditsTransactionsResponse {
-  ok: boolean;
-  transactions: CreditTransaction[];
-}
-
-interface CreditsTopupResponse {
-  ok: boolean;
-  balanceCredits: number;
-  transaction: CreditTransaction;
+function formatFriendlyDate(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3600_000);
+  const diffDays = Math.floor(diffMs / 86400_000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return d.toLocaleDateString();
 }
 
 function toCsv(rows: Array<{ type: string; date: string; amountCredits: number; reason: string }>) {
@@ -52,58 +41,37 @@ function toCsv(rows: Array<{ type: string; date: string; amountCredits: number; 
   );
 }
 
+const ADMIN_TOPUP_KEY = (import.meta.env.VITE_ADMIN_TOPUP_KEY as string)?.trim() || "";
+const HAS_ADMIN_TOPUP = ADMIN_TOPUP_KEY.length > 0;
+
 export default function Wallet() {
-  const [balanceCredits, setBalanceCredits] = useState(0);
-  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { user } = useAuth();
+  const {
+    balanceCredits,
+    tokensPerCredit,
+    isLoading: balanceLoading,
+    error: balanceError,
+    refetch: refetchBalance,
+  } = useWalletBalance();
+  const {
+    transactions,
+    isLoading: txLoading,
+    error: txError,
+    refetch: refetchTx,
+  } = useWalletTransactions(50);
+
   const [filter, setFilter] = useState<FilterType>("all");
   const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
-  const [topupAmount, setTopupAmount] = useState("500");
-  const [topupReason, setTopupReason] = useState("");
+  const [topupAmount, setTopupAmount] = useState("1000");
   const [isSubmittingTopup, setIsSubmittingTopup] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
-  const monthlyBudget = 500000;
-  const used = Math.max(0, monthlyBudget - balanceCredits);
-  const usedPercent = Math.min(100, Math.round((used / monthlyBudget) * 100));
-  const budgetWarning = usedPercent >= 80;
+  const isLoading = balanceLoading || txLoading;
+  const errorMessage = balanceError || txError;
 
-  const loadCreditsData = useCallback(async () => {
-    if (!hasLoadedOnce) {
-      setIsLoading(true);
-    } else {
-      setIsRefreshing(true);
-    }
-    setErrorMessage(null);
-
-    try {
-      const [balanceRes, transactionsRes] = await Promise.all([
-        apiRequest<CreditsBalanceResponse>("/api/credits/balance"),
-        apiRequest<CreditsTransactionsResponse>("/api/credits/transactions?limit=50"),
-      ]);
-      setBalanceCredits(balanceRes.balanceCredits);
-      setTransactions(transactionsRes.transactions || []);
-      setHasLoadedOnce(true);
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
-      const message = error instanceof Error ? error.message : "Failed to load credits data";
-      setErrorMessage(message);
-      showErrorToast("Unable to load credits", message);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [hasLoadedOnce]);
-
-  useEffect(() => {
-    void loadCreditsData();
-  }, [loadCreditsData]);
+  const refetch = async () => {
+    await Promise.all([refetchBalance(), refetchTx()]);
+  };
 
   const normalizedRows = useMemo(() => {
     return transactions.map((tx) => {
@@ -114,15 +82,21 @@ export default function Wallet() {
             ? "Usage"
             : tx.type === "refund"
               ? "Refund"
-              : tx.type === "monthly_reset_bonus"
-                ? "Monthly Reset"
-              : "Bonus";
-      const dateText = new Date(tx.createdAt).toLocaleString();
+              : tx.type === "grant"
+                ? "Bonus"
+                : tx.type === "reserve"
+                  ? "Reserve"
+                  : tx.type === "monthly_reset_bonus"
+                    ? "Monthly Reset"
+                    : "Bonus";
+      const dateText = formatFriendlyDate(tx.createdAt);
+      const fullDate = new Date(tx.createdAt).toLocaleString();
       return {
         id: tx.id,
         typeLabel,
         originalType: tx.type,
         dateText,
+        fullDate,
         amountCredits: tx.amountCredits,
         reason: tx.reason || "-",
         totalTokens:
@@ -157,7 +131,7 @@ export default function Wallet() {
     const csv = toCsv(
       rows.map((row) => ({
         type: row.typeLabel,
-        date: row.dateText,
+        date: row.fullDate,
         amountCredits: row.amountCredits,
         reason: row.reason,
       }))
@@ -174,39 +148,37 @@ export default function Wallet() {
     showSuccessToast("Transactions CSV downloaded");
   };
 
-  const handleSubmitTopup = async () => {
+  const handleManualTopup = async () => {
     const parsedAmount = Number.parseInt(topupAmount, 10);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       showErrorToast("Validation error", "Please enter a positive amount of credits");
       return;
     }
-    if (parsedAmount > 100000) {
-      showErrorToast("Validation error", "Maximum top-up per request is 100000 credits");
+    if (parsedAmount > 1000000) {
+      showErrorToast("Validation error", "Maximum top-up per request is 1,000,000 credits");
+      return;
+    }
+    const userId = user?.id;
+    if (!userId) {
+      showErrorToast("Not signed in", "Please sign in to add credits");
       return;
     }
 
     setIsSubmittingTopup(true);
     try {
-      const response = await apiRequest<CreditsTopupResponse>("/api/credits/topup", {
-        method: "POST",
-        body: {
-          amountCredits: parsedAmount,
-          reason: topupReason.trim() || undefined,
-        },
+      await manualTopup({
+        userId,
+        credits: parsedAmount,
+        reason: "dev topup",
+        adminKey: ADMIN_TOPUP_KEY,
       });
-      setBalanceCredits(response.balanceCredits);
-      setTransactions((prev) => [response.transaction, ...prev]);
+      invalidateWallet();
       setIsTopupModalOpen(false);
-      setTopupAmount("500");
-      setTopupReason("");
+      setTopupAmount("1000");
       showSuccessToast("Credits added", `+${parsedAmount.toLocaleString()} credits`);
-      void loadCreditsData();
+      void refetch();
     } catch (error) {
-      if (error instanceof ApiError) {
-        showErrorToast("Top-up failed", error.message);
-        return;
-      }
-      showErrorToast("Top-up failed", "Unable to add credits right now");
+      showErrorToast("Top-up failed", error instanceof Error ? error.message : "Unable to add credits");
     } finally {
       setIsSubmittingTopup(false);
     }
@@ -228,11 +200,11 @@ export default function Wallet() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => void loadCreditsData()}
-              disabled={isLoading || isRefreshing}
+              onClick={() => void refetch()}
+              disabled={isLoading}
               className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
             >
-              <RefreshCw size={16} className={`mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw size={16} className={`mr-2 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
             <Button
@@ -244,13 +216,15 @@ export default function Wallet() {
               <Download size={16} className="mr-2" />
               Download CSV
             </Button>
-            <Button
-              onClick={() => setIsTopupModalOpen(true)}
-              className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
-            >
-              <Plus size={16} className="mr-2" />
-              Add Credits
-            </Button>
+            {HAS_ADMIN_TOPUP && (
+              <Button
+                onClick={() => setIsTopupModalOpen(true)}
+                className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
+              >
+                <Plus size={16} className="mr-2" />
+                Add Credits
+              </Button>
+            )}
           </div>
         }
       >
@@ -266,7 +240,7 @@ export default function Wallet() {
             <p className="text-sm text-red-200">{errorMessage}</p>
             <Button
               variant="outline"
-              onClick={() => void loadCreditsData()}
+              onClick={() => void refetch()}
               className="mt-3 border-red-300/40 text-red-100 hover:bg-red-500/15"
             >
               Retry
@@ -276,204 +250,198 @@ export default function Wallet() {
 
         {!isLoading && !errorMessage && (
           <>
-        <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
-          <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-            <div>
-              <p className="text-sm text-gray-400">Credit Balance</p>
-              <p className="mt-2 text-5xl font-semibold text-white">
-                <AnimatedCounter value={balanceCredits} />
-              </p>
-              <p className="mt-2 text-xs text-gray-500" title="Credits are used for processing in ALEXZA Managed Runtime.">
-                ALEXZA Credits — usage, monthly allowance.
-              </p>
-            </div>
-            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]/80 p-4">
-              <p className="text-xs text-gray-500">Budget Usage</p>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#1b212a]">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#a8a8a8] to-[#c0c0c0]"
-                  style={{ width: `${usedPercent}%` }}
-                />
-              </div>
-              <p className="mt-2 text-sm text-gray-300">
-                {used.toLocaleString()} / {monthlyBudget.toLocaleString()} credits
-              </p>
-              {budgetWarning && (
-                <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-amber-200">
-                  <AlertCircle size={14} />
-                  <span className="text-xs">Budget warning: usage exceeds 80% this cycle.</span>
+            <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+              <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+                <div>
+                  <p className="text-sm text-gray-400">Balance</p>
+                  <p className="mt-2 text-5xl font-semibold text-white">
+                    <AnimatedCounter value={balanceCredits} /> credits
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    1 credit = {tokensPerCredit.toLocaleString()} tokens
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
-        </section>
 
-        <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-white">Transaction History</h2>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Filter</label>
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as FilterType)}
-                className="rounded-md border border-[rgba(255,255,255,0.1)] bg-[#050607] px-2 py-1 text-sm text-white"
-              >
-                <option value="all">All</option>
-                <option value="topup">Topup</option>
-                <option value="usage">Usage</option>
-                <option value="bonus">Bonus</option>
-                <option value="monthly_reset">Monthly Reset</option>
-              </select>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-500">
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2">Tokens</th>
-                  <th className="px-3 py-2">Credits Charged</th>
-                  <th className="px-3 py-2">Amount</th>
-                  <th className="px-3 py-2">Reason</th>
-                  <th className="px-3 py-2">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <Fragment key={row.id}>
-                    <tr key={row.id} className="border-b border-[rgba(255,255,255,0.05)] text-gray-200">
-                      <td className="px-3 py-2">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs ${
-                            row.typeLabel === "Usage"
-                              ? "bg-red-500/15 text-red-300"
-                              : row.typeLabel === "Topup"
-                                ? "bg-blue-500/15 text-blue-300"
-                                : row.typeLabel === "Refund"
-                                  ? "bg-amber-500/15 text-amber-300"
-                                  : row.typeLabel === "Monthly Reset"
-                                    ? "bg-violet-500/15 text-violet-300"
-                                  : "bg-emerald-500/15 text-emerald-300"
-                          }`}
-                        >
-                          {row.typeLabel}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-gray-400">{row.dateText}</td>
-                      <td className="px-3 py-2 text-gray-300">{row.totalTokens}</td>
-                      <td className="px-3 py-2 text-gray-200">{row.creditsCharged}</td>
-                      <td className="px-3 py-2">
-                        <span className={row.amountCredits < 0 ? "text-red-300" : "text-emerald-300"}>
-                          {row.amountCredits > 0 ? "+" : ""}
-                          {row.amountCredits.toLocaleString()} credits
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-gray-400 max-w-[220px] truncate">{row.reason}</td>
-                      <td className="px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => setExpandedRowId((prev) => (prev === row.id ? null : row.id))}
-                          className="rounded-md border border-[rgba(255,255,255,0.12)] px-2 py-1 text-xs text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
-                        >
-                          {expandedRowId === row.id ? (
-                            <span className="inline-flex items-center gap-1">
-                              Hide <ChevronUp size={12} />
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1">
-                              Show <ChevronDown size={12} />
-                            </span>
-                          )}
-                        </button>
-                      </td>
+                <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]/80 p-4">
+                  <h3 className="text-sm font-medium text-white">Top up (manual for now)</h3>
+                  {HAS_ADMIN_TOPUP ? (
+                    <p className="mt-2 text-xs text-gray-400">
+                      Dev mode: Use the Add Credits button above to add credits manually.
+                    </p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-sm text-gray-300">
+                        Top-up coming soon (Stripe). Contact support.
+                      </p>
+                      <a
+                        href="mailto:sales@alexza.ai"
+                        className="inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#c0c0c0] hover:bg-[rgba(255,255,255,0.08)]"
+                      >
+                        <Mail size={14} />
+                        sales@alexza.ai
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-white">Transaction History</h2>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500">Filter</label>
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value as FilterType)}
+                    className="rounded-md border border-[rgba(255,255,255,0.1)] bg-[#050607] px-2 py-1 text-sm text-white"
+                  >
+                    <option value="all">All</option>
+                    <option value="topup">Topup</option>
+                    <option value="usage">Usage</option>
+                    <option value="bonus">Bonus</option>
+                    <option value="monthly_reset">Monthly Reset</option>
+                  </select>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-500">
+                      <th className="px-3 py-2">Type</th>
+                      <th className="px-3 py-2">Date</th>
+                      <th className="px-3 py-2">Credits</th>
+                      <th className="px-3 py-2">Reason</th>
+                      <th className="px-3 py-2">Details</th>
                     </tr>
-                    {expandedRowId === row.id && (
-                      <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                        <td colSpan={7} className="px-3 py-3">
-                          <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-[#050607] p-3 text-xs text-gray-300">
-                            <div>Reason: {row.reason}</div>
-                            <div>Run ID: {row.details.relatedRunId}</div>
-                            <div>Usage Log ID: {row.details.usageLogId}</div>
-                            <div>Tokens: {row.details.totalTokens}</div>
-                          </div>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <Fragment key={row.id}>
+                        <tr className="border-b border-[rgba(255,255,255,0.05)] text-gray-200">
+                          <td className="px-3 py-2">
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs ${
+                                row.typeLabel === "Usage"
+                                  ? "bg-red-500/15 text-red-300"
+                                  : row.typeLabel === "Topup"
+                                    ? "bg-blue-500/15 text-blue-300"
+                                    : row.typeLabel === "Refund"
+                                      ? "bg-amber-500/15 text-amber-300"
+                                      : row.typeLabel === "Monthly Reset"
+                                        ? "bg-violet-500/15 text-violet-300"
+                                        : "bg-emerald-500/15 text-emerald-300"
+                              }`}
+                            >
+                              {row.typeLabel}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-400" title={row.fullDate}>
+                            {row.dateText}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={row.amountCredits < 0 ? "text-red-300" : "text-emerald-300"}>
+                              {row.amountCredits > 0 ? "+" : ""}
+                              {row.amountCredits.toLocaleString()} credits
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-400 max-w-[220px] truncate">{row.reason}</td>
+                          <td className="px-3 py-2">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedRowId((prev) => (prev === row.id ? null : row.id))}
+                              className="rounded-md border border-[rgba(255,255,255,0.12)] px-2 py-1 text-xs text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
+                            >
+                              {expandedRowId === row.id ? (
+                                <span className="inline-flex items-center gap-1">
+                                  Hide <ChevronUp size={12} />
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1">
+                                  Show <ChevronDown size={12} />
+                                </span>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                        {expandedRowId === row.id && (
+                          <tr className="border-b border-[rgba(255,255,255,0.05)]">
+                            <td colSpan={5} className="px-3 py-3">
+                              <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-[#050607] p-3 text-xs text-gray-300">
+                                <div>Reason: {row.reason}</div>
+                                <div>Run ID: {row.details.relatedRunId}</div>
+                                <div>Usage Log ID: {row.details.usageLogId}</div>
+                                <div>Tokens: {row.details.totalTokens}</div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                    {rows.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-12 text-center text-gray-500">
+                          <p className="text-sm">No transactions yet.</p>
+                          <p className="mt-1 text-xs">Usage and top-ups will appear here.</p>
                         </td>
                       </tr>
                     )}
-                  </Fragment>
-                ))}
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
-                      No transactions yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </>
         )}
       </AppShell>
-      <Modal
-        open={isTopupModalOpen}
-        onOpenChange={(open) => {
-          if (isSubmittingTopup) return;
-          setIsTopupModalOpen(open);
-        }}
-        title="Manual Credit Top-up"
-        description="For testing only. Adds credits directly to your wallet."
-        size="sm"
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setIsTopupModalOpen(false)}
-              disabled={isSubmittingTopup}
-              className="border-[rgba(255,255,255,0.1)] text-white"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void handleSubmitTopup()}
-              disabled={isSubmittingTopup}
-              className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
-            >
-              {isSubmittingTopup ? "Adding..." : "Confirm Top-up"}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm text-gray-300">Amount Credits</label>
-            <input
-              type="number"
-              min="1"
-              max="100000"
-              step="1"
-              value={topupAmount}
-              onChange={(e) => setTopupAmount(e.target.value)}
-              disabled={isSubmittingTopup}
-              className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white focus:outline-none focus:border-[rgba(192,192,192,0.5)]"
-            />
-            <p className="text-xs text-gray-500">Allowed range: 1 - 100000 credits</p>
+
+      {HAS_ADMIN_TOPUP && (
+        <Modal
+          open={isTopupModalOpen}
+          onOpenChange={(open) => {
+            if (isSubmittingTopup) return;
+            setIsTopupModalOpen(open);
+          }}
+          title="Add Credits (Dev)"
+          description="Manual top-up for testing. Requires admin key."
+          size="sm"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setIsTopupModalOpen(false)}
+                disabled={isSubmittingTopup}
+                className="border-[rgba(255,255,255,0.1)] text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => void handleManualTopup()}
+                disabled={isSubmittingTopup}
+                className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
+              >
+                {isSubmittingTopup ? "Adding..." : "Add credits"}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Credits</label>
+              <input
+                type="number"
+                min="1"
+                max="1000000"
+                step="1"
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+                disabled={isSubmittingTopup}
+                className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white focus:outline-none focus:border-[rgba(192,192,192,0.5)]"
+              />
+              <p className="text-xs text-gray-500">1 - 1,000,000 credits</p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm text-gray-300">Reason (optional)</label>
-            <input
-              type="text"
-              value={topupReason}
-              onChange={(e) => setTopupReason(e.target.value)}
-              disabled={isSubmittingTopup}
-              maxLength={200}
-              placeholder="e.g. QA top-up for e2e test"
-              className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white focus:outline-none focus:border-[rgba(192,192,192,0.5)]"
-            />
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </>
   );
 }

@@ -2,7 +2,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
-import { getProjects, listActions, runAction, estimateCost, getCreditsBalance } from "@/lib/alexzaApi";
+import { getProjects, listActions, runAction, estimateCost } from "@/lib/alexzaApi";
+import { invalidateWallet, useWalletBalance } from "@/hooks/useWallet";
 import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
 import type { Project, PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
@@ -65,7 +66,7 @@ export default function Playground() {
     routingMode: RoutingMode;
   } | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
-  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const { balanceCredits: walletBalance } = useWalletBalance();
 
   const projectIdFromUrl = useMemo(() => {
     const match = location.match(/^\/app\/projects\/([^/]+)\/playground$/);
@@ -145,17 +146,6 @@ export default function Playground() {
       }
     })();
   }, [projectId]);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const bal = await getCreditsBalance();
-        setWalletBalance(bal);
-      } catch {
-        setWalletBalance(null);
-      }
-    })();
-  }, [projectId, isRunning]);
 
   const handleEstimate = async () => {
     if (!projectId || !selectedActionName) return;
@@ -267,6 +257,7 @@ export default function Playground() {
       setOutput(res.output);
       setRequestId(res.requestId ?? null);
       setCreditsCharged(res.usage?.creditsCharged ?? null);
+      invalidateWallet();
       showSuccessToast("Run complete", `Latency ${elapsed} ms`);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
@@ -289,7 +280,6 @@ export default function Playground() {
   const insufficientCredits =
     !useLegacy &&
     estimate &&
-    walletBalance !== null &&
     walletBalance < estimate.estimatedCredits;
 
   const canRun = useLegacy

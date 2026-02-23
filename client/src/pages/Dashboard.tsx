@@ -6,9 +6,8 @@ import OnboardingChecklist from "@/components/dashboard/OnboardingChecklist";
 import StatusWidget from "@/components/dashboard/StatusWidget";
 import UsageAnalyticsWidget from "@/components/dashboard/UsageAnalyticsWidget";
 import { Button } from "@/components/ui/button";
-import { getCreditsBalance } from "@/lib/alexzaApi";
+import { useWalletBalance } from "@/hooks/useWallet";
 import { Activity, Gauge, Plus, Server, TriangleAlert } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 const activityFeed = [
@@ -21,26 +20,7 @@ const activityFeed = [
 export default function Dashboard() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const t = window.setTimeout(async () => {
-      try {
-        const bal = await getCreditsBalance();
-        if (!cancelled) setCredits(bal);
-      } catch {
-        if (!cancelled) setCredits(0);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }, 400);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, []);
+  const { balanceCredits, tokensPerCredit, isLoading: loading, error: creditsError, refetch: refetchCredits } = useWalletBalance();
 
   return (
     <AppShell
@@ -82,7 +62,23 @@ export default function Dashboard() {
             { label: t("dashboard.apiLatency"), value: "172ms", icon: Gauge, state: t("dashboard.healthy") },
             { label: t("dashboard.gatewayHealth"), value: "99.98%", icon: Server, state: t("dashboard.operational") },
             { label: t("dashboard.modelCluster"), value: "12/12", icon: Activity, state: t("dashboard.online") },
-            { label: t("dashboard.creditsRemaining"), value: credits !== null ? <AnimatedCounter value={credits} /> : "—", icon: TriangleAlert, state: t("dashboard.budgetSafe") },
+            {
+              label: t("dashboard.creditsRemaining"),
+              value: creditsError ? (
+                <span className="flex flex-col gap-1">
+                  <span className="text-sm text-red-300">{creditsError}</span>
+                  <Button variant="outline" size="sm" onClick={() => void refetchCredits()} className="w-fit border-red-300/40 text-red-100 hover:bg-red-500/15">
+                    Retry
+                  </Button>
+                </span>
+              ) : (
+                <span>
+                  <AnimatedCounter value={balanceCredits} /> credits
+                </span>
+              ),
+              icon: TriangleAlert,
+              state: creditsError ? "" : `1 credit = ${tokensPerCredit.toLocaleString()} tokens`,
+            },
           ].map((item, idx) => {
             const Icon = item.icon;
             return (
