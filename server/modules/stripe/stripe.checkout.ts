@@ -88,7 +88,7 @@ export async function createCheckoutSession(
   });
 
   if (!session.url) {
-    logger.warn("[Stripe] Checkout session created but url is null", { sessionId: session.id });
+    logger.warn({ sessionId: session.id }, "[Stripe] Checkout session created but url is null");
   }
 
   return {

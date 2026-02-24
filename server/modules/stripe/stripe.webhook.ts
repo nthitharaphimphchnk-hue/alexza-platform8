@@ -14,15 +14,6 @@ import { ObjectId } from "mongodb";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 const STRIPE_EVENTS_COLLECTION = "stripe_events";
 
-function getWebhookSecret(): string {
-  if (!STRIPE_WEBHOOK_SECRET) {
-    throw new Error(
-      "STRIPE_WEBHOOK_SECRET is required. Run 'stripe listen --forward-to localhost:3002/api/billing/stripe/webhook' and set whsec_..."
-    );
-  }
-  return STRIPE_WEBHOOK_SECRET;
-}
-
 /** Returns true if inserted (new), false if already processed (duplicate) */
 async function tryMarkSessionProcessed(sessionId: string): Promise<boolean> {
   const db = await getDb();
@@ -61,6 +52,16 @@ export interface WebhookHandlerOptions {
  * Idempotent: duplicate events are ignored.
  */
 export async function handleStripeWebhook(req: Request, res: Response): Promise<void> {
+  if (!STRIPE_WEBHOOK_SECRET) {
+    logger.warn("[Stripe] Webhook secret not configured");
+    res.status(500).json({
+      ok: false,
+      error: "STRIPE_WEBHOOK_NOT_CONFIGURED",
+      message: "STRIPE_WEBHOOK_SECRET is required. Local: run 'stripe listen --forward-to localhost:3002/api/billing/stripe/webhook'. Production: use signing secret from Stripe Dashboard.",
+    });
+    return;
+  }
+
   const sig = req.headers["stripe-signature"];
   if (typeof sig !== "string") {
     res.status(400).json({ ok: false, error: "Missing stripe-signature header" });
@@ -75,12 +76,11 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
 
   let event: Stripe.Event;
   try {
-    const secret = getWebhookSecret();
     const stripe = getStripe();
-    event = stripe.webhooks.constructEvent(rawBody, sig, secret);
+    event = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Invalid signature";
-    logger.warn("[Stripe] Webhook signature verification failed", { message: msg });
+    logger.warn({ message: msg }, "[Stripe] Webhook signature verification failed");
     res.status(400).json({
       ok: false,
       error: "WEBHOOK_SIGNATURE_VERIFICATION_FAILED",
@@ -109,14 +109,14 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
   const metadata = session.metadata;
 
   if (!amountTotal || currency !== "usd") {
-    logger.warn("[Stripe] Invalid session: amount_total or currency", { sessionId });
+    logger.warn({ sessionId }, "[Stripe] Invalid session: amount_total or currency");
     res.status(200).json({ received: true });
     return;
   }
 
   const userIdRaw = metadata?.userId;
   if (typeof userIdRaw !== "string" || !ObjectId.isValid(userIdRaw)) {
-    logger.warn("[Stripe] Invalid metadata userId", { sessionId });
+    logger.warn({ sessionId }, "[Stripe] Invalid metadata userId");
     res.status(200).json({ received: true });
     return;
   }
@@ -130,13 +130,12 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
       amountUsd,
       requestId: sessionId,
     });
-    logger.info("[Stripe] Webhook processed", {
-      sessionId,
-      userId: userIdRaw,
-      amountUsd,
-    });
+    logger.info(
+      { sessionId, userId: userIdRaw, amountUsd },
+      "[Stripe] Webhook processed"
+    );
   } catch (err) {
-    logger.error("[Stripe] Webhook processing failed", err);
+    logger.error({ err }, "[Stripe] Webhook processing failed");
     const db = await getDb();
     await db.collection(STRIPE_EVENTS_COLLECTION).deleteOne({ sessionId });
     res.status(500).json({ ok: false, error: "WEBHOOK_PROCESSING_FAILED" });
