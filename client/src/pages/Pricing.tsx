@@ -1,53 +1,42 @@
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion } from "framer-motion";
-import { containerVariants, itemVariants, staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
+import {
+  containerVariants,
+  itemVariants,
+  staggerContainerVariants,
+  staggerItemVariants,
+} from "@/lib/animations";
 import Logo from "@/components/Logo";
+import {
+  pricingTiers,
+  CREDIT_PRICE,
+  FREE_CREDITS,
+  TOKENS_PER_CREDIT,
+} from "@/config/pricing";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
-/**
- * ALEXZA AI Pricing Page
- * 7-day free trial + pay-as-you-go credits model
- */
+function creditsFromDollars(dollars: number): number {
+  return Math.floor(dollars / CREDIT_PRICE);
+}
 
 export default function Pricing() {
-  const plans = [
-    {
-      name: "Free Trial",
-      description: "Get started with ALEXZA AI",
-      duration: "7 days",
-      features: [
-        "Full platform access",
-        "5,000 free credits",
-        "All AI features",
-        "Community support",
-        "Basic analytics",
-      ],
-      cta: "Start Free Trial",
-      highlighted: true,
-    },
-    {
-      name: "Pay-as-you-go",
-      description: "Scale as you grow",
-      duration: "Usage-based",
-      features: [
-        "Unlimited usage",
-        "Flexible credit packages",
-        "Priority support",
-        "Advanced analytics",
-        "Custom integrations",
-        "Dedicated account manager",
-      ],
-      cta: "Get Started",
-      highlighted: false,
-    },
+  const walletExamples = [
+    { dollars: 10, credits: creditsFromDollars(10) },
+    { dollars: 20, credits: creditsFromDollars(20) },
+    { dollars: 50, credits: creditsFromDollars(50) },
   ];
 
-  const creditPackages = [
-    { credits: "10,000", price: "$50", perCredit: "$0.005" },
-    { credits: "50,000", price: "$200", perCredit: "$0.004" },
-    { credits: "100,000", price: "$350", perCredit: "$0.0035" },
-    { credits: "500,000", price: "$1,500", perCredit: "$0.003" },
-  ];
+  const handleCta = (cta: string) => {
+    if (cta === "Get Started") window.location.href = "/signup";
+    else if (cta === "Add Credits") window.location.href = "/app/billing/credits";
+    else if (cta === "Contact Sales") window.location.href = "mailto:sales@alexza.ai";
+  };
 
   return (
     <div className="min-h-screen text-foreground">
@@ -56,9 +45,20 @@ export default function Pricing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Logo size="navbar" />
           <div className="flex items-center gap-4">
-            <a href="/docs" className="text-sm text-gray-300 hover:text-white transition">Docs</a>
-            <a href="/" className="text-sm text-gray-300 hover:text-white transition">Home</a>
-            <Button variant="outline" className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12]" onClick={() => (window.location.href = "/login")}>
+            <a href="/docs" className="text-sm text-gray-300 hover:text-white transition">
+              Docs
+            </a>
+            <a href="/" className="text-sm text-gray-300 hover:text-white transition">
+              Home
+            </a>
+            <a href="/pricing" className="text-sm text-gray-300 hover:text-white transition">
+              Pricing
+            </a>
+            <Button
+              variant="outline"
+              className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12]"
+              onClick={() => (window.location.href = "/login")}
+            >
               Sign In
             </Button>
           </div>
@@ -66,7 +66,7 @@ export default function Pricing() {
       </nav>
 
       {/* Header */}
-      <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <div className="pt-32 pb-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           className="max-w-4xl mx-auto text-center space-y-6"
           variants={containerVariants}
@@ -74,36 +74,30 @@ export default function Pricing() {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          <motion.h1
-            className="text-5xl md:text-6xl font-bold text-white"
-            variants={itemVariants}
-          >
+          <motion.h1 className="text-5xl md:text-6xl font-bold text-white" variants={itemVariants}>
             Simple, Transparent Pricing
           </motion.h1>
-          <motion.p
-            className="text-xl text-gray-300"
-            variants={itemVariants}
-          >
-            Start free, scale as you grow. Pay only for what you use.
+          <motion.p className="text-xl text-gray-300" variants={itemVariants}>
+            Pay only for what you use. No subscription. No surprises.
           </motion.p>
         </motion.div>
       </div>
 
-      {/* Plans */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      {/* Pricing Cards */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8"
+          className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"
           variants={staggerContainerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
         >
-          {plans.map((plan, idx) => (
+          {pricingTiers.map((tier, idx) => (
             <motion.div
               key={idx}
               className={`p-8 rounded-2xl border transition-all ${
-                plan.highlighted
-                  ? "bg-gradient-to-br from-[#0b0e12] to-[#050607] border-[#c0c0c0]/30 shadow-lg shadow-[#c0c0c0]/10"
+                tier.highlighted
+                  ? "bg-gradient-to-br from-[#0b0e12] to-[#050607] border-[#c0c0c0]/30 shadow-lg shadow-[#c0c0c0]/10 ring-2 ring-[#c0c0c0]/20"
                   : "bg-gradient-to-br from-[#0b0e12] to-[#050607] border-[rgba(255,255,255,0.06)]"
               }`}
               variants={staggerItemVariants}
@@ -111,15 +105,19 @@ export default function Pricing() {
             >
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                  <p className="text-gray-400 mt-2">{plan.description}</p>
-                  <p className="text-sm text-gray-500 mt-2">{plan.duration}</p>
+                  {tier.highlighted && (
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-[#c0c0c0]/20 text-[#c0c0c0] mb-3">
+                      Most Popular
+                    </span>
+                  )}
+                  <h3 className="text-2xl font-bold text-white">{tier.name}</h3>
+                  <p className="text-gray-400 mt-2">{tier.description}</p>
                 </div>
 
                 <div className="space-y-4">
-                  {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Check size={20} className="text-[#c0c0c0] flex-shrink-0" />
+                  {tier.features.map((feature, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <Check size={20} className="text-[#c0c0c0] flex-shrink-0 mt-0.5" />
                       <span className="text-gray-300">{feature}</span>
                     </div>
                   ))}
@@ -127,12 +125,13 @@ export default function Pricing() {
 
                 <Button
                   className={`w-full h-12 font-semibold ${
-                    plan.highlighted
+                    tier.highlighted
                       ? "bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black"
                       : "bg-transparent border border-[#c0c0c0] text-white hover:bg-[#c0c0c0]/10"
                   }`}
+                  onClick={() => handleCta(tier.cta)}
                 >
-                  {plan.cta}
+                  {tier.cta}
                 </Button>
               </div>
             </motion.div>
@@ -140,105 +139,134 @@ export default function Pricing() {
         </motion.div>
       </section>
 
-      {/* Credit Packages */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0b0e12]/50">
-        <div className="max-w-6xl mx-auto">
+      {/* Wallet Example */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
           <motion.h2
-            className="text-4xl font-bold text-white text-center mb-16"
+            className="text-2xl font-bold text-white text-center mb-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true }}
           >
-            Credit Packages
+            Wallet Example
           </motion.h2>
-
           <motion.div
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
             variants={staggerContainerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true }}
           >
-            {creditPackages.map((pkg, idx) => (
+            {walletExamples.map((ex, idx) => (
               <motion.div
                 key={idx}
-                className="p-6 rounded-xl bg-gradient-to-br from-[#0b0e12] to-[#050607] border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)] transition-all"
+                className="p-6 rounded-xl bg-[#0b0e12]/50 border border-[rgba(255,255,255,0.06)] text-center"
                 variants={staggerItemVariants}
-                whileHover={{ scale: 1.05 }}
               >
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-gray-400 text-sm">Credits</p>
-                    <p className="text-3xl font-bold text-white">{pkg.credits}</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-white">{pkg.price}</p>
-                    <p className="text-xs text-gray-500">{pkg.perCredit} per credit</p>
-                  </div>
-                  <Button className="w-full bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold">
-                    Buy Credits
-                  </Button>
-                </div>
+                <p className="text-2xl font-bold text-white">${ex.dollars}</p>
+                <p className="text-gray-400 text-sm mt-1">≈ {ex.credits.toLocaleString()} credits</p>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      {/* How Billing Works */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#0b0e12]/30">
         <div className="max-w-3xl mx-auto">
           <motion.h2
-            className="text-4xl font-bold text-white text-center mb-16"
+            className="text-3xl font-bold text-white text-center mb-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true }}
+          >
+            How Billing Works
+          </motion.h2>
+          <motion.ul
+            className="space-y-4 text-gray-300"
+            variants={staggerContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {[
+              "Add funds to your wallet",
+              "Credits are deducted per API call",
+              `1 credit = ${TOKENS_PER_CREDIT.toLocaleString()} tokens`,
+              `$${CREDIT_PRICE.toFixed(3)} per credit`,
+              "API stops automatically when balance reaches zero",
+            ].map((item, i) => (
+              <motion.li key={i} className="flex items-center gap-3" variants={staggerItemVariants}>
+                <Check size={18} className="text-[#c0c0c0] flex-shrink-0" />
+                {item}
+              </motion.li>
+            ))}
+          </motion.ul>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <motion.h2
+            className="text-3xl font-bold text-white text-center mb-12"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
           >
             Frequently Asked Questions
           </motion.h2>
 
           <motion.div
-            className="space-y-6"
             variants={staggerContainerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true }}
           >
-            {[
-              {
-                q: "How do credits work?",
-                a: "Each API call consumes credits based on complexity. You can monitor usage in real-time.",
-              },
-              {
-                q: "Can I upgrade during my trial?",
-                a: "Yes, upgrade anytime. Your trial credits will be credited toward your purchase.",
-              },
-              {
-                q: "What happens when I run out of credits?",
-                a: "Your requests will be paused. You can instantly buy more credits to resume.",
-              },
-              {
-                q: "Do credits expire?",
-                a: "No, credits never expire. Use them at your own pace.",
-              },
-            ].map((item, idx) => (
-              <motion.div
-                key={idx}
-                className="p-6 rounded-xl bg-[#0b0e12]/50 border border-[rgba(255,255,255,0.06)]"
-                variants={staggerItemVariants}
+            <Accordion type="single" collapsible className="space-y-4">
+              <AccordionItem
+                value="expire"
+                className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/50 px-6"
               >
-                <h3 className="text-lg font-semibold text-white mb-3">{item.q}</h3>
-                <p className="text-gray-400">{item.a}</p>
-              </motion.div>
-            ))}
+                <AccordionTrigger className="text-white hover:no-underline hover:text-gray-300 py-6">
+                  Do credits expire?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-400 pb-6">
+                  No. Paid credits do not expire.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="zero"
+                className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/50 px-6"
+              >
+                <AccordionTrigger className="text-white hover:no-underline hover:text-gray-300 py-6">
+                  What happens when my balance is zero?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-400 pb-6">
+                  API requests will return an insufficient balance error.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="subscription"
+                className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/50 px-6"
+              >
+                <AccordionTrigger className="text-white hover:no-underline hover:text-gray-300 py-6">
+                  Do you offer subscriptions?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-400 pb-6">
+                  No. ALEXZA uses a prepaid wallet model.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </motion.div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
         <motion.div
           className="max-w-2xl mx-auto text-center space-y-8"
           variants={containerVariants}
@@ -248,10 +276,13 @@ export default function Pricing() {
         >
           <h2 className="text-4xl font-bold text-white">Ready to get started?</h2>
           <p className="text-xl text-gray-300">
-            Join thousands of teams using ALEXZA AI to orchestrate their AI systems.
+            New users receive {FREE_CREDITS.toLocaleString()} free credits. No credit card required.
           </p>
-          <Button className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black h-12 px-8 text-base font-semibold inline-flex items-center gap-2">
-            Start Free Trial <ArrowRight size={18} />
+          <Button
+            className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black h-12 px-8 text-base font-semibold"
+            onClick={() => (window.location.href = "/signup")}
+          >
+            Get Started Free
           </Button>
         </motion.div>
       </section>

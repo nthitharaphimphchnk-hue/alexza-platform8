@@ -22,7 +22,10 @@ import { builderRouter } from "./builder";
 import { actionsRouter } from "./actions";
 import { usageRouter } from "./usageRoutes";
 import { creditsRouter } from "./credits";
+import { walletRouter } from "./walletRoutes";
+import { runWalletMigration } from "./wallet";
 import { billingRouter, runBillingUserMigration } from "./billing";
+import { stripeRouter, createWebhookRoute } from "./modules/stripe/stripe.routes";
 import { runRoutingModeMigration } from "./projects";
 import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
@@ -95,6 +98,7 @@ function extractRegisteredRoutes(app: express.Express): string[] {
 
 async function startServer() {
   await runBillingUserMigration();
+  await runWalletMigration();
   await runLowCreditsEmailMigration();
   await runRoutingModeMigration();
   const app = express();
@@ -139,6 +143,10 @@ async function startServer() {
       credentials: true,
     })
   );
+
+  // Stripe webhook MUST use raw body - mount before express.json()
+  app.post("/api/billing/stripe/webhook", ...createWebhookRoute());
+
   app.use(express.json());
   app.use(cookieParser());
 
@@ -171,9 +179,11 @@ async function startServer() {
   app.use("/api", actionsRouter);
   app.use("/api", usageRouter);
   app.use("/api", creditsRouter);
+  app.use("/api", walletRouter);
   app.use("/api", estimateRouter);
   app.use("/api", onboardingRouter);
   app.use("/api", billingRouter);
+  app.use("/api/billing/stripe", stripeRouter);
   app.use("/api", notificationsRouter);
   app.use("/api", adminRunLogsRouter);
   app.use(runRouter);

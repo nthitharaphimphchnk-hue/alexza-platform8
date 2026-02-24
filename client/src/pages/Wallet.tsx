@@ -2,13 +2,12 @@ import AppShell from "@/components/app/AppShell";
 import AnimatedCounter from "@/components/app/AnimatedCounter";
 import Modal from "@/components/Modal";
 import { Button } from "@/components/ui/button";
-import { ApiError, apiRequest } from "@/lib/api";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWalletBalance, useWalletTransactions, invalidateWallet } from "@/hooks/useWallet";
-import { manualTopup } from "@/api/wallet";
-import { ChevronDown, ChevronUp, Download, Mail, Plus, RefreshCw } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { createStripeCheckoutSession, manualTopup } from "@/api/wallet";
+import { ChevronDown, ChevronUp, CreditCard, Download, Mail, Plus, RefreshCw } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 type FilterType = "all" | "topup" | "usage" | "bonus" | "monthly_reset";
 
@@ -44,6 +43,10 @@ function toCsv(rows: Array<{ type: string; date: string; amountCredits: number; 
 const ADMIN_TOPUP_KEY = (import.meta.env.VITE_ADMIN_TOPUP_KEY as string)?.trim() || "";
 const HAS_ADMIN_TOPUP = ADMIN_TOPUP_KEY.length > 0;
 
+const STRIPE_PRESETS = [10, 20, 50];
+const MIN_STRIPE_USD = 10;
+const MAX_STRIPE_USD = 500;
+
 export default function Wallet() {
   const { user } = useAuth();
   const {
@@ -65,12 +68,60 @@ export default function Wallet() {
   const [topupAmount, setTopupAmount] = useState("1000");
   const [isSubmittingTopup, setIsSubmittingTopup] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [stripeAmountUsd, setStripeAmountUsd] = useState("20");
+  const [isStripeLoading, setIsStripeLoading] = useState(false);
+  const [urlStatus, setUrlStatus] = useState<"success" | "cancel" | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      setUrlStatus("success");
+      invalidateWallet();
+      window.history.replaceState({}, "", "/app/billing/credits");
+    } else if (status === "cancel") {
+      setUrlStatus("cancel");
+      window.history.replaceState({}, "", "/app/billing/credits");
+    }
+  }, []);
 
   const isLoading = balanceLoading || txLoading;
   const errorMessage = balanceError || txError;
 
   const refetch = async () => {
     await Promise.all([refetchBalance(), refetchTx()]);
+  };
+
+  useEffect(() => {
+    if (urlStatus === "success") {
+      const t = setTimeout(() => setUrlStatus(null), 8000);
+      return () => clearTimeout(t);
+    }
+  }, [urlStatus]);
+
+  const handleStripeCheckout = async () => {
+    const amount = Number.parseFloat(stripeAmountUsd);
+    if (!Number.isFinite(amount) || amount < MIN_STRIPE_USD) {
+      showErrorToast("Validation error", `Minimum amount is $${MIN_STRIPE_USD}`);
+      return;
+    }
+    if (amount > MAX_STRIPE_USD) {
+      showErrorToast("Validation error", `Maximum amount is $${MAX_STRIPE_USD}`);
+      return;
+    }
+    setIsStripeLoading(true);
+    try {
+      const res = await createStripeCheckoutSession(amount);
+      if (res.url) {
+        window.location.href = res.url;
+        return;
+      }
+      showErrorToast("Checkout failed", "No redirect URL received");
+    } catch (error) {
+      showErrorToast("Checkout failed", error instanceof Error ? error.message : "Unable to start checkout");
+    } finally {
+      setIsStripeLoading(false);
+    }
   };
 
   const normalizedRows = useMemo(() => {
@@ -250,6 +301,19 @@ export default function Wallet() {
 
         {!isLoading && !errorMessage && (
           <>
+            {urlStatus === "success" && (
+              <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                <p className="text-sm font-medium text-emerald-200">
+                  Payment successful! Credits have been added to your wallet.
+                </p>
+              </section>
+            )}
+            {urlStatus === "cancel" && (
+              <section className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                <p className="text-sm text-amber-200">Checkout was cancelled.</p>
+              </section>
+            )}
+
             <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
               <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
                 <div>
@@ -263,25 +327,67 @@ export default function Wallet() {
                 </div>
 
                 <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]/80 p-4">
-                  <h3 className="text-sm font-medium text-white">Top up (manual for now)</h3>
+                  <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                    <CreditCard size={16} />
+                    Top up with Stripe
+                  </h3>
                   {HAS_ADMIN_TOPUP ? (
                     <p className="mt-2 text-xs text-gray-400">
-                      Dev mode: Use the Add Credits button above to add credits manually.
+                      Dev mode: Use the Add Credits button above for manual top-up, or Stripe below.
                     </p>
-                  ) : (
-                    <div className="mt-3 space-y-2">
-                      <p className="text-sm text-gray-300">
-                        Top-up coming soon (Stripe). Contact support.
-                      </p>
-                      <a
-                        href="mailto:sales@alexza.ai"
-                        className="inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#c0c0c0] hover:bg-[rgba(255,255,255,0.08)]"
-                      >
-                        <Mail size={14} />
-                        sales@alexza.ai
-                      </a>
+                  ) : null}
+                  <div className="mt-3 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {STRIPE_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setStripeAmountUsd(String(preset))}
+                          className={`rounded-lg border px-3 py-1.5 text-sm transition ${
+                            stripeAmountUsd === String(preset)
+                              ? "border-[#c0c0c0] bg-[#c0c0c0]/20 text-white"
+                              : "border-[rgba(255,255,255,0.12)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)]"
+                          }`}
+                        >
+                          ${preset}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-500 block mb-1">Custom amount (USD)</label>
+                        <input
+                          type="number"
+                          min={MIN_STRIPE_USD}
+                          max={MAX_STRIPE_USD}
+                          step="1"
+                          value={stripeAmountUsd}
+                          onChange={(e) => setStripeAmountUsd(e.target.value)}
+                          disabled={isStripeLoading}
+                          className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white focus:outline-none focus:border-[rgba(192,192,192,0.5)]"
+                        />
+                      </div>
+                      <Button
+                        onClick={() => void handleStripeCheckout()}
+                        disabled={isStripeLoading}
+                        className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8] shrink-0"
+                      >
+                        {isStripeLoading ? "Redirecting..." : "Proceed to Checkout"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Min ${MIN_STRIPE_USD} · Max ${MAX_STRIPE_USD}
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.06)]">
+                    <a
+                      href="mailto:sales@alexza.ai"
+                      className="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-gray-300"
+                    >
+                      <Mail size={12} />
+                      Contact sales
+                    </a>
+                  </div>
                 </div>
               </div>
             </section>

@@ -83,7 +83,7 @@ router.post("/projects/:id/actions", requireAuth, async (req, res, next) => {
     const hasAccess = await ensureProjectAccess(projectId, req.user._id);
     if (!hasAccess) return err(res, 404, "NOT_FOUND", "Project not found");
 
-    const body = req.body as Partial<ProposedAction> & { actionName?: string };
+    const body = req.body as Partial<ProposedAction> & { actionName?: string; routingPolicy?: string };
     const rawActionName = typeof body.actionName === "string" ? body.actionName : "";
     const nameValidation = validateActionName(rawActionName);
     if (!nameValidation.valid) {

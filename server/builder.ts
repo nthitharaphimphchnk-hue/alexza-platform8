@@ -272,7 +272,7 @@ router.post("/threads/:threadId/messages", requireAuth, async (req, res, next) =
 
     // 6) Parse proposedActions from response, map to public DTO (no provider/model)
     const rawProposed = extractProposedActions(assistantContent);
-    const proposedActions = rawProposed.map((pa) => toPublicProposedAction(pa));
+    const proposedActions = rawProposed.map((pa) => toPublicProposedAction(pa as unknown as Record<string, unknown>));
 
     const assistantMessage = {
       id: insertResult.insertedId.toString(),

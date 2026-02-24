@@ -2,6 +2,7 @@ import { Router, type Request } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { topupForUser } from "./wallet";
 
 export const FREE_TRIAL_CREDITS = 1000;
 export const TOKENS_PER_CREDIT = 1000;
@@ -111,11 +112,9 @@ export async function createCreditTransaction(params: CreateCreditTransactionPar
 }
 
 export async function getWalletBalanceCredits(userId: ObjectId): Promise<number> {
-  await ensureCreditsCollections();
-  const db = await getDb();
-  const users = db.collection<UserWalletDoc>("users");
-  const user = await users.findOne({ _id: userId });
-  return typeof user?.walletBalanceCredits === "number" ? user.walletBalanceCredits : 0;
+  const { getBalance } = await import("./wallet");
+  const { balanceCredits } = await getBalance(userId);
+  return balanceCredits;
 }
 
 /**
@@ -311,47 +310,36 @@ router.post("/credits/topup", requireAuth, async (req, res, next) => {
       });
     }
 
-    await ensureCreditsCollections();
+    const { balanceCredits } = await topupForUser({
+      userId: req.user._id,
+      credits: amountCredits,
+      reason,
+    });
+
     const db = await getDb();
-    const users = db.collection<UserWalletDoc>("users");
+    const txCol = db.collection("wallet_transactions");
+    const latestTx = await txCol
+      .find({ userId: req.user._id, type: "topup" })
+      .sort({ createdAt: -1 })
+      .limit(1)
+      .toArray();
 
-    const updatedUser = await users.findOneAndUpdate(
-      { _id: req.user._id },
-      { $inc: { walletBalanceCredits: amountCredits } },
-      { returnDocument: "after" }
-    );
-    if (!updatedUser) {
-      return res.status(404).json({ ok: false, error: "USER_NOT_FOUND" });
-    }
-
-    try {
-      const transaction = await createCreditTransaction({
-        userId: req.user._id,
-        type: "topup",
+    const tx = latestTx[0] as { _id?: unknown; createdAt?: Date } | undefined;
+    return res.json({
+      ok: true,
+      balanceCredits,
+      transaction: {
+        id: tx?._id?.toString?.() ?? "",
+        userId: req.user._id.toString(),
+        type: "topup" as const,
         amountCredits,
         reason,
-      });
-      return res.json({
-        ok: true,
-        balanceCredits: typeof updatedUser.walletBalanceCredits === "number" ? updatedUser.walletBalanceCredits : 0,
-        transaction: {
-          id: transaction.id.toString(),
-          userId: req.user._id.toString(),
-          type: "topup" as const,
-          amountCredits,
-          reason,
-          relatedRunId: null,
-          usageLogId: null,
-          provider: null,
-          model: null,
-          totalTokens: null,
-          createdAt: transaction.createdAt,
-        },
-      });
-    } catch (transactionError) {
-      await users.updateOne({ _id: req.user._id }, { $inc: { walletBalanceCredits: -amountCredits } });
-      throw transactionError;
-    }
+        relatedRunId: null,
+        usageLogId: null,
+        totalTokens: null,
+        createdAt: tx?.createdAt?.toISOString?.() ?? new Date().toISOString(),
+      },
+    });
   } catch (error) {
     return next(error);
   }

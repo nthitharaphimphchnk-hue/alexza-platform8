@@ -37,6 +37,19 @@ export interface ManualTopupResponse {
   userId: string;
 }
 
+export interface StripeCheckoutResponse {
+  ok: boolean;
+  url: string | null;
+  sessionId?: string;
+}
+
+export async function createStripeCheckoutSession(amountUsd: number): Promise<StripeCheckoutResponse> {
+  return apiRequest<StripeCheckoutResponse>("/api/billing/stripe/checkout", {
+    method: "POST",
+    body: { amountUsd },
+  });
+}
+
 export async function fetchWalletBalance(): Promise<WalletBalanceResponse> {
   return apiRequest<WalletBalanceResponse>("/api/wallet/balance");
 }

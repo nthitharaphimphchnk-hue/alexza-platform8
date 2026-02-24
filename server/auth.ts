@@ -2,7 +2,7 @@ import { Router, type Response } from "express";
 import { MongoServerError, ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
-import { createCreditTransaction, FREE_TRIAL_CREDITS } from "./credits";
+import { FREE_CREDITS, grantFreeCreditsIfEligible, writeWalletTransaction } from "./wallet";
 import { PLAN_MONTHLY_ALLOWANCE } from "./billing";
 import {
   generateSessionToken,
@@ -20,7 +20,9 @@ interface UserDoc {
   email: string;
   passwordHash: string;
   name: string;
-  walletBalanceCredits: number;
+  walletBalanceCredits?: number;
+  walletGrantedFreeCredits?: boolean;
+  walletUpdatedAt?: Date;
   plan: "free" | "pro";
   monthlyCreditsAllowance: number;
   monthlyCreditsUsed: number;
@@ -158,7 +160,9 @@ router.post("/auth/signup", async (req, res, next) => {
       email: payload.email,
       passwordHash,
       name: payload.name,
-      walletBalanceCredits: FREE_TRIAL_CREDITS,
+      walletBalanceCredits: FREE_CREDITS,
+      walletGrantedFreeCredits: true,
+      walletUpdatedAt: createdAt,
       plan: "free",
       monthlyCreditsAllowance: PLAN_MONTHLY_ALLOWANCE.free,
       monthlyCreditsUsed: 0,
@@ -168,15 +172,15 @@ router.post("/auth/signup", async (req, res, next) => {
     });
 
     try {
-      await createCreditTransaction({
+      await writeWalletTransaction({
         userId: insertResult.insertedId,
-        type: "bonus",
-        amountCredits: FREE_TRIAL_CREDITS,
-        reason: "Signup free trial credits",
+        type: "grant",
+        credits: FREE_CREDITS,
+        meta: { reason: "New user signup bonus" },
       });
-    } catch (transactionError) {
+    } catch (txErr) {
       await users.deleteOne({ _id: insertResult.insertedId });
-      throw transactionError;
+      throw txErr;
     }
 
     const user = (await users.findOne({ _id: insertResult.insertedId })) as WithId<UserDoc> | null;
@@ -224,6 +228,8 @@ router.post("/auth/login", async (req, res, next) => {
       );
       return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: "Invalid credentials." });
     }
+
+    await grantFreeCreditsIfEligible(user._id);
 
     await createSessionAndSetCookie(user._id, res);
     return res.json({ ok: true, user: buildUserResponse(user) });

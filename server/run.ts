@@ -2,14 +2,12 @@ import { Router, type Response } from "express";
 import { randomUUID } from "crypto";
 import OpenAI from "openai";
 import {
-  InsufficientCreditsError,
-  MonthlyQuotaExceededError,
-  RUN_COST_CREDITS,
-  TOKENS_PER_CREDIT,
-  deductCreditsForUsage,
-  getWalletBalanceCredits,
-} from "./credits";
-import { getUserBillingState } from "./billing";
+  InsufficientBalanceError,
+  reserveCredits,
+  refundCredits,
+  deductAdditionalCredits,
+  creditsFromTokens,
+} from "./wallet";
 import { MAX_CREDITS_PER_REQUEST, MAX_ESTIMATED_TOKENS, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
 import { rateLimitByApiKey } from "./middleware/rateLimitByApiKey";
@@ -114,81 +112,111 @@ router.post("/v1/run", requireApiKey, rateLimitByApiKey, async (req, res) => {
       return runError(res, statusCode, "RUNTIME_ERROR", "Service not configured");
     }
 
-    const balanceCredits = await getWalletBalanceCredits(req.apiKey.ownerUserId);
-    const billingState = await getUserBillingState(req.apiKey.ownerUserId);
-    if (balanceCredits < RUN_COST_CREDITS) {
-      const statusCode = 402;
-      await safeLogUsage({ statusCode, status: "error" });
-      return runError(res, statusCode, "INSUFFICIENT_CREDITS", "Insufficient credits");
-    }
-    if (billingState.monthlyCreditsUsed + RUN_COST_CREDITS > billingState.monthlyCreditsAllowance) {
-      const statusCode = 402;
-      await safeLogUsage({ statusCode, status: "error" });
-      return runError(res, statusCode, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded");
+    const estimatedCredits = Math.max(1, creditsFromTokens(estimatedTokens));
+    const runId = randomUUID();
+
+    let reserved = false;
+    try {
+      await reserveCredits({
+        userId: req.apiKey.ownerUserId,
+        estimatedCredits,
+        requestId: runId,
+      });
+      reserved = true;
+    } catch (err) {
+      if (err instanceof InsufficientBalanceError) {
+        await safeLogUsage({ statusCode: 402, status: "error" });
+        return res.status(402).json({
+          ok: false,
+          error: { code: "INSUFFICIENT_BALANCE", message: "Insufficient balance" },
+          requiredCredits: err.requiredCredits,
+          balanceCredits: err.balanceCredits,
+        });
+      }
+      throw err;
     }
 
-    const runId = randomUUID();
-    const openaiResponse = await openai.responses.create({
-      model,
-      input,
-    });
+    let openaiResponse;
+    try {
+      openaiResponse = await openai.responses.create({
+        model,
+        input,
+      });
+    } catch (providerErr) {
+      if (reserved) {
+        await refundCredits({
+          userId: req.apiKey.ownerUserId,
+          refundCredits: estimatedCredits,
+          requestId: runId,
+          meta: { reason: "Provider failed" },
+        });
+      }
+      throw providerErr;
+    }
+
     const output = typeof openaiResponse.output_text === "string" ? openaiResponse.output_text : "";
-    const statusCode = 200;
     const usage = openaiResponse.usage;
     const totalTokens = typeof usage?.total_tokens === "number" ? usage.total_tokens : null;
     const creditsCharged =
       typeof totalTokens === "number"
-        ? Math.max(1, Math.ceil(totalTokens / TOKENS_PER_CREDIT))
-        : RUN_COST_CREDITS;
+        ? Math.max(1, creditsFromTokens(totalTokens))
+        : estimatedCredits;
 
     if (creditsCharged > MAX_CREDITS_PER_REQUEST) {
-      const statusCode = 400;
+      await refundCredits({
+        userId: req.apiKey.ownerUserId,
+        refundCredits: estimatedCredits,
+        requestId: runId,
+        meta: { reason: "Cost cap exceeded" },
+      });
       await safeLogUsage({
-        statusCode,
+        statusCode: 400,
         status: "error",
         inputTokens: usage?.input_tokens ?? null,
         outputTokens: usage?.output_tokens ?? null,
         totalTokens,
       });
-      return runError(res, statusCode, "COST_CAP_EXCEEDED", "Request cost too high");
+      return runError(res, 400, "COST_CAP_EXCEEDED", "Request cost too high");
     }
-    let nextBalanceCredits = balanceCredits;
-    try {
-      const deduction = await deductCreditsForUsage({
+
+    if (creditsCharged < estimatedCredits) {
+      await refundCredits({
         userId: req.apiKey.ownerUserId,
-        costCredits: creditsCharged,
-        reason: "Run request token cost",
-        relatedRunId: runId,
-        provider,
-        model,
-        totalTokens,
+        refundCredits: estimatedCredits - creditsCharged,
+        requestId: runId,
+        meta: { totalTokens },
       });
-      nextBalanceCredits = deduction.balanceCredits;
-    } catch (error) {
-      if (error instanceof MonthlyQuotaExceededError) {
-        await safeLogUsage({
-          statusCode: 402,
-          status: "error",
-          inputTokens: usage?.input_tokens ?? null,
-          outputTokens: usage?.output_tokens ?? null,
-          totalTokens,
+    } else if (creditsCharged > estimatedCredits) {
+      const additional = creditsCharged - estimatedCredits;
+      try {
+        await deductAdditionalCredits({
+          userId: req.apiKey.ownerUserId,
+          additionalCredits: additional,
+          requestId: runId,
+          meta: { totalTokens },
         });
-        return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded");
+      } catch (extraErr) {
+        if (extraErr instanceof InsufficientBalanceError) {
+          await refundCredits({
+            userId: req.apiKey.ownerUserId,
+            refundCredits: estimatedCredits,
+            requestId: runId,
+            meta: { reason: "Insufficient for actual usage" },
+          });
+          await safeLogUsage({ statusCode: 402, status: "error", totalTokens });
+          return res.status(402).json({
+            ok: false,
+            error: { code: "INSUFFICIENT_BALANCE", message: "Insufficient balance for actual usage" },
+            requiredCredits: additional,
+            balanceCredits: extraErr.balanceCredits,
+          });
+        }
+        throw extraErr;
       }
-      if (error instanceof InsufficientCreditsError) {
-        await safeLogUsage({
-          statusCode: 402,
-          status: "error",
-          inputTokens: usage?.input_tokens ?? null,
-          outputTokens: usage?.output_tokens ?? null,
-          totalTokens,
-        });
-        return runError(res, 402, "INSUFFICIENT_CREDITS", "Insufficient credits");
-      }
-      throw error;
     }
+
     await safeLogUsage({
-      statusCode,
+      statusCode: 200,
       status: "success",
       inputTokens: usage?.input_tokens ?? null,
       outputTokens: usage?.output_tokens ?? null,

@@ -55,7 +55,7 @@ export default function Home() {
           <div className="md:hidden bg-[#0b0e12] border-t-2 border-[rgba(255,255,255,0.15)] p-4 space-y-4">
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Product</a>
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Docs</a>
-            <a href="#" className="block text-sm text-gray-300 hover:text-white">Pricing</a>
+            <a href="/pricing" className="block text-sm text-gray-300 hover:text-white">Pricing</a>
             <a href="#" className="block text-sm text-gray-300 hover:text-white">Company</a>
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1 border-[rgba(255,255,255,0.06)] text-white">Sign In</Button>

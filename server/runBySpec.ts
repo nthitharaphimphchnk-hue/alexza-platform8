@@ -9,12 +9,13 @@ import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import {
-  InsufficientCreditsError,
-  MonthlyQuotaExceededError,
-  deductCreditsForUsage,
-  refundCreditsFromRun,
-} from "./credits";
-import { estimateTokensFromInput, calculateCredits } from "./utils/tokenEstimator";
+  InsufficientBalanceError,
+  reserveCredits,
+  refundCredits,
+  deductAdditionalCredits,
+  creditsFromTokens,
+} from "./wallet";
+import { estimateTokensFromInput } from "./utils/tokenEstimator";
 import { MAX_CREDITS_PER_REQUEST, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
 import { rateLimitByIp } from "./middleware/rateLimitByIp";
@@ -328,19 +329,20 @@ router.post(
 
       const estimatedTokens = estimateTokensFromInput(prompt);
       const estimatedCredits = Math.min(
-        Math.max(1, calculateCredits(routingMode, estimatedTokens)),
+        Math.max(1, creditsFromTokens(estimatedTokens)),
         MAX_CREDITS_PER_REQUEST
       );
 
+      let reserved = false;
       try {
-        await deductCreditsForUsage({
+        await reserveCredits({
           userId: req.apiKey.ownerUserId,
-          costCredits: estimatedCredits,
-          reason: `Reserve for run: ${actionName}`,
-          relatedRunId: requestId,
+          estimatedCredits,
+          requestId,
         });
+        reserved = true;
       } catch (err) {
-        if (err instanceof MonthlyQuotaExceededError) {
+        if (err instanceof InsufficientBalanceError) {
           await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
@@ -352,49 +354,93 @@ router.post(
             statusCode: 402,
             latencyMs: Date.now() - startMs,
           });
-          return runError(res, 402, "MONTHLY_QUOTA_EXCEEDED", "Monthly quota exceeded", requestId);
-        }
-        if (err instanceof InsufficientCreditsError) {
-          await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
-          await logRun({
+          return res.status(402).json({
+            ok: false,
+            error: { code: "INSUFFICIENT_BALANCE", message: "Insufficient balance" },
+            requiredCredits: err.requiredCredits,
+            balanceCredits: err.balanceCredits,
             requestId,
-            projectId: req.apiKey.projectId,
-            ownerUserId: req.apiKey.ownerUserId,
-            apiKeyId: req.apiKey._id,
-            actionName,
-            status: "failed_insufficient_credits",
-            statusCode: 402,
-            latencyMs: Date.now() - startMs,
           });
-          return runError(res, 402, "INSUFFICIENT_CREDITS", "Not enough credits", requestId);
         }
         throw err;
       }
 
-      const result = await runWithFallback({
-        provider: executionProvider,
-        models: modelList,
-        prompt,
-        temperature: action.temperature,
-        maxTokens: action.maxTokens,
-      });
+      let result;
+      try {
+        result = await runWithFallback({
+          provider: executionProvider,
+          models: modelList,
+          prompt,
+          temperature: action.temperature,
+          maxTokens: action.maxTokens,
+        });
+      } catch (providerErr) {
+        if (reserved) {
+          await refundCredits({
+            userId: req.apiKey.ownerUserId,
+            refundCredits: estimatedCredits,
+            requestId,
+            meta: { reason: "Provider failed", actionName },
+          });
+        }
+        throw providerErr;
+      }
 
       const resolvedModel = result._resolvedModel ?? action.model;
 
       const totalTokens = result.usage?.total_tokens ?? null;
-      const creditsCharged =
+      const actualCredits =
         typeof totalTokens === "number"
-          ? Math.max(1, calculateCredits(routingMode, totalTokens))
+          ? Math.max(1, creditsFromTokens(totalTokens))
           : estimatedCredits;
 
-      const cappedCredits = Math.min(creditsCharged, MAX_CREDITS_PER_REQUEST);
-      if (estimatedCredits > cappedCredits) {
-        await refundCreditsFromRun({
+      const cappedCredits = Math.min(actualCredits, MAX_CREDITS_PER_REQUEST);
+
+      if (cappedCredits < estimatedCredits) {
+        await refundCredits({
           userId: req.apiKey.ownerUserId,
-          amountCredits: estimatedCredits - cappedCredits,
-          reason: `Refund excess reserve: ${actionName}`,
-          relatedRunId: requestId,
+          refundCredits: estimatedCredits - cappedCredits,
+          requestId,
+          meta: { actionName, actualCredits: cappedCredits },
         });
+      } else if (cappedCredits > estimatedCredits) {
+        const additional = cappedCredits - estimatedCredits;
+        try {
+          await deductAdditionalCredits({
+            userId: req.apiKey.ownerUserId,
+            additionalCredits: additional,
+            requestId,
+            meta: { actionName, totalTokens },
+          });
+        } catch (extraErr) {
+          if (extraErr instanceof InsufficientBalanceError) {
+            await refundCredits({
+              userId: req.apiKey.ownerUserId,
+              refundCredits: estimatedCredits,
+              requestId,
+              meta: { reason: "Insufficient for actual usage", actionName },
+            });
+            await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
+            await logRun({
+              requestId,
+              projectId: req.apiKey.projectId,
+              ownerUserId: req.apiKey.ownerUserId,
+              apiKeyId: req.apiKey._id,
+              actionName,
+              status: "failed_insufficient_credits",
+              statusCode: 402,
+              latencyMs: Date.now() - startMs,
+            });
+            return res.status(402).json({
+              ok: false,
+              error: { code: "INSUFFICIENT_BALANCE", message: "Insufficient balance for actual usage" },
+              requiredCredits: additional,
+              balanceCredits: extraErr.balanceCredits,
+              requestId,
+            });
+          }
+          throw extraErr;
+        }
       }
 
       await safeLogUsage({
@@ -409,7 +455,7 @@ router.post(
 
       const latencyMs = Date.now() - startMs;
       if (process.env.NODE_ENV !== "production") {
-        console.log(`[RunBySpec] ${requestId} action=${actionName} credits=${creditsCharged} latency=${latencyMs}ms`);
+        console.log(`[RunBySpec] ${requestId} action=${actionName} credits=${cappedCredits} latency=${latencyMs}ms`);
       }
       await logRun({
         requestId,

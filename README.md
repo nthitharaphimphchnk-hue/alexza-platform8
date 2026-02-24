@@ -7,7 +7,6 @@ After starting the server, test these endpoints in your browser:
 - `/api/health`
 - `/api/health/db`
 - `/api/health/openai`
-
 Expected DB response when Mongo is connected:
 
 ```json
@@ -282,6 +281,36 @@ With DSNs empty, the app runs normally; Sentry is disabled.
 - Error rate spike (e.g. >5% in 5 min)
 - New issue created
 - Slow requests (filter by `slow_request=true` tag)
+
+## Wallet (Prepaid Credits)
+
+- 1 credit = 1,000 tokens. $0.003 per credit.
+- New users receive 500 free credits on signup (one-time).
+- API stops when balance reaches zero (HTTP 402).
+- No subscription; prepaid wallet only.
+
+### Backfill existing users
+
+Run once after deploying the wallet backend to set default fields for users created before the migration:
+
+```bash
+pnpm tsx server/scripts/backfillWallet.ts
+```
+
+This sets `walletBalanceCredits=0` and `walletGrantedFreeCredits=true` for users missing these fields. It does **not** grant 500 credits retroactively.
+
+### Admin manual top-up
+
+For testing or support, use `POST /api/wallet/topup/manual` with `x-admin-key` header:
+
+```bash
+curl -X POST https://your-app.onrender.com/api/wallet/topup/manual \
+  -H "Content-Type: application/json" \
+  -H "x-admin-key: YOUR_ADMIN_API_KEY" \
+  -d '{"userId":"USER_OBJECT_ID","credits":1000,"reason":"Support top-up"}'
+```
+
+Set `ADMIN_API_KEY` in your environment. In production, this is required for admin endpoints.
 
 ## Deploy to Render
 
