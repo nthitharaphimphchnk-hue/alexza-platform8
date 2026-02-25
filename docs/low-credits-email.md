@@ -17,7 +17,7 @@ This runbook explains how low-credit email notifications work and how to test th
 - `RESEND_API_KEY`
 - `EMAIL_FROM` (example: `ALEXZA <alerts@yourdomain.com>`)
 - `LOW_CREDITS_THRESHOLD_EMAIL` (optional, default `100`)
-- `BASE_URL` (optional, default `https://alexza-platform8.onrenderer.com`)
+- `BASE_URL` (optional, default `https://alexza-platform8.onrender.com`)
 - `ADMIN_API_KEY` (required for admin endpoints in production)
 
 After changing env vars, trigger a redeploy.
@@ -37,7 +37,7 @@ After changing env vars, trigger a redeploy.
 ### 1) Check routes
 
 ```powershell
-Invoke-WebRequest -Uri "https://alexza-platform8.onrenderer.com/api/_debug/routes" `
+Invoke-WebRequest -Uri "https://alexza-platform8.onrender.com/api/_debug/routes" `
   -Headers @{ "x-admin-key" = "alexza_super_admin_2024_secure_key" } |
   Select-Object -ExpandProperty Content
 ```
@@ -46,7 +46,7 @@ Invoke-WebRequest -Uri "https://alexza-platform8.onrenderer.com/api/_debug/route
 
 ```powershell
 Invoke-RestMethod -Method POST `
-  -Uri "https://alexza-platform8.onrenderer.com/api/admin/notifications/test-low-credits" `
+  -Uri "https://alexza-platform8.onrender.com/api/admin/notifications/test-low-credits" `
   -Headers @{ "x-admin-key" = "alexza_super_admin_2024_secure_key" } `
   -ContentType "application/json" `
   -Body '{"userId":"PUT_USER_ID_HERE"}' | ConvertTo-Json -Compress
@@ -56,7 +56,7 @@ Invoke-RestMethod -Method POST `
 
 ```powershell
 Invoke-RestMethod -Method POST `
-  -Uri "https://alexza-platform8.onrenderer.com/api/admin/notifications/cron/low-credits-scan" `
+  -Uri "https://alexza-platform8.onrender.com/api/admin/notifications/cron/low-credits-scan" `
   -Headers @{ "x-admin-key" = "alexza_super_admin_2024_secure_key" } | ConvertTo-Json -Compress
 ```
 

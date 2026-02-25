@@ -15,7 +15,7 @@ This runbook configures and verifies automatic monthly billing resets in product
 
 1. Open cron-job.org and create a new job.
 2. Configure URL:
-   - `https://alexza-platform8.onrenderer.com/api/admin/billing/cron/reset-monthly`
+   - `https://alexza-platform8.onrender.com/api/admin/billing/cron/reset-monthly`
 3. Set HTTP method:
    - `POST`
 4. Add request header:
@@ -33,11 +33,11 @@ This runbook configures and verifies automatic monthly billing resets in product
 ### PowerShell (Windows)
 
 ```powershell
-Invoke-WebRequest -Uri "https://alexza-platform8.onrenderer.com/api/_debug/routes" `
+Invoke-WebRequest -Uri "https://alexza-platform8.onrender.com/api/_debug/routes" `
   -Headers @{ "x-admin-key" = "alexza_super_admin_2024_secure_key" } | Select-Object -ExpandProperty Content
 
 Invoke-RestMethod -Method POST `
-  -Uri "https://alexza-platform8.onrenderer.com/api/admin/billing/cron/reset-monthly" `
+  -Uri "https://alexza-platform8.onrender.com/api/admin/billing/cron/reset-monthly" `
   -Headers @{ "x-admin-key" = "alexza_super_admin_2024_secure_key" } | ConvertTo-Json -Compress
 ```
 
@@ -50,9 +50,9 @@ Expected shape:
 ### curl.exe (Windows-friendly)
 
 ```powershell
-curl.exe -s -H "x-admin-key: alexza_super_admin_2024_secure_key" "https://alexza-platform8.onrenderer.com/api/_debug/routes"
+curl.exe -s -H "x-admin-key: alexza_super_admin_2024_secure_key" "https://alexza-platform8.onrender.com/api/_debug/routes"
 
-curl.exe -s -X POST -H "x-admin-key: alexza_super_admin_2024_secure_key" "https://alexza-platform8.onrenderer.com/api/admin/billing/cron/reset-monthly"
+curl.exe -s -X POST -H "x-admin-key: alexza_super_admin_2024_secure_key" "https://alexza-platform8.onrender.com/api/admin/billing/cron/reset-monthly"
 ```
 
 ## Verification in App UI

@@ -1,6 +1,6 @@
 type JsonRecord = Record<string, unknown>;
 
-const BASE_URL = process.env.PROD_BASE_URL || "https://alexza-platform8.onrenderer.com";
+const BASE_URL = process.env.PROD_BASE_URL || "https://alexza-platform8.onrender.com";
 const PASSWORD = process.env.PROD_SMOKE_PASSWORD || "password123";
 const NAME = "Prod Smoke";
 const INPUT_TEXT = `echo smoke ${Date.now()}`;

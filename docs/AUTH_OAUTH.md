@@ -15,8 +15,8 @@ This document describes how to configure OAuth login/signup with Google and GitH
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `SESSION_SECRET` | Secret for signing session/state | `your-random-secret` |
-| `OAUTH_REDIRECT_BASE_URL` | Base URL for OAuth callbacks (where provider redirects back) | `https://alexza-platform8.onrenderer.com` |
-| `FRONTEND_APP_URL` or `CLIENT_URL` | Frontend base URL for post-login redirect | `https://alexza-platform8.onrenderer.com` |
+| `OAUTH_REDIRECT_BASE_URL` | Base URL for OAuth callbacks (where provider redirects back) | `https://alexza-platform8.onrender.com` |
+| `FRONTEND_APP_URL` or `CLIENT_URL` | Frontend base URL for post-login redirect | `https://alexza-platform8.onrender.com` |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | From Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | From Google Cloud Console |
 | `GITHUB_CLIENT_ID` | GitHub OAuth app client ID | From GitHub Developer Settings |
@@ -52,10 +52,10 @@ The Vite config proxies `/auth` to the backend, so `/auth/google` and `/auth/goo
 5. Name: e.g. "ALEXZA AI"
 6. **Authorized JavaScript origins**:
    - Dev: `http://localhost:3000`
-   - Prod: `https://alexza-platform8.onrenderer.com`
+   - Prod: `https://alexza-platform8.onrender.com`
 7. **Authorized redirect URIs**:
    - Dev: `http://localhost:3000/auth/google/callback`
-   - Prod: `https://alexza-platform8.onrenderer.com/auth/google/callback`
+   - Prod: `https://alexza-platform8.onrender.com/auth/google/callback`
 8. Copy **Client ID** and **Client Secret** to your `.env.local`
 
 ### 2. Scopes
@@ -80,10 +80,10 @@ GOOGLE_CLIENT_SECRET="your-client-secret"
 3. Application name: e.g. "ALEXZA AI"
 4. Homepage URL:
    - Dev: `http://localhost:3000`
-   - Prod: `https://alexza-platform8.onrenderer.com`
+   - Prod: `https://alexza-platform8.onrender.com`
 5. **Authorization callback URL**:
    - Dev: `http://localhost:3000/auth/github/callback`
-   - Prod: `https://alexza-platform8.onrenderer.com/auth/github/callback`
+   - Prod: `https://alexza-platform8.onrender.com/auth/github/callback`
 6. Register and copy **Client ID**
 7. Generate **Client Secret** and copy it
 
@@ -103,7 +103,7 @@ GITHUB_CLIENT_SECRET="your-github-client-secret"
 ## Production (Render)
 
 1. Set all env vars in Render dashboard
-2. `OAUTH_REDIRECT_BASE_URL` = your Render URL (e.g. `https://alexza-platform8.onrenderer.com`)
+2. `OAUTH_REDIRECT_BASE_URL` = your Render URL (e.g. `https://alexza-platform8.onrender.com`)
 3. `FRONTEND_APP_URL` or `CLIENT_URL` = same URL (when frontend and backend share the domain)
 4. `TRUST_PROXY=1` for correct `req.protocol` behind proxy
 5. Ensure Google and GitHub callback URLs in provider consoles match your production domain
@@ -123,3 +123,18 @@ On OAuth failure, the user is redirected to `/login?error=<code>` (or `/signup?e
 | `OAUTH_INCOMPLETE_PROFILE` | Provider did not return email |
 
 The frontend shows a toast with a user-friendly message and clears the error from the URL.
+
+---
+
+## Troubleshooting: redirect_uri_mismatch (Google)
+
+If Google shows **Error 400: redirect_uri_mismatch**:
+
+1. **Check domain spelling** — Render uses `onrender.com` (one 'r'), not `onrenderer.com`
+2. **Google Cloud Console** → APIs & Services → Credentials → your OAuth client
+3. **Authorized redirect URIs** — add exactly:
+   ```
+   https://alexza-platform8.onrender.com/auth/google/callback
+   ```
+4. **Render env** — set `OAUTH_REDIRECT_BASE_URL`, `FRONTEND_APP_URL`, `CLIENT_URL` to the same domain
+5. Save and wait a few minutes for Google to propagate changes

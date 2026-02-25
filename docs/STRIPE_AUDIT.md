@@ -21,8 +21,8 @@ APP_URL="http://localhost:5173"     # Vite client URL
 # Production (Render)
 STRIPE_SECRET_KEY="sk_live_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."   # from Stripe Dashboard → Webhooks → endpoint signing secret
-APP_URL="https://alexza-platform8.onrenderer.com"
-# or CLIENT_URL="https://alexza-platform8.onrenderer.com" (APP_URL falls back to CLIENT_URL)
+APP_URL="https://alexza-platform8.onrender.com"
+# or CLIENT_URL="https://alexza-platform8.onrender.com" (APP_URL falls back to CLIENT_URL)
 ```
 
 ---
@@ -78,7 +78,7 @@ APP_URL="https://alexza-platform8.onrenderer.com"
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Webhook URL format | ✅ | `https://alexza-platform8.onrenderer.com/api/billing/stripe/webhook` |
+| Webhook URL format | ✅ | `https://alexza-platform8.onrender.com/api/billing/stripe/webhook` |
 | Local: Stripe CLI listen, whsec_ from CLI | ✅ | `stripe listen --forward-to localhost:3002/api/billing/stripe/webhook` |
 | Production: whsec_ from Dashboard | ✅ | Stripe Dashboard → Webhooks → Add endpoint → Signing secret |
 

@@ -308,16 +308,33 @@ async function startServer() {
     });
   }
 
-  const rootFromSource = path.resolve(__dirname, "..");
-  const rootFromBuild = path.resolve(__dirname, "..", "..");
-  const projectRoot = fs.existsSync(path.resolve(rootFromSource, "client")) ? rootFromSource : rootFromBuild;
-  const staticPath = path.resolve(projectRoot, "client", "dist");
+  // Resolve client/dist - support both local dev and Render (cwd may differ)
+  const candidates = [
+    path.resolve(__dirname, "..", "..", "client", "dist"), // server/dist -> project -> client/dist
+    path.resolve(__dirname, "..", "client", "dist"), // server/dist -> server -> client/dist (monorepo)
+    path.resolve(process.cwd(), "client", "dist"),
+  ];
+  let staticPath = candidates.find((p) => fs.existsSync(path.join(p, "index.html")));
+  if (!staticPath) {
+    staticPath = path.resolve(__dirname, "..", "..", "client", "dist");
+    logger.warn({ staticPath, candidates, cwd: process.cwd(), __dirname }, "Static path fallback - client/dist may be missing");
+  } else {
+    logger.info({ staticPath }, "Serving static from client/dist");
+  }
 
-  app.use(express.static(staticPath));
+  app.use(express.static(staticPath, { index: false }));
 
-  // Handle client-side routing - serve index.html for all routes
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(staticPath, "index.html"));
+  // Handle client-side routing - serve index.html for non-asset routes only
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/assets/")) {
+      return res.status(404).send("Not found");
+    }
+    const indexPath = path.join(staticPath!, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Not found");
+    }
   });
 
   Sentry.setupExpressErrorHandler(app);

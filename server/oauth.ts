@@ -208,6 +208,16 @@ router.get("/auth/google", (req, res) => {
       maxAge: OAUTH_STATE_TTL_MS / 1000,
       path: "/",
     });
+    logger.info(
+      {
+        statePrefix: state.slice(0, 20) + "...",
+        stateLength: state.length,
+        cookieName: OAUTH_STATE_COOKIE,
+        requestHost: req.get("host"),
+        requestProtocol: req.protocol,
+      },
+      "[OAuth] GET /auth/google state created and cookie set"
+    );
     const redirect = (req.query.redirect as string | undefined)?.trim();
     const nextPath = (req.query.next as string | undefined)?.trim();
     let targetRedirect = redirect;
@@ -262,8 +272,23 @@ router.get("/auth/google/callback", async (req, res) => {
     const hasStoredState = Boolean(storedState);
     const defaultTarget = getFrontendUrl() + "/app/dashboard";
     const target = redirectUrl && getAllowedRedirects().some((a) => redirectUrl.startsWith(a)) ? redirectUrl : defaultTarget;
+    const stateFromQueryPrefix = typeof state === "string" ? state.slice(0, 20) + "..." : null;
+    const storedStatePrefix = storedState ? storedState.slice(0, 20) + "..." : null;
+    const verifyOk = storedState ? verifyState(storedState) : false;
     logger.info(
-      { hasCode, hasState, hasStoredState, error: error ?? null, redirectTarget: target },
+      {
+        hasCode,
+        hasState,
+        hasStoredState,
+        stateFromQueryPrefix,
+        storedStatePrefix,
+        verifyStateOk: verifyOk,
+        stateMatch: typeof state === "string" && storedState ? state === storedState : null,
+        error: error ?? null,
+        redirectTarget: target,
+        requestHost: req.get("host"),
+        requestProtocol: req.protocol,
+      },
       "[OAuth] GET /auth/google/callback received"
     );
 
