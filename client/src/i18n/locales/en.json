@@ -130,6 +130,67 @@
       "viewDocs": "View Docs"
     }
   },
+  "landing": {
+    "useCases": {
+      "title": "Built for real-world AI workloads",
+      "subtitle": "Start with proven templates. Scale to custom orchestration.",
+      "learnMore": "Learn more",
+      "support": {
+        "title": "Customer Support Copilot",
+        "desc": "Summarize tickets, draft replies, route by intent. Reduce response time and improve satisfaction."
+      },
+      "document": {
+        "title": "Document Intelligence",
+        "desc": "Extract, classify, reason over long documents. Build pipelines for contracts, reports, and research."
+      },
+      "marketing": {
+        "title": "Marketing Automation",
+        "desc": "Generate ad copy, landing pages, multivariate content. Scale campaigns with AI-powered creation."
+      },
+      "rag": {
+        "title": "RAG Search",
+        "desc": "Enterprise search and knowledge base Q&A. Connect your data to AI for accurate, contextual answers."
+      },
+      "data": {
+        "title": "Data-to-Insights",
+        "desc": "Analysis, reporting, structured output. Turn raw data into actionable insights and summaries."
+      },
+      "workflow": {
+        "title": "Workflow Automation",
+        "desc": "Agents, routing, fallback, retries. Build resilient AI pipelines that handle failures gracefully."
+      }
+    },
+    "architecture": {
+      "title": "How ALEXZA AI works",
+      "subtitle": "A unified runtime that selects the best model fit and controls spend.",
+      "label1": "Intelligent model selection",
+      "label2": "Automatic fallback",
+      "label3": "Credit & cost control",
+      "label4": "Unified logging",
+      "cta": "View architecture"
+    },
+    "trust": {
+      "title": "Reliability built in",
+      "usage": {
+        "title": "Usage & Credits",
+        "desc": "Real-time usage logging. Track credits, tokens, and costs per project."
+      },
+      "guardrails": {
+        "title": "Guardrails",
+        "desc": "Budget limits and cost controls. Prevent cost spikes before they happen."
+      },
+      "observability": {
+        "title": "Observability",
+        "desc": "Request traces and error monitoring. Debug and optimize with full visibility."
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "desc": "Run events and completion notifications. Integrate with your stack in real time."
+      },
+      "statusLink": "Status",
+      "securityLink": "Security"
+    }
+  },
   "auth": {
     "login": {
       "title": "Sign in to your account",
@@ -369,5 +430,234 @@
     "passwordMismatch": "Passwords do not match",
     "nameTooShort": "Name must be at least 3 characters",
     "nameTooLong": "Name must not exceed 50 characters"
+  },
+  "marketing": {
+    "nav": {
+      "home": "Home",
+      "useCases": "Use Cases",
+      "architecture": "Architecture",
+      "security": "Security",
+      "enterprise": "Enterprise",
+      "status": "Status",
+      "roadmap": "Roadmap",
+      "docs": "Docs",
+      "pricing": "Pricing"
+    },
+    "footer": {
+      "product": "Product",
+      "resources": "Resources",
+      "company": "Company",
+      "legal": "Legal",
+      "pricing": "Pricing",
+      "security": "Security",
+      "docs": "Docs",
+      "status": "Status",
+      "allSystemsOperational": "All systems operational"
+    }
+  },
+  "useCases": {
+    "hero": {
+      "title": "Use Cases",
+      "subtitle": "See how ALEXZA AI powers real-world applications"
+    },
+    "customerSupport": {
+      "title": "Customer Support",
+      "problem": "High volume of support tickets with repetitive questions.",
+      "actions": "Classify tickets, suggest responses, escalate when needed.",
+      "tier": "Starter+",
+      "cta": "Get Started"
+    },
+    "documentIntelligence": {
+      "title": "Document Intelligence",
+      "problem": "Extracting insights from contracts, reports, and unstructured docs.",
+      "actions": "Summarize, extract entities, answer questions over documents.",
+      "tier": "Business",
+      "cta": "Get Started"
+    },
+    "marketingAutomation": {
+      "title": "Marketing Automation",
+      "problem": "Creating personalized content at scale for campaigns.",
+      "actions": "Generate copy, segment audiences, A/B test variants.",
+      "tier": "Starter+",
+      "cta": "Get Started"
+    },
+    "ragSearch": {
+      "title": "RAG Search",
+      "problem": "Building semantic search over your knowledge base.",
+      "actions": "Embed, retrieve, and generate answers from your data.",
+      "tier": "Business",
+      "cta": "Get Started"
+    },
+    "dataToInsights": {
+      "title": "Data-to-Insights",
+      "problem": "Turning raw data into actionable insights and reports.",
+      "actions": "Analyze trends, generate summaries, create visualizations.",
+      "tier": "Starter+",
+      "cta": "Get Started"
+    },
+    "workflowAutomation": {
+      "title": "Workflow Automation",
+      "problem": "Orchestrating multi-step AI workflows with triggers.",
+      "actions": "Chain models, call tools, handle webhooks and events.",
+      "tier": "Business",
+      "cta": "Get Started"
+    }
+  },
+  "architecture": {
+    "hero": {
+      "title": "Architecture",
+      "subtitle": "How ALEXZA AI orchestrates your AI workloads"
+    },
+    "diagram": {
+      "title": "Request Flow",
+      "subtitle": "From your client to model output"
+    },
+    "modules": {
+      "title": "Key Modules",
+      "subtitle": "Core components that power the platform",
+      "modelRegistry": {
+        "title": "Model Registry",
+        "body": "Central registry of available models with routing rules, cost tiers, and capability metadata."
+      },
+      "fallback": {
+        "title": "Fallback",
+        "body": "Automatic failover to alternative models when primary fails or is rate-limited."
+      },
+      "creditReservation": {
+        "title": "Credit Reservation",
+        "body": "Reserve credits before execution to prevent overspend and ensure budget control."
+      },
+      "usageLogging": {
+        "title": "Usage Logging",
+        "body": "Track every API call for billing, analytics, and debugging."
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "body": "Real-time notifications for run completion, failures, and lifecycle events."
+      }
+    },
+    "why": {
+      "title": "Why It Matters",
+      "reliability": {
+        "title": "Reliability",
+        "body": "Automatic fallback and retries keep your app running even when providers have issues."
+      },
+      "scalability": {
+        "title": "Scalability",
+        "body": "Scale across model families without changing your integration code."
+      },
+      "costControl": {
+        "title": "Cost Control",
+        "body": "Credit reservation and usage logging prevent surprise bills."
+      }
+    }
+  },
+  "security": {
+    "hero": {
+      "title": "Security",
+      "subtitle": "Enterprise-grade security for your AI workloads"
+    },
+    "items": {
+      "data": {
+        "title": "Data",
+        "body": "Your data is processed securely. We do not train on your inputs. Data in transit is encrypted with TLS."
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "body": "API keys are hashed and never stored in plaintext. Rotate keys anytime from the dashboard."
+      },
+      "auth": {
+        "title": "Auth",
+        "body": "OAuth 2.0 and API key authentication. Optional MFA for enterprise accounts."
+      },
+      "rateLimiting": {
+        "title": "Rate Limiting",
+        "body": "Per-key rate limits to protect your account and ensure fair usage."
+      },
+      "logging": {
+        "title": "Logging",
+        "body": "Audit logs for API access. Configurable retention for compliance."
+      }
+    },
+    "compliance": {
+      "title": "Compliance",
+      "subtitle": "We are working towards SOC 2 and GDPR compliance.",
+      "comingSoon": "Coming soon"
+    },
+    "disclosure": {
+      "title": "Responsible Disclosure",
+      "body": "Found a vulnerability? Please report it to us. We respond within 48 hours.",
+      "cta": "Report to security@alexza.ai"
+    }
+  },
+  "enterprise": {
+    "hero": {
+      "title": "Enterprise",
+      "subtitle": "Plans for teams and organizations at scale"
+    },
+    "plans": {
+      "team": {
+        "title": "Team",
+        "desc": "Collaboration features, shared projects, and team billing. Perfect for small teams."
+      },
+      "business": {
+        "title": "Business",
+        "desc": "SLA, dedicated support, and advanced analytics. For growing companies."
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "desc": "Custom models, on-prem options, and white-glove onboarding."
+      }
+    },
+    "comingSoon": "Coming soon",
+    "contactSales": "Contact Sales",
+    "table": {
+      "title": "Feature Comparison",
+      "feature": "Feature",
+      "sla": "SLA guarantee",
+      "dedicatedSupport": "Dedicated support",
+      "customModels": "Custom model fine-tuning",
+      "onPrem": "On-premise deployment"
+    },
+    "cta": {
+      "title": "Need a custom solution?",
+      "subtitle": "Our team can help design a plan for your organization.",
+      "button": "Contact Sales"
+    }
+  },
+  "status": {
+    "hero": {
+      "title": "Status",
+      "subtitle": "Real-time status of ALEXZA AI services"
+    },
+    "allOperational": "All systems operational",
+    "allOperationalDesc": "All services are running normally.",
+    "operational": "Operational",
+    "components": {
+      "api": "API",
+      "dashboard": "Dashboard",
+      "billing": "Billing",
+      "webhooks": "Webhooks",
+      "runtime": "Runtime"
+    }
+  },
+  "roadmap": {
+    "hero": {
+      "title": "Roadmap",
+      "subtitle": "What we're building next"
+    },
+    "now": {
+      "title": "Now",
+      "items": ["Stable REST API", "Model orchestration", "Credits & billing", "Webhooks"]
+    },
+    "next": {
+      "title": "Next",
+      "items": ["Team plans", "Advanced analytics", "More model families", "RAG support"]
+    },
+    "later": {
+      "title": "Later",
+      "items": ["On-prem deployment", "Custom model fine-tuning", "SOC 2 compliance", "Enterprise SSO"]
+    },
+    "disclaimer": "Roadmap items and timelines are subject to change. We ship iteratively based on customer feedback."
   }
 }

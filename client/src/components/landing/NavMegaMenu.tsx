@@ -9,7 +9,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { Box, BookOpen, Cpu, FileText } from "lucide-react";
+import { Box, BookOpen, Cpu, FileText, Layout, MapPin } from "lucide-react";
 import { Link } from "wouter";
 
 export default function NavMegaMenu() {
@@ -45,6 +45,28 @@ export default function NavMegaMenu() {
                     </div>
                   </div>
                 </Link>
+                <Link href="/use-cases" className="group/item block rounded-lg p-3 hover:bg-[rgba(255,255,255,0.04)] transition">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#1a1d22] border border-[rgba(34,197,94,0.35)] flex items-center justify-center group-hover/item:border-[rgba(34,197,94,0.5)] transition-all">
+                      <MapPin className="w-5 h-5 text-[#22c55e]" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">Use Cases</p>
+                      <p className="text-sm text-gray-400">Real-world examples</p>
+                    </div>
+                  </div>
+                </Link>
+                <Link href="/architecture" className="group/item block rounded-lg p-3 hover:bg-[rgba(255,255,255,0.04)] transition">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#1a1d22] border border-[rgba(6,182,212,0.35)] flex items-center justify-center group-hover/item:border-[rgba(6,182,212,0.5)] transition-all">
+                      <Layout className="w-5 h-5 text-[#06b6d4]" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">Architecture</p>
+                      <p className="text-sm text-gray-400">How it works</p>
+                    </div>
+                  </div>
+                </Link>
               </div>
             </div>
           </NavigationMenuContent>
@@ -63,6 +85,10 @@ export default function NavMegaMenu() {
                   <a href="/careers" className="block py-2 text-sm text-gray-300 hover:text-[#22c55e] transition">Careers</a>
                   <a href="/customers" className="block py-2 text-sm text-gray-300 hover:text-[#06b6d4] transition">Customers</a>
                   <a href="/contact" className="block py-2 text-sm text-gray-300 hover:text-white transition">Contact</a>
+                  <Link href="/security"><a className="block py-2 text-sm text-gray-300 hover:text-[#06b6d4] transition">Security</a></Link>
+                  <Link href="/status"><a className="block py-2 text-sm text-gray-300 hover:text-[#22c55e] transition">Status</a></Link>
+                  <Link href="/roadmap"><a className="block py-2 text-sm text-gray-300 hover:text-[#d4a84b] transition">Roadmap</a></Link>
+                  <Link href="/enterprise"><a className="block py-2 text-sm text-gray-300 hover:text-white transition">Enterprise</a></Link>
                 </div>
                 <div className="space-y-3">
                   <Link href="/docs" className="group/item block rounded-xl p-4 border border-[rgba(139,92,246,0.25)] bg-[#0b0e12] hover:border-[rgba(139,92,246,0.45)] hover:bg-[#0b0e12]/90 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] transition-all">

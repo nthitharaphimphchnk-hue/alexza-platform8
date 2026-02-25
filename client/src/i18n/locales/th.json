@@ -130,6 +130,67 @@
       "viewDocs": "View Docs"
     }
   },
+  "landing": {
+    "useCases": {
+      "title": "Built for real-world AI workloads",
+      "subtitle": "Start with proven templates. Scale to custom orchestration.",
+      "learnMore": "Learn more",
+      "support": {
+        "title": "Customer Support Copilot",
+        "desc": "สรุป ticket, เขียนคำตอบ, route ตาม intent ลดเวลาตอบและเพิ่มความพึงพอใจ"
+      },
+      "document": {
+        "title": "Document Intelligence",
+        "desc": "ดึงข้อมูล, จัดประเภท, วิเคราะห์เอกสารยาว สร้าง pipeline สำหรับสัญญา รายงาน และงานวิจัย"
+      },
+      "marketing": {
+        "title": "Marketing Automation",
+        "desc": "สร้าง ad copy, landing page, content แบบหลายตัวแปร ขยายแคมเปญด้วย AI"
+      },
+      "rag": {
+        "title": "RAG Search",
+        "desc": "Enterprise search และ knowledge base Q&A เชื่อมข้อมูลกับ AI เพื่อคำตอบที่แม่นยำ"
+      },
+      "data": {
+        "title": "Data-to-Insights",
+        "desc": "วิเคราะห์ รายงาน structured output แปลงข้อมูลดิบเป็น insights และสรุปที่ใช้งานได้"
+      },
+      "workflow": {
+        "title": "Workflow Automation",
+        "desc": "Agents, routing, fallback, retries สร้าง AI pipeline ที่จัดการความล้มเหลวได้ดี"
+      }
+    },
+    "architecture": {
+      "title": "How ALEXZA AI works",
+      "subtitle": "A unified runtime that selects the best model fit and controls spend.",
+      "label1": "Intelligent model selection",
+      "label2": "Automatic fallback",
+      "label3": "Credit & cost control",
+      "label4": "Unified logging",
+      "cta": "View architecture"
+    },
+    "trust": {
+      "title": "Reliability built in",
+      "usage": {
+        "title": "Usage & Credits",
+        "desc": "Real-time usage logging ติดตาม credits, tokens และต้นทุนต่อ project"
+      },
+      "guardrails": {
+        "title": "Guardrails",
+        "desc": "Budget limits และ cost controls ป้องกัน cost spike ก่อนเกิด"
+      },
+      "observability": {
+        "title": "Observability",
+        "desc": "Request traces และ error monitoring debug และ optimize ด้วย visibility เต็มรูปแบบ"
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "desc": "Run events และ completion notifications เชื่อมกับ stack ของคุณแบบ real time"
+      },
+      "statusLink": "Status",
+      "securityLink": "Security"
+    }
+  },
   "auth": {
     "login": {
       "title": "เข้าสู่ระบบบัญชีของคุณ",
@@ -385,5 +446,234 @@
     "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
     "nameTooShort": "ชื่อต้องมีอย่างน้อย 3 ตัวอักษร",
     "nameTooLong": "ชื่อต้องไม่เกิน 50 ตัวอักษร"
+  },
+  "marketing": {
+    "nav": {
+      "home": "หน้าแรก",
+      "useCases": "Use Cases",
+      "architecture": "สถาปัตยกรรม",
+      "security": "ความปลอดภัย",
+      "enterprise": "Enterprise",
+      "status": "สถานะ",
+      "roadmap": "แผนงาน",
+      "docs": "เอกสาร",
+      "pricing": "ราคา"
+    },
+    "footer": {
+      "product": "ผลิตภัณฑ์",
+      "resources": "ทรัพยากร",
+      "company": "บริษัท",
+      "legal": "กฎหมาย",
+      "pricing": "ราคา",
+      "security": "ความปลอดภัย",
+      "docs": "เอกสาร",
+      "status": "สถานะ",
+      "allSystemsOperational": "ระบบทำงานปกติทั้งหมด"
+    }
+  },
+  "useCases": {
+    "hero": {
+      "title": "Use Cases",
+      "subtitle": "ดูว่า ALEXZA AI ทำงานอย่างไรในแอปพลิเคชันจริง"
+    },
+    "customerSupport": {
+      "title": "Customer Support",
+      "problem": "ปริมาณตั๋วสนับสนุนสูงพร้อมคำถามซ้ำๆ",
+      "actions": "จัดประเภทตั๋ว แนะนำคำตอบ เลื่อนระดับเมื่อจำเป็น",
+      "tier": "Starter+",
+      "cta": "เริ่มต้นใช้งาน"
+    },
+    "documentIntelligence": {
+      "title": "Document Intelligence",
+      "problem": "ดึงข้อมูลจากสัญญา รายงาน และเอกสารที่ไม่มีโครงสร้าง",
+      "actions": "สรุป แยก entities ตอบคำถามจากเอกสาร",
+      "tier": "Business",
+      "cta": "เริ่มต้นใช้งาน"
+    },
+    "marketingAutomation": {
+      "title": "Marketing Automation",
+      "problem": "สร้างเนื้อหาแบบส่วนบุคคลในระดับใหญ่สำหรับแคมเปญ",
+      "actions": "สร้างข้อความ แบ่งกลุ่มผู้ชม ทดสอบ A/B",
+      "tier": "Starter+",
+      "cta": "เริ่มต้นใช้งาน"
+    },
+    "ragSearch": {
+      "title": "RAG Search",
+      "problem": "สร้างการค้นหาเชิงความหมายเหนือฐานความรู้",
+      "actions": "Embed ดึงข้อมูล และสร้างคำตอบจากข้อมูลของคุณ",
+      "tier": "Business",
+      "cta": "เริ่มต้นใช้งาน"
+    },
+    "dataToInsights": {
+      "title": "Data-to-Insights",
+      "problem": "เปลี่ยนข้อมูลดิบเป็นข้อมูลเชิงลึกและรายงาน",
+      "actions": "วิเคราะห์แนวโน้ม สรุป สร้างการแสดงผล",
+      "tier": "Starter+",
+      "cta": "เริ่มต้นใช้งาน"
+    },
+    "workflowAutomation": {
+      "title": "Workflow Automation",
+      "problem": "จัดลำดับเวิร์กโฟลว์ AI ขั้นตอนหลายขั้นพร้อมทริกเกอร์",
+      "actions": "เชื่อมโมเดล เรียก tools จัดการ webhooks และ events",
+      "tier": "Business",
+      "cta": "เริ่มต้นใช้งาน"
+    }
+  },
+  "architecture": {
+    "hero": {
+      "title": "Architecture",
+      "subtitle": "ALEXZA AI จัดการ AI workloads อย่างไร"
+    },
+    "diagram": {
+      "title": "Request Flow",
+      "subtitle": "จาก client ของคุณถึง model output"
+    },
+    "modules": {
+      "title": "Key Modules",
+      "subtitle": "คอมโพเนนต์หลักที่ขับเคลื่อนแพลตฟอร์ม",
+      "modelRegistry": {
+        "title": "Model Registry",
+        "body": "รีจิสทรีกลางของโมเดลที่มี routing rules, cost tiers และ metadata"
+      },
+      "fallback": {
+        "title": "Fallback",
+        "body": "Failover อัตโนมัติไปยังโมเดลสำรองเมื่อหลักล้มเหลวหรือถูก rate limit"
+      },
+      "creditReservation": {
+        "title": "Credit Reservation",
+        "body": "จองเครดิตก่อนรันเพื่อป้องกันการใช้เกินและควบคุมงบประมาณ"
+      },
+      "usageLogging": {
+        "title": "Usage Logging",
+        "body": "ติดตามทุก API call สำหรับ billing, analytics และ debugging"
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "body": "การแจ้งเตือนแบบ real-time สำหรับ run completion, failures และ lifecycle events"
+      }
+    },
+    "why": {
+      "title": "Why It Matters",
+      "reliability": {
+        "title": "Reliability",
+        "body": "Fallback และ retries อัตโนมัติทำให้แอปทำงานแม้ provider มีปัญหา"
+      },
+      "scalability": {
+        "title": "Scalability",
+        "body": "Scale ข้าม model families โดยไม่ต้องเปลี่ยน integration code"
+      },
+      "costControl": {
+        "title": "Cost Control",
+        "body": "Credit reservation และ usage logging ป้องกันบิลที่น่าประหลาดใจ"
+      }
+    }
+  },
+  "security": {
+    "hero": {
+      "title": "Security",
+      "subtitle": "ความปลอดภัยระดับ enterprise สำหรับ AI workloads ของคุณ"
+    },
+    "items": {
+      "data": {
+        "title": "Data",
+        "body": "ข้อมูลของคุณถูกประมวลผลอย่างปลอดภัย เราไม่ train บน inputs ของคุณ ข้อมูลใน transit ถูกเข้ารหัสด้วย TLS"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "body": "API keys ถูก hash และไม่เก็บแบบ plaintext หมุน keys ได้ตลอดจาก dashboard"
+      },
+      "auth": {
+        "title": "Auth",
+        "body": "OAuth 2.0 และ API key authentication MFA สำหรับบัญชี enterprise"
+      },
+      "rateLimiting": {
+        "title": "Rate Limiting",
+        "body": "Per-key rate limits เพื่อปกป้องบัญชีและใช้อย่างเป็นธรรม"
+      },
+      "logging": {
+        "title": "Logging",
+        "body": "Audit logs สำหรับ API access การเก็บรักษาแบบกำหนดได้สำหรับ compliance"
+      }
+    },
+    "compliance": {
+      "title": "Compliance",
+      "subtitle": "เรากำลังดำเนินการ SOC 2 และ GDPR compliance",
+      "comingSoon": "เร็วๆ นี้"
+    },
+    "disclosure": {
+      "title": "Responsible Disclosure",
+      "body": "พบช่องโหว่? กรุณารายงานให้เรา เราตอบภายใน 48 ชั่วโมง",
+      "cta": "รายงานที่ security@alexza.ai"
+    }
+  },
+  "enterprise": {
+    "hero": {
+      "title": "Enterprise",
+      "subtitle": "แผนสำหรับทีมและองค์กรในระดับใหญ่"
+    },
+    "plans": {
+      "team": {
+        "title": "Team",
+        "desc": "ฟีเจอร์ collaboration โปรเจกต์ร่วม และ team billing เหมาะสำหรับทีมเล็ก"
+      },
+      "business": {
+        "title": "Business",
+        "desc": "SLA, dedicated support และ advanced analytics สำหรับบริษัทที่กำลังเติบโต"
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "desc": "Custom models, on-prem options และ white-glove onboarding"
+      }
+    },
+    "comingSoon": "เร็วๆ นี้",
+    "contactSales": "ติดต่อฝ่ายขาย",
+    "table": {
+      "title": "Feature Comparison",
+      "feature": "ฟีเจอร์",
+      "sla": "SLA guarantee",
+      "dedicatedSupport": "Dedicated support",
+      "customModels": "Custom model fine-tuning",
+      "onPrem": "On-premise deployment"
+    },
+    "cta": {
+      "title": "ต้องการโซลูชันแบบกำหนดเอง?",
+      "subtitle": "ทีมของเราช่วยออกแบบแผนสำหรับองค์กรของคุณ",
+      "button": "Contact Sales"
+    }
+  },
+  "status": {
+    "hero": {
+      "title": "Status",
+      "subtitle": "สถานะ real-time ของบริการ ALEXZA AI"
+    },
+    "allOperational": "ระบบทำงานปกติทั้งหมด",
+    "allOperationalDesc": "บริการทั้งหมดทำงานปกติ",
+    "operational": "Operational",
+    "components": {
+      "api": "API",
+      "dashboard": "Dashboard",
+      "billing": "Billing",
+      "webhooks": "Webhooks",
+      "runtime": "Runtime"
+    }
+  },
+  "roadmap": {
+    "hero": {
+      "title": "Roadmap",
+      "subtitle": "สิ่งที่เรากำลังสร้างต่อไป"
+    },
+    "now": {
+      "title": "Now",
+      "items": ["Stable REST API", "Model orchestration", "Credits & billing", "Webhooks"]
+    },
+    "next": {
+      "title": "Next",
+      "items": ["Team plans", "Advanced analytics", "More model families", "RAG support"]
+    },
+    "later": {
+      "title": "Later",
+      "items": ["On-prem deployment", "Custom model fine-tuning", "SOC 2 compliance", "Enterprise SSO"]
+    },
+    "disclaimer": "รายการและไทม์ไลน์ใน roadmap อาจเปลี่ยนแปลง เราส่งมอบแบบ iterative ตาม feedback ลูกค้า"
   }
 }

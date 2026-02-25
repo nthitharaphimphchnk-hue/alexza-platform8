@@ -11,6 +11,12 @@ import { Toaster } from "sonner";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Docs from "./pages/Docs";
+import UseCases from "./pages/UseCases";
+import Architecture from "./pages/Architecture";
+import Security from "./pages/Security";
+import Enterprise from "./pages/Enterprise";
+import Status from "./pages/Status";
+import Roadmap from "./pages/Roadmap";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
@@ -45,6 +51,12 @@ function Router() {
     <Switch>
       {/* Public Routes */}
       <Route path={"/"} component={Home} />
+      <Route path={"/use-cases"} component={UseCases} />
+      <Route path={"/architecture"} component={Architecture} />
+      <Route path={"/security"} component={Security} />
+      <Route path={"/enterprise"} component={Enterprise} />
+      <Route path={"/status"} component={Status} />
+      <Route path={"/roadmap"} component={Roadmap} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/docs"} component={Docs} />
       <Route path={"/login"} component={Login} />

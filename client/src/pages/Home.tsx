@@ -10,6 +10,7 @@ import Logo from "@/components/Logo";
 import NavMegaMenu from "@/components/landing/NavMegaMenu";
 import FounderSpotlight from "@/components/landing/FounderSpotlight";
 import ModelOrchestrationSection from "@/components/landing/ModelOrchestrationSection";
+import LandingSections from "@/components/landing/LandingSections";
 
 
 type CodeTab = 'node' | 'python' | 'curl';
@@ -54,13 +55,18 @@ export default function Home() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#0b0e12] border-t-2 border-[rgba(255,255,255,0.15)] p-4 space-y-4">
-            <a href="#" className="block text-sm text-gray-300 hover:text-white">Product</a>
-            <a href="#" className="block text-sm text-gray-300 hover:text-white">Docs</a>
+            <a href="/" className="block text-sm text-gray-300 hover:text-white">Home</a>
+            <a href="/use-cases" className="block text-sm text-gray-300 hover:text-white">Use Cases</a>
+            <a href="/architecture" className="block text-sm text-gray-300 hover:text-white">Architecture</a>
+            <a href="/docs" className="block text-sm text-gray-300 hover:text-white">Docs</a>
             <a href="/pricing" className="block text-sm text-gray-300 hover:text-white">Pricing</a>
-            <a href="#" className="block text-sm text-gray-300 hover:text-white">Company</a>
+            <a href="/security" className="block text-sm text-gray-300 hover:text-white">Security</a>
+            <a href="/status" className="block text-sm text-gray-300 hover:text-white">Status</a>
+            <a href="/roadmap" className="block text-sm text-gray-300 hover:text-white">Roadmap</a>
+            <a href="/enterprise" className="block text-sm text-gray-300 hover:text-white">Enterprise</a>
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" className="flex-1 border-[rgba(255,255,255,0.06)] text-white">Sign In</Button>
-              <Button className="flex-1 btn-silver-bright">Get Started</Button>
+              <Button variant="outline" className="flex-1 border-[rgba(255,255,255,0.06)] text-white" onClick={() => window.location.href = "/login"}>Sign In</Button>
+              <Button className="flex-1 btn-silver-bright" onClick={() => window.location.href = "/signup"}>Get Started</Button>
             </div>
           </div>
         )}
@@ -140,6 +146,9 @@ export default function Home() {
 
       {/* Model Orchestration - One API, Many Models */}
       <ModelOrchestrationSection />
+
+      {/* Use Cases, Architecture, Trust */}
+      <LandingSections />
 
       {/* Multi-Screen Showcase */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -616,7 +625,7 @@ export default function Home() {
                 ))}
               </div>
               <a
-                href="#"
+                href="/status"
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-[#c0c0c0]" />
@@ -627,19 +636,21 @@ export default function Home() {
             {/* Right: Link columns */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
               <div>
-                <h4 className="text-white font-semibold mb-4 text-sm">Features</h4>
+                <h4 className="text-white font-semibold mb-4 text-sm">Product</h4>
                 <ul className="space-y-2">
-                  {['API', 'Flow Builder', 'Webhooks', 'Analytics', 'Integrations'].map((link) => (
-                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
-                  ))}
+                  <li><a href="/use-cases" className="text-gray-400 hover:text-white text-sm">Use Cases</a></li>
+                  <li><a href="/architecture" className="text-gray-400 hover:text-white text-sm">Architecture</a></li>
+                  <li><a href="/docs" className="text-gray-400 hover:text-white text-sm">Docs</a></li>
+                  <li><a href="/pricing" className="text-gray-400 hover:text-white text-sm">Pricing</a></li>
                 </ul>
               </div>
               <div>
                 <h4 className="text-white font-semibold mb-4 text-sm">Resources</h4>
                 <ul className="space-y-2">
-                  {['Changelog', 'Pricing', 'Security', 'Docs', 'Status'].map((link) => (
-                    <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>
-                  ))}
+                  <li><a href="/security" className="text-gray-400 hover:text-white text-sm">Security</a></li>
+                  <li><a href="/status" className="text-gray-400 hover:text-white text-sm">Status</a></li>
+                  <li><a href="/roadmap" className="text-gray-400 hover:text-white text-sm">Roadmap</a></li>
+                  <li><a href="/enterprise" className="text-gray-400 hover:text-white text-sm">Enterprise</a></li>
                 </ul>
               </div>
               <div>
