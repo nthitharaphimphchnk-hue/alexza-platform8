@@ -62,7 +62,7 @@
 | **Sonner** | Toast notifications |
 
 ### Infrastructure
-- **Render** — Deploy production (https://alexza-platform8.onrender.com)
+- **Render** — Deploy production (https://alexza-platform8.onrenderer.com)
 - **MongoDB Atlas** — Database
 - **Stripe** — Payment
 
@@ -133,7 +133,7 @@
 
 ### 7.1 ผู้ใช้ใหม่
 
-1. ไปที่ https://alexza-platform8.onrender.com (หรือ localhost)
+1. ไปที่ https://alexza-platform8.onrenderer.com (หรือ localhost)
 2. กด **Get Started** → สมัคร (email, password, name)
 3. Login → เข้า Dashboard
 4. กด **Projects** → **Create Project** → ตั้งชื่อ
@@ -145,7 +145,7 @@
 10. ใช้ API จากโค้ด:
 
 ```bash
-curl -X POST "https://alexza-platform8.onrender.com/v1/projects/<project_id>/run/<action_name>" \
+curl -X POST "https://alexza-platform8.onrenderer.com/v1/projects/<project_id>/run/<action_name>" \
   -H "Content-Type: application/json" \
   -H "x-api-key: axza_your_key" \
   -d '{"input":"ข้อความที่ต้องการสรุป"}'
@@ -161,7 +161,7 @@ curl -X POST "https://alexza-platform8.onrender.com/v1/projects/<project_id>/run
 ### 7.3 Developer (เรียก API)
 
 ```javascript
-const res = await fetch('https://alexza-platform8.onrender.com/v1/projects/PROJECT_ID/run/ACTION_NAME', {
+const res = await fetch('https://alexza-platform8.onrenderer.com/v1/projects/PROJECT_ID/run/ACTION_NAME', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

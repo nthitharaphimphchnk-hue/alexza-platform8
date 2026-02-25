@@ -1,5 +1,5 @@
 Param(
-  [string]$BaseUrl = "https://alexza-platform8.onrender.com",
+  [string]$BaseUrl = "https://alexza-platform8.onrenderer.com",
   [string]$AdminKey = "alexza_super_admin_2024_secure_key",
   [string]$UserId = ""
 )

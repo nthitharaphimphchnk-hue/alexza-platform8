@@ -102,7 +102,7 @@ Sign-in with Google or GitHub is available on the Login and Signup pages. See **
 | Environment | Callback URL |
 |-------------|--------------|
 | Dev | `http://localhost:3000/auth/google/callback` and `http://localhost:3000/auth/github/callback` |
-| Prod | `https://alexza-platform8.onrender.com/auth/google/callback` and `https://alexza-platform8.onrender.com/auth/github/callback` |
+| Prod | `https://alexza-platform8.onrenderer.com/auth/google/callback` and `https://alexza-platform8.onrenderer.com/auth/github/callback` |
 
 ## Projects Smoke Test
 
@@ -319,7 +319,7 @@ This sets `walletBalanceCredits=0` and `walletGrantedFreeCredits=true` for users
 For testing or support, use `POST /api/wallet/topup/manual` with `x-admin-key` header:
 
 ```bash
-curl -X POST https://your-app.onrender.com/api/wallet/topup/manual \
+curl -X POST https://your-app.onrenderer.com/api/wallet/topup/manual \
   -H "Content-Type: application/json" \
   -H "x-admin-key: YOUR_ADMIN_API_KEY" \
   -d '{"userId":"USER_OBJECT_ID","credits":1000,"reason":"Support top-up"}'
@@ -370,8 +370,8 @@ Monitoring (optional):
 
 Networking/cookies (required for production auth):
 
-- `CLIENT_URL` (recommended) — frontend origin, e.g. `https://your-app.onrender.com` (enables cross-origin cookies)
-- `CORS_ORIGIN` (alternative) — comma-separated allowlist, e.g. `https://your-app.onrender.com`
+- `CLIENT_URL` (recommended) — frontend origin, e.g. `https://your-app.onrenderer.com` (enables cross-origin cookies)
+- `CORS_ORIGIN` (alternative) — comma-separated allowlist, e.g. `https://your-app.onrenderer.com`
 - `TRUST_PROXY=1` (recommended on Render so secure cookies work behind proxy)
 
 ### Deployment checklist
@@ -397,6 +397,6 @@ pnpm tsx scripts/smoke-prod.ts
 Optional overrides:
 
 ```bash
-PROD_BASE_URL="https://alexza-platform8.onrender.com" pnpm tsx scripts/smoke-prod.ts
+PROD_BASE_URL="https://alexza-platform8.onrenderer.com" pnpm tsx scripts/smoke-prod.ts
 PROD_SMOKE_PASSWORD="your_password" pnpm tsx scripts/smoke-prod.ts
 ```

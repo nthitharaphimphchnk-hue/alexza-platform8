@@ -44,10 +44,24 @@ function getSecret(): string {
 }
 
 function getRedirectBase(): string {
-  const base = (process.env.OAUTH_REDIRECT_BASE_URL || "").trim().replace(/\/+$/, "");
-  if (base) return base;
-  const frontend = (process.env.FRONTEND_APP_URL || process.env.CLIENT_URL || process.env.APP_BASE_URL || "").trim().replace(/\/+$/, "");
-  if (frontend) return frontend;
+  const { base: raw } = getRedirectBaseWithSource();
+  try {
+    const u = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+    return u.origin;
+  } catch {
+    return raw;
+  }
+}
+
+/** Returns base URL and which env var provided it (for diagnostics). */
+function getRedirectBaseWithSource(): { base: string; source: string } {
+  const oauth = (process.env.OAUTH_REDIRECT_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (oauth) return { base: oauth, source: "OAUTH_REDIRECT_BASE_URL" };
+  const fe = (process.env.FRONTEND_APP_URL || process.env.CLIENT_URL || process.env.APP_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (fe) {
+    const src = process.env.FRONTEND_APP_URL ? "FRONTEND_APP_URL" : process.env.CLIENT_URL ? "CLIENT_URL" : "APP_BASE_URL";
+    return { base: fe, source: src };
+  }
   throw new Error("OAUTH_REDIRECT_BASE_URL or FRONTEND_APP_URL/CLIENT_URL/APP_BASE_URL required for OAuth callbacks");
 }
 
@@ -211,10 +225,23 @@ router.get("/auth/google", (req, res) => {
         path: "/",
       });
     }
-    const base = getRedirectBase();
+    const { base: rawBase, source: baseSource } = getRedirectBaseWithSource();
+    const base = getRedirectBase(); // normalized to origin only (fixes 400 malformed if base had path)
     const callbackUrl = `${base}/auth/google/callback`;
+    const clientIdPrefix = clientId.length >= 10 ? clientId.slice(0, 10) + "..." : clientId ? "[set]" : "[empty]";
+    logger.info(
+      {
+        redirectUrl: callbackUrl,
+        base,
+        baseSource,
+        baseHadPath: rawBase !== base,
+        clientIdPrefix,
+        hasClientId: Boolean(clientId),
+      },
+      "[OAuth] GET /auth/google redirecting to Google"
+    );
     const scope = "openid email profile";
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(callbackUrl)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
     res.redirect(url);
   } catch (err) {
     logger.error({ err }, "[OAuth] Google init failed");
@@ -229,6 +256,16 @@ router.get("/auth/google/callback", async (req, res) => {
     const redirectUrl = req.cookies?.[OAUTH_REDIRECT_COOKIE];
     res.clearCookie(OAUTH_STATE_COOKIE, { path: "/", httpOnly: true });
     res.clearCookie(OAUTH_REDIRECT_COOKIE, { path: "/", httpOnly: true });
+
+    const hasCode = typeof code === "string";
+    const hasState = typeof state === "string";
+    const hasStoredState = Boolean(storedState);
+    const defaultTarget = getFrontendUrl() + "/app/dashboard";
+    const target = redirectUrl && getAllowedRedirects().some((a) => redirectUrl.startsWith(a)) ? redirectUrl : defaultTarget;
+    logger.info(
+      { hasCode, hasState, hasStoredState, error: error ?? null, redirectTarget: target },
+      "[OAuth] GET /auth/google/callback received"
+    );
 
     if (error) {
       logger.warn({ error }, "[OAuth] Google returned error");
@@ -312,10 +349,7 @@ router.get("/auth/google/callback", async (req, res) => {
     await ensureAuthCollections();
     await createSessionAndSetCookie(user._id, res);
 
-    const target =
-      redirectUrl && getAllowedRedirects().some((a) => redirectUrl.startsWith(a))
-        ? redirectUrl
-        : getFrontendUrl() + "/app/dashboard";
+    logger.info({ redirectTarget: target }, "[OAuth] GET /auth/google/callback success, redirecting to frontend");
     safeRedirect(res, target);
   } catch (err) {
     logger.error({ err }, "[OAuth] Google callback failed");

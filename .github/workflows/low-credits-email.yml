@@ -12,5 +12,5 @@ jobs:
     steps:
       - name: Call low credits scan endpoint
         run: |
-          curl -X POST https://alexza-platform8.onrender.com/api/admin/notifications/cron/low-credits-scan \
+          curl -X POST https://alexza-platform8.onrenderer.com/api/admin/notifications/cron/low-credits-scan \
             -H "x-admin-key: ${{ secrets.ADMIN_API_KEY }}"

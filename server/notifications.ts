@@ -49,7 +49,7 @@ const LOW_CREDITS_EMAIL_THRESHOLD = (() => {
   const parsed = Number.parseInt(process.env.LOW_CREDITS_THRESHOLD_EMAIL ?? "100", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
 })();
-const BASE_URL = (process.env.BASE_URL || "https://alexza-platform8.onrender.com").replace(/\/+$/, "");
+const BASE_URL = (process.env.BASE_URL || "https://alexza-platform8.onrenderer.com").replace(/\/+$/, "");
 const LOW_CREDITS_EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 interface SessionDoc {

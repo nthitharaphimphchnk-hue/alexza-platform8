@@ -12,5 +12,5 @@ jobs:
     steps:
       - name: Call monthly reset endpoint
         run: |
-          curl -X POST https://alexza-platform8.onrender.com/api/admin/billing/cron/reset-monthly \
+          curl -X POST https://alexza-platform8.onrenderer.com/api/admin/billing/cron/reset-monthly \
           -H "x-admin-key: ${{ secrets.ADMIN_API_KEY }}"
