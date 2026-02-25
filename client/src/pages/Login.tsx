@@ -31,8 +31,13 @@ export default function Login() {
     const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const error = params?.get("error");
     if (error) {
-      const msg = params?.get("message") || (error === "OAUTH_DENIED" ? "Sign-in was cancelled" : "Sign-in failed. Please try again.");
-      showFormSubmitErrorToast(msg);
+      const msg =
+        params?.get("message") ||
+        (error === "OAUTH_DENIED" ? "Sign-in was cancelled" : null) ||
+        (error === "OAUTH_CONFIG" ? "OAuth is not configured. Please contact support." : null) ||
+        (error === "oauth_failed" || error.startsWith("OAUTH_") ? "Sign-in failed. Please try again." : null) ||
+        "Something went wrong. Please try again.";
+      if (msg) showFormSubmitErrorToast(msg);
       window.history.replaceState({}, "", "/login");
     }
   }, []);

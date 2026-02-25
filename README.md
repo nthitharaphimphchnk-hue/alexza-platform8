@@ -91,31 +91,18 @@ curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/auth/log
 
 ## OAuth (Google, GitHub)
 
-Sign-in with Google or GitHub is available on the Login and Signup pages. Configure these env vars:
+Sign-in with Google or GitHub is available on the Login and Signup pages. See **[docs/AUTH_OAUTH.md](docs/AUTH_OAUTH.md)** for full setup.
 
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-- `OAUTH_REDIRECT_BASE_URL` – backend base URL (where OAuth callbacks are served)
-- `FRONTEND_APP_URL` – frontend base URL (where users are redirected after login)
-- `SESSION_SECRET` or `JWT_SECRET` – used for OAuth state signing
+**Quick config:** Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `OAUTH_REDIRECT_BASE_URL`, `FRONTEND_APP_URL`, and `SESSION_SECRET`.
 
-### Redirect URIs to configure in provider consoles
+**Local dev:** Vite proxies `/auth` to the backend. Use `OAUTH_REDIRECT_BASE_URL=http://localhost:3000` and `FRONTEND_APP_URL=http://localhost:3000` so callbacks hit the same origin and cookies work.
 
-**Google (Google Cloud Console → APIs & Services → Credentials):**
+**Redirect URIs** (must match provider console):
 
-| Environment | Redirect URI |
+| Environment | Callback URL |
 |-------------|--------------|
-| Dev | `http://localhost:3002/auth/google/callback` |
-| Prod | `https://alexza-platform8.onrender.com/auth/google/callback` |
-
-**GitHub (GitHub → Settings → Developer settings → OAuth Apps):**
-
-| Environment | Authorization callback URL |
-|-------------|----------------------------|
-| Dev | `http://localhost:3002/auth/github/callback` |
-| Prod | `https://alexza-platform8.onrender.com/auth/github/callback` |
-
-Use your actual backend URL for `OAUTH_REDIRECT_BASE_URL` and set the same value in the provider console.
+| Dev | `http://localhost:3000/auth/google/callback` and `http://localhost:3000/auth/github/callback` |
+| Prod | `https://alexza-platform8.onrender.com/auth/google/callback` and `https://alexza-platform8.onrender.com/auth/github/callback` |
 
 ## Projects Smoke Test
 

@@ -1,4 +1,7 @@
-const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() || "";
+const configuredApiBaseUrl =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ||
+  (import.meta.env.VITE_API_URL as string | undefined)?.trim() ||
+  "";
 export const API_BASE_URL = configuredApiBaseUrl.replace(/\/+$/, "");
 
 /** Base URL for OAuth redirects (backend). Uses API_BASE_URL or same origin when empty. */
@@ -7,15 +10,16 @@ export function getOAuthBaseUrl(): string {
   return base.replace(/\/+$/, "");
 }
 
-/** Full OAuth URL for a provider (e.g. google, github). Optionally pass redirect URL. */
-export function getOAuthUrl(provider: "google" | "github", redirect?: string): string {
+/** Full OAuth URL for a provider (e.g. google, github). Pass next path (e.g. /app/dashboard) for post-login redirect. */
+export function getOAuthUrl(provider: "google" | "github", next?: string): string {
   const base = getOAuthBaseUrl();
   const url = `${base}/auth/${provider}`;
-  if (redirect && typeof window !== "undefined") {
-    const fullRedirect = redirect.startsWith("/") ? window.location.origin + redirect : redirect;
-    return `${url}?redirect=${encodeURIComponent(fullRedirect)}`;
+  const nextPath = next || "/app/dashboard";
+  if (typeof window !== "undefined") {
+    const fullRedirect = nextPath.startsWith("/") ? window.location.origin + nextPath : nextPath;
+    return `${url}?redirect=${encodeURIComponent(fullRedirect)}&next=${encodeURIComponent(nextPath)}`;
   }
-  return url;
+  return `${url}?next=${encodeURIComponent(nextPath)}`;
 }
 let hasLoggedApiBase = false;
 

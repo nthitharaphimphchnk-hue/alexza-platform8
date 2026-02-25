@@ -45,13 +45,15 @@ function getSecret(): string {
 
 function getRedirectBase(): string {
   const base = (process.env.OAUTH_REDIRECT_BASE_URL || "").trim().replace(/\/+$/, "");
-  if (!base) throw new Error("OAUTH_REDIRECT_BASE_URL required (backend base URL for OAuth callbacks)");
-  return base;
+  if (base) return base;
+  const frontend = (process.env.FRONTEND_APP_URL || process.env.CLIENT_URL || process.env.APP_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (frontend) return frontend;
+  throw new Error("OAUTH_REDIRECT_BASE_URL or FRONTEND_APP_URL/CLIENT_URL/APP_BASE_URL required for OAuth callbacks");
 }
 
 function getFrontendUrl(): string {
-  const url = (process.env.FRONTEND_APP_URL || process.env.CLIENT_URL || "").trim().replace(/\/+$/, "");
-  if (!url) throw new Error("FRONTEND_APP_URL or CLIENT_URL required");
+  const url = (process.env.FRONTEND_APP_URL || process.env.CLIENT_URL || process.env.APP_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (!url) throw new Error("FRONTEND_APP_URL, CLIENT_URL, or APP_BASE_URL required");
   return url;
 }
 
@@ -192,12 +194,19 @@ router.get("/auth/google", (req, res) => {
       maxAge: OAUTH_STATE_TTL_MS / 1000,
       path: "/",
     });
-    const redirect = req.query.redirect as string | undefined;
-    if (redirect && getAllowedRedirects().some((a) => redirect.startsWith(a))) {
-      res.cookie(OAUTH_REDIRECT_COOKIE, redirect, {
+    const redirect = (req.query.redirect as string | undefined)?.trim();
+    const nextPath = (req.query.next as string | undefined)?.trim();
+    let targetRedirect = redirect;
+    if (!targetRedirect && nextPath) {
+      const frontend = getFrontendUrl();
+      const path = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
+      targetRedirect = `${frontend}${path}`;
+    }
+    if (targetRedirect && getAllowedRedirects().some((a) => targetRedirect!.startsWith(a) || targetRedirect === a)) {
+      res.cookie(OAUTH_REDIRECT_COOKIE, targetRedirect, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" && (process.env.CLIENT_URL || process.env.CORS_ORIGIN) ? "none" : "lax",
         maxAge: OAUTH_STATE_TTL_MS / 1000,
         path: "/",
       });
@@ -329,12 +338,19 @@ router.get("/auth/github", (req, res) => {
       maxAge: OAUTH_STATE_TTL_MS / 1000,
       path: "/",
     });
-    const redirect = req.query.redirect as string | undefined;
-    if (redirect && getAllowedRedirects().some((a) => redirect.startsWith(a))) {
-      res.cookie(OAUTH_REDIRECT_COOKIE, redirect, {
+    const redirect = (req.query.redirect as string | undefined)?.trim();
+    const nextPath = (req.query.next as string | undefined)?.trim();
+    let targetRedirect = redirect;
+    if (!targetRedirect && nextPath) {
+      const frontend = getFrontendUrl();
+      const path = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
+      targetRedirect = `${frontend}${path}`;
+    }
+    if (targetRedirect && getAllowedRedirects().some((a) => targetRedirect!.startsWith(a) || targetRedirect === a)) {
+      res.cookie(OAUTH_REDIRECT_COOKIE, targetRedirect, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" && (process.env.CLIENT_URL || process.env.CORS_ORIGIN) ? "none" : "lax",
         maxAge: OAUTH_STATE_TTL_MS / 1000,
         path: "/",
       });

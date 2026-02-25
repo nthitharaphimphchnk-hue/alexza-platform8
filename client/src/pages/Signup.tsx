@@ -7,7 +7,7 @@ import { containerVariants, itemVariants } from "@/lib/animations";
 import { useLocation } from "wouter";
 import { useForm } from "@/hooks/useForm";
 import { validateSignupForm, getFieldError, hasFieldError } from "@/lib/validation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
 import { ApiError, apiRequest, getOAuthUrl } from "@/lib/api";
 
@@ -30,6 +30,16 @@ export default function Signup() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  useEffect(() => {
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const error = params?.get("error");
+    if (error) {
+      const msg = params?.get("message") || (error === "OAUTH_DENIED" ? "Sign-up was cancelled" : "Sign-up failed. Please try again.");
+      showFormSubmitErrorToast(msg);
+      window.history.replaceState({}, "", "/signup");
+    }
+  }, []);
 
   const form = useForm<SignupFormData>({
     initialValues: {
