@@ -13,7 +13,8 @@
     "edit": "แก้ไข",
     "close": "ปิด",
     "search": "ค้นหา",
-    "back": "กลับ"
+    "back": "กลับ",
+    "next": "ถัดไป"
   },
   "navigation": {
     "product": "สินค้า",
@@ -58,6 +59,75 @@
       "feature1": "สร้างเวิร์กโฟลว์ AI ที่ซับซ้อนโดยไม่ต้องเขียนโค้ด",
       "feature2": "จัดการโมเดล AI หลายตัวได้อย่างราบรื่น",
       "feature3": "ตรวจสอบและปรับปรุงประสิทธิภาพแบบเรียลไทม์"
+    }
+  },
+  "orchestration": {
+    "header": {
+      "title": "One API. Many Leading AI Models. Zero Complexity.",
+      "subtitle": "เข้าถึงโมเดล AI ชั้นนำหลายตระกูลผ่าน ALEXZA AI — โดยไม่ต้องต่อ provider เลือกโมเดล หรือเขียน fallback logic เอง"
+    },
+    "traditional": {
+      "title": "Traditional AI API Gateway",
+      "bullet1": "ต้องเลือกโมเดลทุกครั้งที่เรียก",
+      "bullet2": "เขียน routing + fallback logic เอง",
+      "bullet3": "จัดการ retries, timeouts, rate limits เอง",
+      "bullet4": "ติดตามต้นทุนและป้องกัน cost spike เอง",
+      "bullet5": "ดูแล integrations และ keys หลายชุด",
+      "tabModel": "Model selection",
+      "tabFallback": "Fallback",
+      "tabCost": "Cost control"
+    },
+    "alexza": {
+      "title": "ALEXZA AI Orchestration",
+      "bullet1": "เรียก endpoint เดียว",
+      "bullet2": "เลือกโมเดลอัจฉริยะอัตโนมัติ",
+      "bullet3": "Fallback อัตโนมัติ + reliability layer",
+      "bullet4": "ควบคุมต้นทุนอัจฉริยะ (ป้องกัน cost spike)",
+      "bullet5": "Usage logging และ credits แบบรวมศูนย์",
+      "behindTheScenes": "เบื้องหลังการทำงาน",
+      "step1": "วิเคราะห์ task",
+      "step2": "เลือก model family ที่เหมาะสม",
+      "step3": "รัน",
+      "step4": "Fallback ถ้าจำเป็น",
+      "step5": "คืน output + usage"
+    },
+    "models": {
+      "title": "Model families ที่ใช้ได้ผ่าน ALEXZA AI",
+      "subtitle": "เลือกผลลัพธ์ — ไม่ใช่ provider เรา route โมเดลที่เหมาะกับ workload ของคุณ",
+      "bestFor": "เหมาะสำหรับ:",
+      "openai": {
+        "title": "OpenAI Models",
+        "bestFor": "งานทั่วไป, tool calling, structured output"
+      },
+      "claude": {
+        "title": "Claude (Anthropic)",
+        "bestFor": "งานเขียนยาว, reasoning แข็งแรง, เอกสารยาว"
+      },
+      "llama": {
+        "title": "Meta Llama",
+        "bestFor": "workload ประหยัดต้นทุน, cheap tier, automation ขยายได้"
+      },
+      "gemini": {
+        "title": "Google Gemini",
+        "bestFor": "context ยาวมาก, multimodal tasks"
+      },
+      "mistral": {
+        "title": "Mistral",
+        "bestFor": "ต้นทุนต่ำ, งานประจำวัน"
+      },
+      "cohere": {
+        "title": "Cohere",
+        "bestFor": "RAG, enterprise search"
+      },
+      "opensource": {
+        "title": "Open Source / Community",
+        "bestFor": "ทดลองได้อย่างยืดหยุ่น"
+      }
+    },
+    "cta": {
+      "copy": "Build once. Scale with intelligent orchestration.",
+      "getStarted": "Get Started",
+      "viewDocs": "View Docs"
     }
   },
   "auth": {

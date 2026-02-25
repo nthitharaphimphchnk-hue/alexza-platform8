@@ -46,6 +46,7 @@ type AppShellProps = {
   backLabel?: string;
   actions?: ReactNode;
   children: ReactNode;
+  titleClassName?: string;
 };
 
 const navKeys = [
@@ -70,6 +71,7 @@ export default function AppShell({
   backLabel = "Back",
   actions,
   children,
+  titleClassName,
 }: AppShellProps) {
   const { t } = useTranslation();
   const [location, setLocation] = useLocation();
@@ -163,31 +165,46 @@ export default function AppShell({
   return (
     <div className="min-h-screen text-foreground">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 border-r border-[rgba(255,255,255,0.06)] bg-[#06090d]/85 backdrop-blur-xl lg:flex lg:flex-col">
-          <div className="border-b border-[rgba(255,255,255,0.06)] px-4 py-4">
+        <aside
+          className="hidden w-72 shrink-0 border-r border-white/10 backdrop-blur-xl lg:flex lg:flex-col relative overflow-hidden"
+          style={{ background: "linear-gradient(180deg, #050607 0%, #080c10 100%)" }}
+        >
+          <div className="absolute inset-0 pointer-events-none opacity-70" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "20px 20px" }} aria-hidden />
+          <div className="relative border-b border-white/10 px-4 py-4">
             <Logo size="sidebar" />
           </div>
 
-          <nav className="flex-1 space-y-1 px-4 py-6">
+          <nav className="relative flex-1 space-y-1 px-4 py-6">
             {navKeys.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.href);
               return (
                 <button
                   key={item.href}
                   onClick={() => setLocation(item.href)}
-                  className={`ripple-btn flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm transition-all ${
-                    isActive(item.href)
-                      ? "bg-[rgba(192,192,192,0.14)] text-white shadow-[0_0_24px_rgba(192,192,192,0.2)]"
-                      : "text-gray-400 hover:bg-[rgba(255,255,255,0.06)] hover:text-white"
-                  }`}
+                  className={`ripple-btn group relative flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm transition-all duration-300 ${!active ? "hover:bg-white/5 hover:text-white" : ""}`}
+                  style={
+                    active
+                      ? { background: "rgba(192,192,192,0.12)", color: "#fff", border: "1px solid rgba(192,192,192,0.3)", boxShadow: "0 0 20px rgba(192,192,192,0.15)" }
+                      : { color: "#9ca3af", border: "1px solid transparent" }
+                  }
                 >
-                  <Icon size={18} />
-                  <span>{t(item.key)}</span>
+                  {active && (
+                    <span
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r"
+                      style={{ background: "#c0c0c0" }}
+                      aria-hidden
+                    />
+                  )}
+                  <Icon
+                    size={18}
+                    className="shrink-0 transition-all duration-300"
+                    style={{ color: active ? "#c0c0c0" : undefined }}
+                  />
+                  <span className="flex-1">{t(item.key)}</span>
                   {item.href === "/app/billing/credits" && isLowCredits ? (
                     <span
-                      className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        isZeroCredits ? "bg-red-500/25 text-red-200" : "bg-amber-500/25 text-amber-200"
-                      }`}
+                      className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold animate-pulse bg-[rgba(192,192,192,0.2)] text-[#c0c0c0] border border-[rgba(192,192,192,0.3)]"
                     >
                       {isZeroCredits ? t("appShell.topUp") : t("appShell.low")}
                     </span>
@@ -199,7 +216,7 @@ export default function AppShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-[rgba(255,255,255,0.06)] bg-[#050607]/85 px-4 py-4 backdrop-blur-xl md:px-8">
+          <header className="sticky top-0 z-30 border-b border-[rgba(255,255,255,0.06)] bg-[#050607]/90 px-4 py-4 backdrop-blur-xl md:px-8 shadow-[0_1px_0_rgba(255,255,255,0.03)]">
             <div className="grid grid-cols-1 items-center gap-3 xl:grid-cols-[2fr_1.5fr_2fr]">
               <div className="flex items-center gap-3">
                 <div className="lg:hidden shrink-0">
@@ -229,15 +246,15 @@ export default function AppShell({
                 <input
                   type="text"
                   placeholder={t("appShell.searchPlaceholder")}
-                  className="h-10 w-full rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-[rgba(192,192,192,0.45)] focus:outline-none"
+                  className="h-10 w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-[rgba(192,192,192,0.5)] focus:outline-none focus:shadow-[0_0_0_1px_rgba(192,192,192,0.3),0_0_12px_rgba(192,192,192,0.08)] transition-all duration-200"
                 />
               </div>
 
               <div className="flex items-center justify-start gap-2 xl:justify-end">
                 <LanguageSwitcher />
-                <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 px-3 py-1.5 text-xs text-gray-300">
+                <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-xs text-gray-300 shadow-[0_0_8px_rgba(0,0,0,0.2)]">
                   {t("appShell.environment")}:
-                  <span className={`ml-2 font-semibold ${mode === "Production" ? "text-[#c0c0c0]" : "text-cyan-300"}`}>
+                  <span className={`ml-2 font-semibold ${mode === "Production" ? "text-[#c0c0c0] drop-shadow-[0_0_6px_rgba(192,192,192,0.2)]" : "text-[#c0c0c0] drop-shadow-[0_0_6px_rgba(192,192,192,0.2)]"}`}>
                     {mode}
                   </span>
                 </div>
@@ -302,7 +319,7 @@ export default function AppShell({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.24, ease: "easeOut" }}
-            className="flex-1 p-4 md:p-8"
+            className="flex-1 p-4 md:p-8 relative"
           >
             <div className="mx-auto w-full max-w-7xl space-y-8">
               {isLowCredits && !isLowCreditsDismissed ? (
@@ -323,12 +340,12 @@ export default function AppShell({
                 <div>
                   <button
                     onClick={handleBack}
-                    className="mb-3 inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-sm text-gray-200 transition hover:border-[rgba(192,192,192,0.4)] hover:text-white"
+                    className="mb-3 inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-sm text-gray-200 transition-all duration-200 hover:border-[rgba(192,192,192,0.4)] hover:text-white hover:shadow-[0_0_12px_rgba(255,255,255,0.04)]"
                   >
                     <span aria-hidden>←</span>
                     {backLabel || t("common.back")}
                   </button>
-                  <h1 className="text-3xl font-semibold text-white">{title}</h1>
+                  <h1 className={`text-3xl font-semibold ${titleClassName ?? "text-white"}`}>{title}</h1>
                   {subtitle ? <p className="mt-1 text-sm text-gray-400">{subtitle}</p> : null}
                   <div className="mt-3 flex items-center gap-1 overflow-x-auto whitespace-nowrap text-xs">
                     {breadcrumbs.map((item, idx) => (
@@ -362,7 +379,7 @@ export default function AppShell({
               onClick={() => {
                 throw new Error("Sentry Frontend Test Error");
               }}
-              className="fixed bottom-4 right-4 z-50 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200 hover:bg-amber-500/20"
+              className="fixed bottom-4 right-4 z-50 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-xs text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
             >
               Test Sentry Frontend
             </button>

@@ -39,50 +39,53 @@ export default function StatusWidget() {
 
   if (loading) {
     return (
-      <section className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-5 backdrop-blur">
-        <div className="skeleton-shimmer h-24 w-full rounded-lg" />
+      <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5">
+        <div className="skeleton-shimmer h-24 w-full rounded-xl" />
       </section>
     );
   }
 
   return (
-    <section className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-5 backdrop-blur">
-      <h2 className="mb-4 text-lg font-semibold text-white">{t("dashboard.status")}</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-4">
-          <div className="flex items-center gap-2 text-gray-400">
-            <Wallet size={16} />
-            <span className="text-xs">{t("dashboard.creditsBalance")}</span>
-          </div>
-          {creditsError ? (
-            <div className="mt-2">
-              <p className="text-sm text-red-300">{creditsError}</p>
-              <Button variant="outline" size="sm" onClick={() => void refetchCredits()} className="mt-2 border-red-300/40 text-red-100 hover:bg-red-500/15">
-                Retry
-              </Button>
+    <section className="group relative overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5 transition-all duration-300 hover:border-[rgba(192,192,192,0.4)]">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="relative">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">{t("dashboard.status")}</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 p-4">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]">BALANCE</span>
+              <Wallet size={14} className="text-gray-500" />
             </div>
-          ) : (
-            <>
-              <p className="mt-2 text-2xl font-semibold text-white">
-                <AnimatedCounter value={balanceCredits} />
-              </p>
-              <p className="mt-1 text-xs text-gray-500">1 credit = {tokensPerCredit.toLocaleString()} tokens</p>
-            </>
-          )}
-        </div>
-        <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-4">
-          <div className="flex items-center gap-2 text-gray-400">
-            <Activity size={16} />
-            <span className="text-xs">{t("dashboard.last24hUsage")}</span>
+            {creditsError ? (
+              <div className="mt-2">
+                <p className="text-sm text-gray-300">{creditsError}</p>
+                <Button variant="outline" size="sm" onClick={() => void refetchCredits()} className="mt-2 border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]">
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <>
+                <p className="mt-2 text-2xl font-bold text-white">
+                  <AnimatedCounter value={balanceCredits} />
+                </p>
+                <p className="mt-1 text-xs text-gray-500">1 credit = {tokensPerCredit.toLocaleString()} tokens</p>
+              </>
+            )}
           </div>
-          <p className="mt-2 text-2xl font-semibold text-white">
-            {usage ? `${usage.totals.calls} ${t("dashboard.calls")}` : "—"}
-          </p>
-          {usage && usage.totals.errors > 0 && (
-            <p className="mt-1 text-xs text-amber-400">
-              {usage.totals.errors} {t("dashboard.errors")}
+          <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 p-4">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]">24H</span>
+              <Activity size={14} className="text-gray-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold text-white">
+              {usage ? `${usage.totals.calls} ${t("dashboard.calls")}` : "—"}
             </p>
-          )}
+            {usage && usage.totals.errors > 0 && (
+              <span className="mt-1 inline-block rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-xs text-[#c0c0c0]">
+                {usage.totals.errors} {t("dashboard.errors")}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </section>

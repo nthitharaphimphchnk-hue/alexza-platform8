@@ -93,7 +93,7 @@ function validateLogin(body: AuthBody) {
   return { valid: true as const, email, password };
 }
 
-async function ensureAuthCollections() {
+export async function ensureAuthCollections() {
   if (!authCollectionsReady) {
     authCollectionsReady = (async () => {
       const db = await getDb();
@@ -118,7 +118,7 @@ function buildUserResponse(user: WithId<UserDoc>) {
   };
 }
 
-async function createSessionAndSetCookie(userId: ObjectId, res: Response) {
+export async function createSessionAndSetCookie(userId: ObjectId, res: Response) {
   const db = await getDb();
   const sessions = db.collection<SessionDoc>("sessions");
 

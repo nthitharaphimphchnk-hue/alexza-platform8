@@ -16,18 +16,14 @@ export default function LowCreditsBanner({ balanceCredits, onAddCredits, onDismi
 
   return (
     <div
-      className={`rounded-xl px-4 py-3 ${
-        isZeroBalance
-          ? "border border-red-300/40 bg-red-500/10 text-red-100"
-          : "border border-amber-300/40 bg-amber-500/10 text-amber-100"
-      }`}
+      className="rounded-xl px-4 py-3 border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 text-gray-200"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <AlertTriangle size={18} className={`mt-0.5 ${isZeroBalance ? "text-red-300" : "text-amber-300"}`} />
+          <AlertTriangle size={18} className="mt-0.5 text-[#c0c0c0]" />
           <div>
             <p className="text-sm font-semibold">{title}</p>
-            <p className={`mt-1 text-sm ${isZeroBalance ? "text-red-100/90" : "text-amber-100/90"}`}>{message}</p>
+            <p className="mt-1 text-sm text-gray-400">{message}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -37,11 +33,7 @@ export default function LowCreditsBanner({ balanceCredits, onAddCredits, onDismi
               variant="outline"
               size="sm"
               onClick={onDismiss}
-              className={
-                isZeroBalance
-                  ? "border-red-300/40 text-red-100 hover:bg-red-500/15"
-                  : "border-amber-300/40 text-amber-100 hover:bg-amber-500/15"
-              }
+              className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
             >
               Dismiss
             </Button>
@@ -50,7 +42,7 @@ export default function LowCreditsBanner({ balanceCredits, onAddCredits, onDismi
             type="button"
             size="sm"
             onClick={onAddCredits}
-            className={isZeroBalance ? "bg-red-300 text-black hover:bg-red-200" : "bg-amber-300 text-black hover:bg-amber-200"}
+            className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
           >
             {isZeroBalance ? "Top up now" : "Add Credits"}
           </Button>

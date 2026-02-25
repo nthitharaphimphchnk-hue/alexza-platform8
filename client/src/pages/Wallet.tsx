@@ -240,6 +240,7 @@ export default function Wallet() {
       <AppShell
         title="Credits & Wallet"
         subtitle="ALEXZA Credits and ALEXZA Managed Runtime usage"
+        titleClassName="text-white"
         backHref="/app/dashboard"
         backLabel="Back to Dashboard"
         breadcrumbs={[
@@ -253,7 +254,7 @@ export default function Wallet() {
               variant="outline"
               onClick={() => void refetch()}
               disabled={isLoading}
-              className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+              className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(192,192,192,0.4)] transition-all"
             >
               <RefreshCw size={16} className={`mr-2 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
@@ -262,7 +263,7 @@ export default function Wallet() {
               variant="outline"
               onClick={exportCsv}
               disabled={rows.length === 0}
-              className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+              className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(192,192,192,0.4)] transition-all disabled:opacity-50"
             >
               <Download size={16} className="mr-2" />
               Download CSV
@@ -270,7 +271,7 @@ export default function Wallet() {
             {HAS_ADMIN_TOPUP && (
               <Button
                 onClick={() => setIsTopupModalOpen(true)}
-                className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"
+                className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8] transition-all"
               >
                 <Plus size={16} className="mr-2" />
                 Add Credits
@@ -281,18 +282,18 @@ export default function Wallet() {
       >
         {isLoading && (
           <section className="space-y-4">
-            <div className="skeleton-shimmer h-36 rounded-xl border border-[rgba(255,255,255,0.08)]" />
-            <div className="skeleton-shimmer h-64 rounded-xl border border-[rgba(255,255,255,0.08)]" />
+            <div className="skeleton-shimmer h-36 rounded-xl border border-[rgba(255,255,255,0.08)] bg-black" />
+            <div className="skeleton-shimmer h-64 rounded-xl border border-[rgba(255,255,255,0.08)] bg-black" />
           </section>
         )}
 
         {!isLoading && errorMessage && (
-          <section className="rounded-xl border border-red-500/30 bg-red-500/10 p-6">
-            <p className="text-sm text-red-200">{errorMessage}</p>
+          <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+            <p className="text-sm text-gray-200">{errorMessage}</p>
             <Button
               variant="outline"
               onClick={() => void refetch()}
-              className="mt-3 border-red-300/40 text-red-100 hover:bg-red-500/15"
+              className="mt-3 border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
             >
               Retry
             </Button>
@@ -302,23 +303,24 @@ export default function Wallet() {
         {!isLoading && !errorMessage && (
           <>
             {urlStatus === "success" && (
-              <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-                <p className="text-sm font-medium text-emerald-200">
+              <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-4">
+                <p className="text-sm font-medium text-gray-200">
                   Payment successful! Credits have been added to your wallet.
                 </p>
               </section>
             )}
             {urlStatus === "cancel" && (
-              <section className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                <p className="text-sm text-amber-200">Checkout was cancelled.</p>
+              <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-4">
+                <p className="text-sm text-gray-200">Checkout was cancelled.</p>
               </section>
             )}
 
-            <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
-              <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-                <div>
-                  <p className="text-sm text-gray-400">Balance</p>
-                  <p className="mt-2 text-5xl font-semibold text-white">
+            <section className="relative overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(192,192,192,0.04),transparent_60%)]" aria-hidden />
+              <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] relative">
+                <div className="group">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Balance</p>
+                  <p className="mt-2 text-5xl font-bold text-white">
                     <AnimatedCounter value={balanceCredits} /> credits
                   </p>
                   <p className="mt-2 text-xs text-gray-500">
@@ -326,81 +328,109 @@ export default function Wallet() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]/80 p-4">
-                  <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                    <CreditCard size={16} />
-                    Top up with Stripe
-                  </h3>
-                  {HAS_ADMIN_TOPUP ? (
-                    <p className="mt-2 text-xs text-gray-400">
-                      Dev mode: Use the Add Credits button above for manual top-up, or Stripe below.
-                    </p>
-                  ) : null}
-                  <div className="mt-3 space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      {STRIPE_PRESETS.map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setStripeAmountUsd(String(preset))}
-                          className={`rounded-lg border px-3 py-1.5 text-sm transition ${
-                            stripeAmountUsd === String(preset)
-                              ? "border-[#c0c0c0] bg-[#c0c0c0]/20 text-white"
-                              : "border-[rgba(255,255,255,0.12)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)]"
-                          }`}
-                        >
-                          ${preset}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-500 block mb-1">Custom amount (USD)</label>
-                        <input
-                          type="number"
-                          min={MIN_STRIPE_USD}
-                          max={MAX_STRIPE_USD}
-                          step="1"
-                          value={stripeAmountUsd}
-                          onChange={(e) => setStripeAmountUsd(e.target.value)}
-                          disabled={isStripeLoading}
-                          className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white focus:outline-none focus:border-[rgba(192,192,192,0.5)]"
-                        />
+                <div
+                  data-topup-card="silver-3d"
+                  className="group/card relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(192,192,192,0.4),inset_0_1px_0_rgba(255,255,255,0.25)]"
+                  style={{
+                    background: "linear-gradient(145deg, #2a2d32 0%, #1e2126 25%, #16181c 50%, #0f1114 75%, #0a0b0d 100%)",
+                    border: "1px solid rgba(192,192,192,0.35)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.5), 0 0 20px rgba(192,192,192,0.08)",
+                  }}
+                >
+                  {/* Silver metallic reflection - top-left highlight */}
+                  <div className="absolute inset-0 opacity-100" style={{ backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 20%, transparent 40%), linear-gradient(225deg, transparent 50%, rgba(0,0,0,0.15) 100%)" }} aria-hidden />
+                  {/* Radial depth - inner glow */}
+                  <div className="absolute inset-0 opacity-60" style={{ backgroundImage: "radial-gradient(ellipse 80% 50% at 30% 20%, rgba(192,192,192,0.15) 0%, transparent 50%), radial-gradient(ellipse 60% 60% at 70% 80%, rgba(0,0,0,0.4) 0%, transparent 50%)" }} aria-hidden />
+                  {/* Top edge - metallic silver highlight */}
+                  <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(to right, transparent 0%, rgba(192,192,192,0.5) 20%, rgba(255,255,255,0.4) 50%, rgba(192,192,192,0.5) 80%, transparent 100%)" }} aria-hidden />
+                  <div className="relative p-5">
+                    {/* Card header - chip + badge */}
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-7 rounded-[4px] bg-gradient-to-br from-slate-400/90 via-slate-500/60 to-slate-700/80 border border-slate-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_2px_rgba(0,0,0,0.3)]" aria-hidden />
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">Top up</span>
                       </div>
-                      <Button
-                        onClick={() => void handleStripeCheckout()}
-                        disabled={isStripeLoading}
-                        className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8] shrink-0"
-                      >
-                        {isStripeLoading ? "Redirecting..." : "Proceed to Checkout"}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <CreditCard size={14} className="text-slate-300" style={{ filter: "drop-shadow(0 0 4px rgba(192,192,192,0.4))" }} />
+                        <span className="text-xs font-medium text-slate-200">Stripe</span>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Min ${MIN_STRIPE_USD} · Max ${MAX_STRIPE_USD}
-                    </p>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.06)]">
-                    <a
-                      href="mailto:sales@alexza.ai"
-                      className="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-gray-300"
-                    >
-                      <Mail size={12} />
-                      Contact sales
-                    </a>
+                    <p className="mb-2 text-[9px] text-slate-500" style={{ fontFamily: "monospace" }}>ALEXZA · Silver 3D</p>
+                    {HAS_ADMIN_TOPUP ? (
+                      <p className="mb-3 text-[10px] text-gray-500">
+                        Dev mode: Add Credits above or Stripe below.
+                      </p>
+                    ) : null}
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {STRIPE_PRESETS.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setStripeAmountUsd(String(preset))}
+                            className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-all ${
+                              stripeAmountUsd === String(preset)
+                                ? "border-slate-400/60 bg-slate-500/30 text-slate-100 shadow-[0_0_12px_rgba(192,192,192,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                                : "border-slate-600/50 text-slate-400 bg-slate-800/40 hover:bg-slate-700/50 hover:border-slate-400/40 hover:text-slate-200"
+                            }`}
+                          >
+                            ${preset}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-1">Amount (USD)</label>
+                          <input
+                            type="number"
+                            min={MIN_STRIPE_USD}
+                            max={MAX_STRIPE_USD}
+                            step="1"
+                            value={stripeAmountUsd}
+                            onChange={(e) => setStripeAmountUsd(e.target.value)}
+                            disabled={isStripeLoading}
+                            className="w-full rounded-lg border border-slate-600/50 bg-slate-900/60 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-400/60 focus:ring-1 focus:ring-slate-400/30 focus:shadow-[0_0_12px_rgba(192,192,192,0.1)]"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => void handleStripeCheckout()}
+                          disabled={isStripeLoading}
+                          className="shrink-0 bg-gradient-to-b from-slate-300 via-slate-400 to-slate-600 text-slate-900 font-semibold shadow-[0_4px_0_#374151,inset_0_1px_0_rgba(255,255,255,0.3)] hover:from-slate-200 hover:via-slate-300 hover:to-slate-500 hover:shadow-[0_2px_0_#374151,inset_0_1px_0_rgba(255,255,255,0.3)] active:shadow-none active:translate-y-[2px] transition-all"
+                        >
+                          {isStripeLoading ? "Redirecting..." : "Checkout"}
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-slate-500">
+                        Min ${MIN_STRIPE_USD} · Max ${MAX_STRIPE_USD}
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-600/50">
+                      <a
+                        href="mailto:sales@alexza.ai"
+                        className="inline-flex items-center gap-2 text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        <Mail size={11} />
+                        Contact sales
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+            <section className="relative overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" aria-hidden />
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-white">Transaction History</h2>
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-[#c0c0c0] animate-pulse" />
+                  Transaction History
+                </h2>
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-gray-500">Filter</label>
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as FilterType)}
-                    className="rounded-md border border-[rgba(255,255,255,0.1)] bg-[#050607] px-2 py-1 text-sm text-white"
+                    className="rounded-md border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-2 py-1 text-sm text-gray-200 focus:border-[rgba(192,192,192,0.5)] focus:outline-none"
                   >
                     <option value="all">All</option>
                     <option value="topup">Topup</option>
@@ -410,53 +440,43 @@ export default function Wallet() {
                   </select>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto -mx-1">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-500">
-                      <th className="px-3 py-2">Type</th>
-                      <th className="px-3 py-2">Date</th>
-                      <th className="px-3 py-2">Credits</th>
-                      <th className="px-3 py-2">Reason</th>
-                      <th className="px-3 py-2">Details</th>
+                    <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-3 py-3">Type</th>
+                      <th className="px-3 py-3">Date</th>
+                      <th className="px-3 py-3">Credits</th>
+                      <th className="px-3 py-3">Reason</th>
+                      <th className="px-3 py-3">Details</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row) => (
                       <Fragment key={row.id}>
-                        <tr className="border-b border-[rgba(255,255,255,0.05)] text-gray-200">
-                          <td className="px-3 py-2">
+                        <tr className="border-b border-[rgba(255,255,255,0.06)] text-gray-200 hover:bg-[rgba(255,255,255,0.03)] transition-colors">
+                          <td className="px-3 py-2.5">
                             <span
-                              className={`rounded-full px-2.5 py-1 text-xs ${
-                                row.typeLabel === "Usage"
-                                  ? "bg-red-500/15 text-red-300"
-                                  : row.typeLabel === "Topup"
-                                    ? "bg-blue-500/15 text-blue-300"
-                                    : row.typeLabel === "Refund"
-                                      ? "bg-amber-500/15 text-amber-300"
-                                      : row.typeLabel === "Monthly Reset"
-                                        ? "bg-violet-500/15 text-violet-300"
-                                        : "bg-emerald-500/15 text-emerald-300"
-                              }`}
+                              className="rounded-full px-2.5 py-1 text-xs font-medium bg-[rgba(255,255,255,0.08)] text-gray-300 border border-[rgba(255,255,255,0.08)]"
                             >
                               {row.typeLabel}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-gray-400" title={row.fullDate}>
+                          <td className="px-3 py-2.5 text-gray-400" title={row.fullDate}>
                             {row.dateText}
                           </td>
-                          <td className="px-3 py-2">
-                            <span className={row.amountCredits < 0 ? "text-red-300" : "text-emerald-300"}>
+                          <td className="px-3 py-2.5">
+                            <span className={`font-semibold ${row.amountCredits < 0 ? "text-gray-300" : "text-gray-200"}`}>
                               {row.amountCredits > 0 ? "+" : ""}
                               {row.amountCredits.toLocaleString()} credits
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-gray-400 max-w-[220px] truncate">{row.reason}</td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2.5 text-gray-400 max-w-[220px] truncate">{row.reason}</td>
+                          <td className="px-3 py-2.5">
                             <button
                               type="button"
                               onClick={() => setExpandedRowId((prev) => (prev === row.id ? null : row.id))}
-                              className="rounded-md border border-[rgba(255,255,255,0.12)] px-2 py-1 text-xs text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
+                              className="rounded-md border border-[rgba(255,255,255,0.08)] px-2 py-1 text-xs text-gray-200 hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(192,192,192,0.4)] transition-all"
                             >
                               {expandedRowId === row.id ? (
                                 <span className="inline-flex items-center gap-1">
@@ -471,9 +491,9 @@ export default function Wallet() {
                           </td>
                         </tr>
                         {expandedRowId === row.id && (
-                          <tr className="border-b border-[rgba(255,255,255,0.05)]">
+                          <tr className="border-b border-[rgba(255,255,255,0.06)]">
                             <td colSpan={5} className="px-3 py-3">
-                              <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-[#050607] p-3 text-xs text-gray-300">
+                              <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-3 text-xs text-gray-300">
                                 <div>Reason: {row.reason}</div>
                                 <div>Run ID: {row.details.relatedRunId}</div>
                                 <div>Usage Log ID: {row.details.usageLogId}</div>

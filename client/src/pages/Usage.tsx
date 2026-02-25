@@ -247,12 +247,12 @@ export default function Usage() {
         )}
 
         {!isLoading && errorMessage && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-5">
-            <p className="text-sm text-red-200">{errorMessage}</p>
+          <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5">
+            <p className="text-sm text-gray-200">{errorMessage}</p>
             <Button
               variant="outline"
               onClick={() => setRefreshNonce((prev) => prev + 1)}
-              className="mt-3 border-red-300/40 text-red-100 hover:bg-red-500/15"
+              className="mt-3 border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
             >
               Retry
             </Button>

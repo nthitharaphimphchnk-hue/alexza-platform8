@@ -34,14 +34,17 @@ export default function Dashboard() {
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={() => setLocation("/app/projects")} className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]">
+          <Button
+            onClick={() => setLocation("/app/projects")}
+            className="bg-[#c0c0c0] text-black font-semibold hover:bg-[#a8a8a8] transition-all"
+          >
             <Plus size={16} className="mr-2" />
             {t("navigation.newProject")}
           </Button>
           <Button
             variant="outline"
             onClick={() => setLocation("/app/usage")}
-            className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+            className="border-[rgba(255,255,255,0.08)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(192,192,192,0.4)] hover:text-white transition-all"
           >
             {t("navigation.openUsage")}
           </Button>
@@ -66,8 +69,8 @@ export default function Dashboard() {
               label: t("dashboard.creditsRemaining"),
               value: creditsError ? (
                 <span className="flex flex-col gap-1">
-                  <span className="text-sm text-red-300">{creditsError}</span>
-                  <Button variant="outline" size="sm" onClick={() => void refetchCredits()} className="w-fit border-red-300/40 text-red-100 hover:bg-red-500/15">
+                  <span className="text-sm text-gray-300">{creditsError}</span>
+                  <Button variant="outline" size="sm" onClick={() => void refetchCredits()} className="w-fit border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]">
                     Retry
                   </Button>
                 </span>
@@ -81,14 +84,32 @@ export default function Dashboard() {
             },
           ].map((item, idx) => {
             const Icon = item.icon;
+            const glows = [
+              { border: "hover:border-[rgba(192,192,192,0.4)]", shadow: "", icon: "text-[#c0c0c0]" },
+              { border: "hover:border-[rgba(192,192,192,0.4)]", shadow: "", icon: "text-[#c0c0c0]" },
+              { border: "hover:border-[rgba(192,192,192,0.4)]", shadow: "", icon: "text-[#c0c0c0]" },
+              { border: "hover:border-[rgba(192,192,192,0.4)]", shadow: "", icon: "text-[#c0c0c0]" },
+            ];
+            const g = glows[idx] || glows[0];
             return (
-              <div key={idx} className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-5 backdrop-blur">
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-sm text-gray-400">{item.label}</p>
-                  <Icon size={16} className="text-[#c0c0c0]" />
+              <div
+                key={idx}
+                className={`group relative overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-black p-5 transition-all duration-300 ${g.border} ${g.shadow} before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300 group-hover:before:opacity-100 before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent`}
+              >
+                <div className="relative">
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-xs font-medium uppercase tracking-wider text-gray-500">{item.label}</p>
+                    <div className={`rounded-lg bg-[rgba(255,255,255,0.06)] p-2 transition-colors group-hover:bg-[rgba(255,255,255,0.1)] ${g.icon}`}>
+                      <Icon size={16} className="text-current" />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-white">{item.value}</p>
+                  {item.state && (
+                    <span className="mt-2 inline-block rounded-full bg-[rgba(255,255,255,0.08)] px-2.5 py-0.5 text-xs text-gray-400 border border-[rgba(255,255,255,0.06)]">
+                      {item.state}
+                    </span>
+                  )}
                 </div>
-                <p className="text-3xl font-semibold text-white">{item.value}</p>
-                <p className="mt-2 text-xs text-gray-500">{item.state}</p>
               </div>
             );
           })}
@@ -103,36 +124,61 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <section className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-6 backdrop-blur">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">{t("dashboard.systemStatus")}</h2>
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">{t("dashboard.allSystemsNormal")}</span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-4">
-              <p className="text-xs text-gray-500">Inference Queue</p>
-              <p className="mt-1 text-xl font-semibold text-white">42 jobs</p>
+        <section className="group relative overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6 transition-all duration-300 hover:border-[rgba(192,192,192,0.4)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="relative">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t("dashboard.systemStatus")}</h2>
+              <span className="rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-3 py-1 text-xs font-medium text-white">{t("dashboard.allSystemsNormal")}</span>
             </div>
-            <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-4">
-              <p className="text-xs text-gray-500">Error Rate</p>
-              <p className="mt-1 text-xl font-semibold text-white">0.06%</p>
-            </div>
-            <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-4">
-              <p className="text-xs text-gray-500">Throughput</p>
-              <p className="mt-1 text-xl font-semibold text-white">4.3k rpm</p>
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                { label: "Inference Queue", value: "42 jobs", pill: "JOBS", pillClass: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]" },
+                { label: "Error Rate", value: "0.06%", pill: "LOW", pillClass: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]" },
+                { label: "Throughput", value: "4.3k rpm", pill: "RPM", pillClass: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]" },
+              ].map((m) => (
+                <div key={m.label} className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 p-4 transition hover:border-[rgba(255,255,255,0.12)]">
+                  <span className={m.pillClass}>{m.pill}</span>
+                  <p className="mt-2 text-xl font-bold text-white">{m.value}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{m.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="card-hover rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0b0e12]/70 p-6 backdrop-blur">
-          <h2 className="mb-4 text-lg font-semibold text-white">{t("dashboard.activityFeed")}</h2>
-          <div className="space-y-3">
-            {activityFeed.map((item) => (
-              <div key={item.id} className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607]/80 p-3">
-                <p className="text-sm text-white">{item.title}</p>
-                <p className="mt-1 text-xs text-gray-500">{item.detail}</p>
-              </div>
-            ))}
+        <section className="group relative overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6 transition-all duration-300 hover:border-[rgba(192,192,192,0.4)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="relative">
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">{t("dashboard.activityFeed")}</h2>
+            <div className="relative space-y-0 pl-4">
+              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-[rgba(192,192,192,0.4)] via-[rgba(192,192,192,0.2)] to-transparent" />
+              {activityFeed.map((item) => {
+                const pillClasses = {
+                  ok: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]",
+                  info: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]",
+                  warning: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]",
+                  danger: "rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-2 py-0.5 text-[10px] font-medium text-[#c0c0c0]",
+                };
+                const dotColors = { ok: "bg-[#c0c0c0]", info: "bg-[#c0c0c0]", warning: "bg-[#c0c0c0]", danger: "bg-[#c0c0c0]" };
+                const dot = dotColors[item.tone as keyof typeof dotColors] || "bg-gray-400";
+                const pill = pillClasses[item.tone as keyof typeof pillClasses] || pillClasses.info;
+                return (
+                  <div key={item.id} className="relative flex gap-3 pb-4 last:pb-0">
+                    <div className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${dot}`} />
+                    <div className="flex-1 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12]/70 p-3 transition hover:border-[rgba(255,255,255,0.12)]">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-white">{item.title}</p>
+                        <span className={pill}>
+                          {item.tone.toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">{item.detail}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
       </div>

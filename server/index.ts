@@ -11,6 +11,7 @@ import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
 import { sanitizeForLog } from "./utils/sanitize";
 import { authRouter } from "./auth";
+import { oauthRouter } from "./oauth";
 import { getDb, pingDb } from "./db";
 import { keysRouter } from "./keys";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
@@ -149,6 +150,8 @@ async function startServer() {
 
   app.use(express.json());
   app.use(cookieParser());
+
+  app.use(oauthRouter);
 
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true });

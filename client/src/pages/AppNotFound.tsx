@@ -21,8 +21,8 @@ export default function AppNotFound() {
       <div className="flex flex-col items-center justify-center py-16 px-4">
         <div className="flex justify-center mb-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-amber-500/20 rounded-full animate-pulse" />
-            <AlertCircle className="relative h-16 w-16 text-amber-400" />
+            <div className="absolute inset-0 bg-[rgba(192,192,192,0.2)] rounded-full animate-pulse" />
+            <AlertCircle className="relative h-16 w-16 text-gray-400" />
           </div>
         </div>
         <h1 className="text-3xl font-bold text-white mb-2">404</h1>

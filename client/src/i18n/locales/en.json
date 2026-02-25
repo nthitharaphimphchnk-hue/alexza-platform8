@@ -13,7 +13,8 @@
     "edit": "Edit",
     "close": "Close",
     "search": "Search",
-    "back": "Back"
+    "back": "Back",
+    "next": "Next"
   },
   "navigation": {
     "product": "Product",
@@ -58,6 +59,75 @@
       "feature1": "Build complex AI workflows without code",
       "feature2": "Orchestrate multiple AI models seamlessly",
       "feature3": "Monitor and optimize in real-time"
+    }
+  },
+  "orchestration": {
+    "header": {
+      "title": "One API. Many Leading AI Models. Zero Complexity.",
+      "subtitle": "Access multiple best-in-class AI model families through ALEXZA AI — without wiring providers, picking models, or building fallback logic."
+    },
+    "traditional": {
+      "title": "Traditional AI API Gateway",
+      "bullet1": "Choose model for each request",
+      "bullet2": "Write routing + fallback logic",
+      "bullet3": "Handle retries, timeouts, rate limits",
+      "bullet4": "Track costs & prevent cost spikes",
+      "bullet5": "Maintain multiple integrations & keys",
+      "tabModel": "Model selection",
+      "tabFallback": "Fallback",
+      "tabCost": "Cost control"
+    },
+    "alexza": {
+      "title": "ALEXZA AI Orchestration",
+      "bullet1": "Call one endpoint",
+      "bullet2": "Intelligent model selection",
+      "bullet3": "Automatic fallback + reliability layer",
+      "bullet4": "Smart cost optimization (prevents cost spikes)",
+      "bullet5": "Unified usage logging & credits",
+      "behindTheScenes": "Behind the scenes",
+      "step1": "Analyze task",
+      "step2": "Select best model family",
+      "step3": "Run",
+      "step4": "Fallback if needed",
+      "step5": "Return output + usage"
+    },
+    "models": {
+      "title": "Model families available behind ALEXZA AI",
+      "subtitle": "Choose outcomes — not providers. We route the best fit for your workload.",
+      "bestFor": "Best for:",
+      "openai": {
+        "title": "OpenAI Models",
+        "bestFor": "general purpose, tool calling, structured output"
+      },
+      "claude": {
+        "title": "Claude (Anthropic)",
+        "bestFor": "long-form writing, strong reasoning, long documents"
+      },
+      "llama": {
+        "title": "Meta Llama",
+        "bestFor": "cost-efficient workloads, cheap tier, scalable automation"
+      },
+      "gemini": {
+        "title": "Google Gemini",
+        "bestFor": "very long context, multimodal tasks"
+      },
+      "mistral": {
+        "title": "Mistral",
+        "bestFor": "low cost, everyday tasks"
+      },
+      "cohere": {
+        "title": "Cohere",
+        "bestFor": "RAG, enterprise search"
+      },
+      "opensource": {
+        "title": "Open Source / Community",
+        "bestFor": "flexible experimentation"
+      }
+    },
+    "cta": {
+      "copy": "Build once. Scale with intelligent orchestration.",
+      "getStarted": "Get Started",
+      "viewDocs": "View Docs"
     }
   },
   "auth": {

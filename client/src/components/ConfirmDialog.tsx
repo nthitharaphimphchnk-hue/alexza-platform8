@@ -65,7 +65,7 @@ export default function ConfirmDialog({
             disabled={isLoading || confirmDisabled}
             className={`font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
               isDangerous
-                ? 'bg-red-600/80 hover:bg-red-700 text-white'
+                ? 'bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black'
                 : 'bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black'
             }`}
           >
@@ -83,9 +83,9 @@ export default function ConfirmDialog({
     >
       <div className="space-y-4">
         {isDangerous && (
-          <div className="p-4 rounded-lg bg-red-600/10 border border-red-600/30 flex items-start gap-3">
-            <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-400">This action cannot be undone.</p>
+          <div className="p-4 rounded-lg bg-[#0b0e12]/70 border border-[rgba(255,255,255,0.08)] flex items-start gap-3">
+            <AlertCircle size={20} className="text-gray-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-gray-400">This action cannot be undone.</p>
           </div>
         )}
         {children}

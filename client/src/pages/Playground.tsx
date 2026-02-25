@@ -28,17 +28,8 @@ interface RunUiError {
 
 type RoutingMode = "cheap" | "balanced" | "quality";
 
-function getRoutingBadgeClass(mode: RoutingMode): string {
-  switch (mode) {
-    case "cheap":
-      return "bg-slate-500/20 text-slate-300 border-slate-500/30";
-    case "balanced":
-      return "bg-amber-500/20 text-amber-200 border-amber-500/30";
-    case "quality":
-      return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
-    default:
-      return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
-  }
+function getRoutingBadgeClass(_mode: RoutingMode): string {
+  return "bg-[rgba(255,255,255,0.08)] text-gray-300 border-[rgba(255,255,255,0.08)]";
 }
 
 export default function Playground() {
@@ -399,14 +390,14 @@ export default function Playground() {
                   ))}
                 </select>
                 {projectId && actions.length === 0 && (
-                  <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-                    <p className="text-amber-200">No actions yet</p>
+                  <div className="mt-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-3 text-sm">
+                    <p className="text-gray-200">No actions yet</p>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => setLocation(`/app/projects/${projectId}/ai`)}
-                      className="mt-2 border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                      className="mt-2 border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
                     >
                       <MessageSquare size={14} className="mr-2" />
                       Create in ChatBuilder
@@ -445,7 +436,7 @@ export default function Playground() {
                 className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white placeholder-gray-600 focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
               />
               {!apiKey.trim() && projectId && (
-                <div className="flex items-center gap-2 text-sm text-amber-200/90">
+                <div className="flex items-center gap-2 text-sm text-gray-300">
                   <Key size={14} />
                   <span>Create API key in API Keys tab</span>
                   <Button
@@ -453,7 +444,7 @@ export default function Playground() {
                     variant="outline"
                     size="sm"
                     onClick={() => setLocation(`/app/projects/${projectId}?tab=keys`)}
-                    className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15 shrink-0"
+                    className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)] shrink-0"
                   >
                     Open API Keys
                   </Button>
@@ -505,9 +496,9 @@ export default function Playground() {
                   </Button>
                 </div>
                 {validateError && (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2">
-                    <p className="text-sm text-amber-200 font-medium">Validation error</p>
-                    <p className="text-xs text-amber-100 mt-1">{validateError}</p>
+                  <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-2">
+                    <p className="text-sm text-gray-200 font-medium">Validation error</p>
+                    <p className="text-xs text-gray-400 mt-1">{validateError}</p>
                   </div>
                 )}
               </div>
@@ -540,7 +531,7 @@ export default function Playground() {
                   </div>
                 )}
                 {insufficientCredits && (
-                  <p className="text-sm text-amber-400">
+                  <p className="text-sm text-gray-400">
                     {t("estimate.insufficientCredits", { needed: estimate?.estimatedCredits ?? 0, balance: walletBalance ?? 0 })}
                   </p>
                 )}
@@ -558,11 +549,11 @@ export default function Playground() {
             </Button>
 
             {runError && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+              <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-3 text-sm text-gray-200">
                 <p className="font-medium">{runError.message}</p>
-                {runError.hint && <p className="mt-1 text-xs text-amber-200">{runError.hint}</p>}
+                {runError.hint && <p className="mt-1 text-xs text-gray-400">{runError.hint}</p>}
                 {runError.code === "MONTHLY_QUOTA_EXCEEDED" && runError.nextResetAt && (
-                  <p className="mt-1 text-xs text-amber-200">
+                  <p className="mt-1 text-xs text-gray-400">
                     Next reset: {new Date(runError.nextResetAt).toLocaleString()}
                   </p>
                 )}
@@ -573,7 +564,7 @@ export default function Playground() {
                       variant="outline"
                       size="sm"
                       onClick={() => setLocation("/app/billing/credits")}
-                      className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                      className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
                     >
                       Open Wallet
                     </Button>
@@ -585,7 +576,7 @@ export default function Playground() {
                         variant="outline"
                         size="sm"
                         onClick={() => setLocation("/app/billing/plans")}
-                        className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                        className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
                       >
                         Upgrade Plan
                       </Button>
@@ -594,7 +585,7 @@ export default function Playground() {
                         variant="outline"
                         size="sm"
                         onClick={() => setLocation("/app/billing/credits")}
-                        className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                        className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
                       >
                         Open Wallet
                       </Button>
@@ -607,7 +598,7 @@ export default function Playground() {
                       size="sm"
                       onClick={() => void handleRun()}
                       disabled={isRunning}
-                      className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                      className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
                     >
                       Retry
                     </Button>

@@ -30,6 +30,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { logApiBaseUrlOnce } from "./lib/api";
 import CosmicBackground from "./components/CosmicBackground";
+import DotGridBackground from "./components/DotGridBackground";
 
 function ApiKeysRoute() {
   return <ApiKeys />;
@@ -209,7 +210,14 @@ function App() {
               '--sonner-color-text': 'rgba(255,255,255,0.92)',
             } as any}
             />
-            <div className="min-h-screen bg-gradient-to-b from-[#050607] via-[#0b0e12] to-[#050607]">
+            <div className="min-h-screen relative">
+              <div
+                className="fixed inset-0 -z-30 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(to bottom, #050607 0%, #0b0e12 50%, #050607 100%)',
+                }}
+              />
+              <DotGridBackground />
               <CosmicBackground />
               <div className="relative z-10">
                 <Router />

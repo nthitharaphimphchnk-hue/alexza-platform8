@@ -377,7 +377,7 @@ export default function ProjectDetail() {
               variant="outline"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={!project || isLoading}
-              className="border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200 disabled:opacity-50"
+              className="border-[rgba(255,255,255,0.08)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)] hover:text-gray-200 disabled:opacity-50"
             >
               <Trash2 size={16} className="mr-2" />
               {t("projectDetail.deleteProject")}
@@ -395,9 +395,9 @@ export default function ProjectDetail() {
           )}
 
           {!isLoading && !project && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 flex items-center gap-3">
-              <AlertCircle size={18} className="text-red-400" />
-              <p className="text-red-300">{t("projectDetail.projectUnavailable")}</p>
+            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6 flex items-center gap-3">
+              <AlertCircle size={18} className="text-gray-400" />
+              <p className="text-gray-300">{t("projectDetail.projectUnavailable")}</p>
             </div>
           )}
 
@@ -508,13 +508,7 @@ export default function ProjectDetail() {
                     <p className="text-sm font-medium text-gray-300">
                       {t("routing.projectMode")}:{" "}
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                          project.routingMode === "cheap"
-                            ? "bg-slate-500/20 text-slate-300"
-                            : project.routingMode === "balanced"
-                              ? "bg-amber-500/20 text-amber-200"
-                              : "bg-emerald-500/20 text-emerald-200"
-                        }`}
+                        className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-[rgba(255,255,255,0.08)] text-gray-300 border border-[rgba(255,255,255,0.08)]"
                       >
                         {t(`routing.mode.${(project.routingMode ?? "quality") as "cheap" | "balanced" | "quality"}`)}
                       </span>
@@ -542,13 +536,13 @@ export default function ProjectDetail() {
                     </Button>
                   </div>
                   {actionsError ? (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-center justify-between gap-4">
-                      <p className="text-sm text-amber-200">{actionsError}</p>
+                    <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-4 flex items-center justify-between gap-4">
+                      <p className="text-sm text-gray-200">{actionsError}</p>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => void loadActions()}
-                        className="border-amber-300/50 text-amber-100 hover:bg-amber-500/15"
+                        className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
                       >
                         {t("projectDetail.retry")}
                       </Button>
@@ -626,7 +620,7 @@ const data = await res.json();`;
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="border-red-500/30 text-red-300 hover:bg-red-500/10"
+                                  className="border-[rgba(255,255,255,0.08)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)]"
                                   onClick={() => setDeleteActionName(action.actionName)}
                                 >
                                   <Trash2 size={14} />

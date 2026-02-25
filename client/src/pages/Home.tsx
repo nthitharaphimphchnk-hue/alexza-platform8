@@ -9,6 +9,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import NavMegaMenu from "@/components/landing/NavMegaMenu";
 import FounderSpotlight from "@/components/landing/FounderSpotlight";
+import ModelOrchestrationSection from "@/components/landing/ModelOrchestrationSection";
 
 
 type CodeTab = 'node' | 'python' | 'curl';
@@ -137,87 +138,8 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Key Features - Why Orchestrate with ALEXZA AI? */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-6xl mx-auto">
-          <motion.h2
-            className="text-4xl font-bold text-white text-center mb-12"
-            variants={scrollFadeInVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            Why Orchestrate with ALEXZA AI?
-          </motion.h2>
-          <motion.div
-            className="grid md:grid-cols-3 gap-8"
-            variants={staggerContainerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-          >
-            {[
-              { icon: Network, title: "ALEXZA Managed Runtime", desc: "Unified AI runtime with intelligent routing. Build once, run anywhere.", color: "mono" as const },
-              { icon: GitBranch, title: "Visual Flow Builder", desc: "Design complex AI agent workflows with our intuitive drag-and-drop interface.", color: "mono" as const },
-              { icon: Gauge, title: "Real-time Optimization", desc: "Monitor performance, track costs, and optimize latency automatically.", color: "mono" as const },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              const colorMap = {
-                mono: {
-                  border: "hover:border-[rgba(255,255,255,0.4)]",
-                  shadow: "hover:shadow-[0_0_30px_rgba(255,255,255,0.1),0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)]",
-                  iconBorder: "border-[rgba(255,255,255,0.25)]",
-                  iconBg: "bg-[#1a1d22]",
-                  iconBgHover: "group-hover:bg-[#252830] group-hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]",
-                  iconGlow: "",
-                  iconColor: "text-[#c0c0c0]",
-                },
-                purple: {
-                  border: "hover:border-[rgba(109,40,217,0.55)]",
-                  shadow: "hover:shadow-[0_0_30px_rgba(109,40,217,0.25)]",
-                  iconBorder: "border-[rgba(109,40,217,0.45)]",
-                  iconBg: "bg-[rgba(109,40,217,0.12)]",
-                  iconBgHover: "group-hover:bg-[rgba(109,40,217,0.2)]",
-                  iconGlow: "group-hover:shadow-[0_0_20px_rgba(109,40,217,0.3)]",
-                  iconColor: "text-[#7c3aed]",
-                },
-                gold: {
-                  border: "hover:border-[rgba(180,134,11,0.55)]",
-                  shadow: "hover:shadow-[0_0_30px_rgba(180,134,11,0.25)]",
-                  iconBorder: "border-[rgba(180,134,11,0.45)]",
-                  iconBg: "bg-[rgba(180,134,11,0.12)]",
-                  iconBgHover: "group-hover:bg-[rgba(180,134,11,0.2)]",
-                  iconGlow: "group-hover:shadow-[0_0_20px_rgba(180,134,11,0.3)]",
-                  iconColor: "text-[#b8860b]",
-                },
-                green: {
-                  border: "hover:border-[rgba(22,163,74,0.55)]",
-                  shadow: "hover:shadow-[0_0_30px_rgba(22,163,74,0.25)]",
-                  iconBorder: "border-[rgba(22,163,74,0.45)]",
-                  iconBg: "bg-[rgba(22,163,74,0.12)]",
-                  iconBgHover: "group-hover:bg-[rgba(22,163,74,0.2)]",
-                  iconGlow: "group-hover:shadow-[0_0_20px_rgba(22,163,74,0.3)]",
-                  iconColor: "text-[#16a34a]",
-                },
-              };
-              const c = colorMap[item.color];
-              return (
-                <motion.div
-                  key={i}
-                  className={`group p-6 rounded-xl bg-[#07090b] border border-[rgba(255,255,255,0.1)] transition-all duration-300 ${c.border} ${c.shadow} shadow-[0_4px_20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)]`}
-                  variants={scrollFadeInVariants}
-                >
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 border ${c.iconBorder} ${c.iconBg} ${c.iconBgHover} ${c.iconGlow} transition-all`}>
-                    <Icon className={`w-6 h-6 ${c.iconColor}`} />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
-      </section>
+      {/* Model Orchestration - One API, Many Models */}
+      <ModelOrchestrationSection />
 
       {/* Multi-Screen Showcase */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -264,7 +186,7 @@ export default function Home() {
               {/* Top: Input + HTTP logs */}
               <div className="flex-1 p-5 space-y-3">
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.08)]">
-                  <span className="px-2 py-0.5 rounded text-xs font-medium text-green-400 border border-green-500/50 bg-green-500/10">Delivered</span>
+                  <span className="px-2 py-0.5 rounded text-xs font-medium text-[#c0c0c0] border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)]">Delivered</span>
                   <span className="text-sm text-gray-300 flex-1 truncate">run@alexza.ai</span>
                   <button className="p-1.5 rounded-md border border-[rgba(255,255,255,0.15)] hover:bg-white/5 transition">
                     <Send className="w-4 h-4 text-gray-400" />
@@ -308,7 +230,7 @@ export default function Home() {
                 <div className="p-3 rounded-lg border border-[rgba(255,255,255,0.08)] space-y-1">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-500" />
-                    <span className="px-2 py-0.5 rounded text-xs text-sky-400 border border-sky-500/40 bg-sky-500/10">Delivered</span>
+                    <span className="px-2 py-0.5 rounded text-xs text-[#c0c0c0] border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)]">Delivered</span>
                     <span className="text-xs text-gray-500">Feb 21 12:06:47</span>
                   </div>
                   <p className="text-xs text-gray-300">from api@alexza.ai with subject <span className="text-gray-400">Run Success</span></p>
@@ -341,15 +263,15 @@ export default function Home() {
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center py-2 px-3 rounded-lg border border-[rgba(255,255,255,0.08)] text-gray-300">
                     <span>Feb 10, 2026</span>
-                    <span className="text-red-400">-15,234</span>
+                    <span className="text-gray-300">-15,234</span>
                   </div>
                   <div className="flex justify-between items-center py-2 px-3 rounded-lg border border-[rgba(255,255,255,0.08)] text-gray-300">
                     <span>Feb 09, 2026</span>
-                    <span className="text-red-400">-12,456</span>
+                    <span className="text-gray-300">-12,456</span>
                   </div>
                   <div className="flex justify-between items-center py-2 px-3 rounded-lg border border-[rgba(255,255,255,0.08)] text-gray-300">
                     <span>Feb 08, 2026</span>
-                    <span className="text-green-400">+50,000</span>
+                    <span className="text-gray-300">+50,000</span>
                   </div>
                 </div>
               </div>
@@ -697,7 +619,7 @@ export default function Home() {
                 href="#"
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="w-2 h-2 rounded-full bg-[#c0c0c0]" />
                 <span className="text-sm text-gray-400">All systems operational</span>
               </a>
             </div>
@@ -750,7 +672,7 @@ export default function Home() {
           <div className="border-t-2 border-[rgba(255,255,255,0.12)] pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
             <p>© 2026 ALEXZA AI. All rights reserved.</p>
             <p className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="w-2 h-2 rounded-full bg-[#c0c0c0]" />
               All systems operational
             </p>
           </div>

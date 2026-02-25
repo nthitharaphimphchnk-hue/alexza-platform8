@@ -1,16 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import MorphingBlob from "@/components/blob";
-import { motion } from "framer-motion";
-import { containerVariants, itemVariants } from "@/lib/animations";
 import { useLocation } from "wouter";
 import { useForm } from "@/hooks/useForm";
 import { validateLoginForm, getFieldError, hasFieldError } from "@/lib/validation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
-import { ApiError, apiRequest } from "@/lib/api";
+import { ApiError, apiRequest, getOAuthUrl } from "@/lib/api";
 
 /**
  * ALEXZA AI Login Page
@@ -29,6 +26,16 @@ export default function Login() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  useEffect(() => {
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const error = params?.get("error");
+    if (error) {
+      const msg = params?.get("message") || (error === "OAUTH_DENIED" ? "Sign-in was cancelled" : "Sign-in failed. Please try again.");
+      showFormSubmitErrorToast(msg);
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
 
   const form = useForm<LoginFormData>({
     initialValues: {
@@ -80,13 +87,8 @@ export default function Login() {
         <LanguageSwitcher />
       </div>
 
-      <motion.div
-        className="w-full max-w-md"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div className="text-center mb-8" variants={itemVariants}>
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
           <div className="flex justify-center mb-6 cursor-pointer select-none">
             <MorphingBlob
               size={120}
@@ -105,24 +107,20 @@ export default function Login() {
           </div>
           <h1 className="hero-title-gradient font-brand text-3xl font-extrabold tracking-tight">{t("auth.login.title")}</h1>
           <p className="text-gray-400 mt-2">{t("auth.login.welcomeBack")}</p>
-        </motion.div>
+        </div>
 
         {/* Form card */}
-        <motion.div className="rounded-2xl p-6 lg:p-8 code-block-carbon border border-[rgba(255,255,255,0.12)]" variants={itemVariants}>
+        <div className="rounded-2xl p-6 lg:p-8 code-block-carbon border border-[rgba(255,255,255,0.12)]">
         {/* Success Message */}
         {submitSuccess && (
-          <motion.div
-            className="mb-6 p-4 rounded-lg bg-[#c0c0c0]/10 border border-[#c0c0c0]/30 flex items-center gap-3"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div className="mb-6 p-4 rounded-lg bg-[#c0c0c0]/10 border border-[#c0c0c0]/30 flex items-center gap-3">
             <CheckCircle size={20} className="text-[#c0c0c0]" />
             <p className="text-sm text-[#c0c0c0]">{t("auth.login.loginSuccess")}</p>
-          </motion.div>
+          </div>
         )}
 
         {/* Form */}
-        <motion.form onSubmit={form.handleSubmit} className="space-y-6" variants={itemVariants}>
+        <form onSubmit={form.handleSubmit} className="space-y-6">
           {/* Email */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">{t("auth.login.email")}</label>
@@ -137,7 +135,7 @@ export default function Login() {
                 disabled={form.isSubmitting}
                 className={`w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border transition text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[rgba(192,192,192,0.3)] focus:ring-offset-2 focus:ring-offset-[#050607] ${
                   hasFieldError(form.errors, "email")
-                    ? "border-red-500/50 focus:border-red-500/70 focus:ring-red-500/30"
+                    ? "border-[rgba(255,255,255,0.2)] focus:border-[rgba(192,192,192,0.5)] focus:ring-[rgba(192,192,192,0.2)]"
                     : "border-[rgba(255,255,255,0.06)] focus:border-[rgba(255,255,255,0.2)]"
                 } disabled:opacity-50`}
               />
@@ -164,7 +162,7 @@ export default function Login() {
                 disabled={form.isSubmitting}
                 className={`w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border transition text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[rgba(192,192,192,0.3)] focus:ring-offset-2 focus:ring-offset-[#050607] ${
                   hasFieldError(form.errors, "password")
-                    ? "border-red-500/50 focus:border-red-500/70 focus:ring-red-500/30"
+                    ? "border-[rgba(255,255,255,0.2)] focus:border-[rgba(192,192,192,0.5)] focus:ring-[rgba(192,192,192,0.2)]"
                     : "border-[rgba(255,255,255,0.06)] focus:border-[rgba(255,255,255,0.2)]"
                 } disabled:opacity-50`}
               />
@@ -189,15 +187,14 @@ export default function Login() {
           </div>
 
           {/* Submit */}
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
+          <button
             type="submit"
             disabled={form.isSubmitting}
-            className="w-full btn-black-glow h-12 font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+            className="w-full btn-black-glow h-12 font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg ripple-btn"
           >
             {form.isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin shrink-0" />
                 {t("auth.login.signingIn")}
               </>
             ) : (
@@ -205,12 +202,11 @@ export default function Login() {
                 {t("auth.login.signIn")} <ArrowRight size={18} />
               </>
             )}
-          </Button>
-          </motion.div>
-        </motion.form>
+          </button>
+        </form>
 
         {/* Divider */}
-        <motion.div className="relative my-8" variants={itemVariants}>
+        <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-[rgba(255,255,255,0.06)]"></div>
           </div>
@@ -219,39 +215,43 @@ export default function Login() {
               {t("auth.login.orContinueWith")}
             </span>
           </div>
-        </motion.div>
+        </div>
 
         {/* Social Login */}
-        <motion.div className="grid grid-cols-2 gap-4" variants={itemVariants}>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Button
-              variant="outline"
-              disabled={form.isSubmitting}
-              className="w-full border-2 border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-50 transition-all"
-            >
-              GitHub
-            </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Button
-              variant="outline"
-              disabled={form.isSubmitting}
-              className="w-full border-2 border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-50 transition-all"
-            >
-              Google
-            </Button>
-          </motion.div>
-        </motion.div>
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            type="button"
+            disabled={form.isSubmitting}
+            className="w-full border-2 border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-50 transition-all rounded-lg py-2.5 px-4 text-sm font-medium"
+            onClick={() => {
+              const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") || new URLSearchParams(window.location.search).get("redirect") : null;
+              window.location.href = getOAuthUrl("github", next || "/app/dashboard");
+            }}
+          >
+            GitHub
+          </button>
+          <button
+            type="button"
+            disabled={form.isSubmitting}
+            className="w-full border-2 border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-50 transition-all rounded-lg py-2.5 px-4 text-sm font-medium"
+            onClick={() => {
+              const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") || new URLSearchParams(window.location.search).get("redirect") : null;
+              window.location.href = getOAuthUrl("google", next || "/app/dashboard");
+            }}
+          >
+            Google
+          </button>
+        </div>
 
         {/* Sign Up Link */}
-        <motion.p className="text-center text-gray-400 mt-8" variants={itemVariants}>
+        <p className="text-center text-gray-400 mt-8">
           {t("auth.login.noAccount")}{" "}
           <a href="/signup" className="text-[#c0c0c0] hover:text-white transition font-semibold">
             {t("auth.login.signUp")}
           </a>
-        </motion.p>
-        </motion.div>
-      </motion.div>
+        </p>
+        </div>
+      </div>
     </div>
   );
 }

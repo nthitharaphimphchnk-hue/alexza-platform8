@@ -22,6 +22,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg';
   closeOnOverlay?: boolean;
   closeOnEsc?: boolean;
+  variant?: 'default' | 'neon';
 }
 
 const sizeClasses = {
@@ -40,6 +41,7 @@ export default function Modal({
   size = 'md',
   closeOnOverlay = true,
   closeOnEsc = true,
+  variant = 'default',
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -137,47 +139,60 @@ export default function Modal({
         >
           <motion.div
             ref={modalRef}
-            className={`bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl w-full ${sizeClasses[size]}`}
+            className={`relative w-full ${sizeClasses[size]} ${variant === 'neon' ? 'p-[2px] rounded-xl' : ''}`}
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
             aria-describedby={description ? 'modal-description' : undefined}
+            style={variant === 'neon' ? {
+              background: 'linear-gradient(90deg, rgba(192,192,192,0.35), rgba(192,192,192,0.2), rgba(192,192,192,0.3), rgba(192,192,192,0.35))',
+              backgroundSize: '200% 100%',
+              animation: 'neon-sweep 8s linear infinite',
+              boxShadow: '0 0 40px rgba(192,192,192,0.1), 0 0 80px rgba(192,192,192,0.05)',
+            } : undefined}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-8 border-b border-[rgba(255,255,255,0.06)]">
-              <div>
-                <h2 id="modal-title" className="text-2xl font-bold text-white">
-                  {title}
-                </h2>
-                {description && (
-                  <p id="modal-description" className="text-sm text-gray-400 mt-2">
-                    {description}
-                  </p>
-                )}
+            <div
+              className="rounded-xl overflow-hidden bg-[#0b0e12] border border-[rgba(255,255,255,0.08)] shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-8 border-b border-[rgba(255,255,255,0.08)]">
+                <div>
+                  <h2 id="modal-title" className="text-2xl font-bold flex items-center gap-2 text-white">
+                    {variant === 'neon' && (
+                      <span className="w-2 h-2 rounded-full bg-[#c0c0c0] animate-pulse shrink-0" aria-hidden />
+                    )}
+                    <span>{title}</span>
+                  </h2>
+                  {description && (
+                    <p id="modal-description" className={`text-sm mt-2 ${variant === 'neon' ? 'text-gray-400' : 'text-gray-400'}`}>
+                      {description}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => onOpenChange(false)}
+                  className="p-2 rounded-lg transition hover:bg-[rgba(255,255,255,0.06)] text-gray-400 hover:text-white"
+                  aria-label="Close modal"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition text-gray-400 hover:text-white"
-                aria-label="Close modal"
-              >
-                <X size={20} />
-              </button>
+
+              {/* Content */}
+              <div className="p-8">{children}</div>
+
+              {/* Footer */}
+              {footer && (
+                <div className="p-8 border-t border-[rgba(255,255,255,0.08)] flex gap-3 justify-end">
+                  {footer}
+                </div>
+              )}
             </div>
-
-            {/* Content */}
-            <div className="p-8">{children}</div>
-
-            {/* Footer */}
-            {footer && (
-              <div className="p-8 border-t border-[rgba(255,255,255,0.06)] flex gap-3 justify-end">
-                {footer}
-              </div>
-            )}
           </motion.div>
         </motion.div>
       )}

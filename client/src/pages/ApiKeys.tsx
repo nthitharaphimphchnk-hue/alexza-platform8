@@ -128,7 +128,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
 
   const content = (
     <div className="space-y-4">
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+      <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-4 text-sm text-gray-200">
         <p className="font-semibold">Security Warning</p>
         <p className="mt-1">This key is shown only once. Store it securely before leaving this page.</p>
       </div>
@@ -157,7 +157,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
                   <p className="text-xs text-gray-500 mt-1">Created {new Date(keyItem.createdAt).toLocaleString()}</p>
                 </div>
               </div>
-              <span className={`rounded-full px-3 py-1 text-xs ${keyItem.revokedAt ? "bg-slate-500/20 text-slate-300" : "bg-emerald-500/20 text-emerald-300"}`}>
+              <span className="rounded-full px-3 py-1 text-xs bg-[rgba(255,255,255,0.08)] text-gray-300 border border-[rgba(255,255,255,0.08)]">
                 {keyItem.revokedAt ? "Revoked" : "Active"}
               </span>
             </div>
@@ -185,7 +185,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
                   setSelectedKeyId(keyItem.id);
                   setShowRevokeConfirm(true);
                 }}
-                className="border-red-500/35 text-red-300 hover:bg-red-500/10 hover:text-red-200 disabled:opacity-50"
+                className="border-[rgba(255,255,255,0.08)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)] hover:text-gray-200 disabled:opacity-50"
               >
                 <Trash2 size={14} className="mr-2" />
                 Revoke
@@ -266,7 +266,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
             placeholder="Key name (optional)"
             className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white"
           />
-          <p className="text-xs text-amber-100 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
+          <p className="text-xs text-gray-200 rounded-md border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-2">
             The raw API key will be displayed only once after creation.
           </p>
         </div>

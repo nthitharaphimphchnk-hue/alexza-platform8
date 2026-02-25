@@ -9,7 +9,7 @@ import { useForm } from "@/hooks/useForm";
 import { validateSignupForm, getFieldError, hasFieldError } from "@/lib/validation";
 import { useState } from "react";
 import { showSuccessToast, showFormSubmitErrorToast } from "@/lib/toast";
-import { ApiError, apiRequest } from "@/lib/api";
+import { ApiError, apiRequest, getOAuthUrl } from "@/lib/api";
 
 /**
  * ALEXZA AI Signup Page
@@ -130,7 +130,7 @@ export default function Signup() {
                 disabled={form.isSubmitting}
                 className={`w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border transition text-white placeholder-gray-600 focus:outline-none ${
                   hasFieldError(form.errors, "email")
-                    ? "border-red-500/50 focus:border-red-500/70"
+                    ? "border-[rgba(255,255,255,0.2)] focus:border-[rgba(192,192,192,0.5)]"
                     : "border-[rgba(255,255,255,0.06)] focus:border-[rgba(255,255,255,0.12)]"
                 } disabled:opacity-50`}
               />
@@ -174,7 +174,7 @@ export default function Signup() {
                 disabled={form.isSubmitting}
                 className={`w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border transition text-white placeholder-gray-600 focus:outline-none ${
                   hasFieldError(form.errors, "password")
-                    ? "border-red-500/50 focus:border-red-500/70"
+                    ? "border-[rgba(255,255,255,0.2)] focus:border-[rgba(192,192,192,0.5)]"
                     : "border-[rgba(255,255,255,0.06)] focus:border-[rgba(255,255,255,0.12)]"
                 } disabled:opacity-50`}
               />
@@ -204,7 +204,7 @@ export default function Signup() {
                 disabled={form.isSubmitting}
                 className={`w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border transition text-white placeholder-gray-600 focus:outline-none ${
                   hasFieldError(form.errors, "confirmPassword")
-                    ? "border-red-500/50 focus:border-red-500/70"
+                    ? "border-[rgba(255,255,255,0.2)] focus:border-[rgba(192,192,192,0.5)]"
                     : "border-[rgba(255,255,255,0.06)] focus:border-[rgba(255,255,255,0.12)]"
                 } disabled:opacity-50`}
               />
@@ -269,6 +269,8 @@ export default function Signup() {
             variant="outline"
             disabled={form.isSubmitting}
             className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
+            type="button"
+            onClick={() => (window.location.href = getOAuthUrl("github", "/app/dashboard"))}
           >
             GitHub
           </Button>
@@ -276,6 +278,8 @@ export default function Signup() {
             variant="outline"
             disabled={form.isSubmitting}
             className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
+            type="button"
+            onClick={() => (window.location.href = getOAuthUrl("google", "/app/dashboard"))}
           >
             Google
           </Button>

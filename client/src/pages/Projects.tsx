@@ -10,7 +10,6 @@ import {
   KeyRound,
   Settings,
   Play,
-  Sparkles,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@/hooks/useForm";
@@ -147,13 +146,7 @@ function ProjectCard({
             </div>
           </div>
           <span
-            className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-              status === "running" || status === "active"
-                ? "bg-emerald-500/20 text-emerald-300"
-                : status === "paused"
-                  ? "bg-amber-500/20 text-amber-300"
-                  : "bg-slate-500/20 text-slate-300"
-            }`}
+            className="rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-3 py-1 text-[11px] font-semibold text-[#c0c0c0]"
           >
             {status === "active" ? "Running" : status === "paused" ? "Paused" : "Draft"}
           </span>
@@ -331,17 +324,18 @@ export default function Projects() {
         actions={
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold flex items-center gap-2"
+            className="relative overflow-hidden bg-[#c0c0c0] text-black font-semibold flex items-center gap-2 hover:bg-[#a8a8a8] transition-all duration-300"
           >
-            <Plus size={18} /> New Project
+            <Plus size={18} className="relative z-10" />
+            <span className="relative z-10">New Project</span>
           </Button>
         }
       >
         {isDev && (
-          <div className="rounded-lg border border-[rgba(255,255,255,0.16)] bg-[#0b0e12]/95 px-3 py-2 text-xs text-gray-300">
-            <div>API: <span className="text-white">{API_BASE_URL}</span></div>
-            <div>/api/projects: <span className="text-white">{lastProjectsStatus ?? "-"}</span></div>
-            <div>length: <span className="text-white">{lastProjectsLength}</span></div>
+          <div className="rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(11,14,18,0.95)", color: "#9ca3af" }}>
+            <div>API: <span style={{ color: "#d1d5db" }}>{API_BASE_URL}</span></div>
+            <div>/api/projects: <span style={{ color: "#d1d5db" }}>{lastProjectsStatus ?? "-"}</span></div>
+            <div>length: <span style={{ color: "#d1d5db" }}>{lastProjectsLength}</span></div>
           </div>
         )}
 
@@ -351,10 +345,10 @@ export default function Projects() {
               <Search size={18} className="absolute left-3 top-3 text-gray-500" />
               <input
                 type="text"
-                placeholder="Search projects..."
+                placeholder="ค้นหาโปรเจกต์..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600 focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition"
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#0b0e12] border border-[rgba(255,255,255,0.08)] text-white placeholder-gray-500 focus:outline-none focus:border-[rgba(192,192,192,0.4)] focus:ring-1 focus:ring-[rgba(192,192,192,0.2)] transition"
               />
             </div>
             {isDev && (
@@ -413,29 +407,48 @@ export default function Projects() {
           )}
 
           {!isLoading && projects.length === 0 && (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-full max-w-lg rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-10 text-center">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(192,192,192,0.12)]">
-                  <Sparkles className="text-[#c0c0c0]" />
-                </div>
-                <p className="text-xl font-semibold text-white">Create your first AI workflow</p>
-                <p className="mt-2 text-sm text-gray-500">
-                  No project found. Start by creating a project to orchestrate your models and APIs.
-                </p>
-                <Button
-                  onClick={() => setShowCreateModal(true)}
-                  className="mt-6 bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold"
+            <div className="flex flex-col items-center justify-center py-16 px-4" data-projects-empty="v2">
+              <div
+                className="rounded-xl p-10 max-w-md w-full text-center"
+                style={{ background: "#0b0e12", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
+              >
+                <div
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+                  style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
-                  <Plus size={16} className="mr-2" />
-                  Create Project
-                </Button>
+                  <Folder size={28} style={{ color: "#6b7280" }} />
+                </div>
+                <p className="text-lg font-semibold" style={{ color: "#ffffff" }}>ยังไม่มีโปรเจกต์</p>
+                <p className="mt-2 text-sm" style={{ color: "#6b7280" }}>
+                  เริ่มต้นด้วยการสร้างโปรเจกต์เพื่อออกแบบและจัดการ AI workflows ของคุณ
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-6 inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg font-semibold w-full sm:w-auto transition-colors"
+                  style={{
+                    background: "#c0c0c0",
+                    color: "#000000",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = "#a8a8a8";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = "#c0c0c0";
+                  }}
+                >
+                  <Plus size={18} />
+                  สร้างโปรเจกต์
+                </button>
               </div>
             </div>
           )}
 
           {!isLoading && projects.length > 0 && filteredProjects.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-400">No projects match your search</p>
+              <p className="text-gray-400">ไม่พบโปรเจกต์ที่ตรงกับคำค้นหา</p>
             </div>
           )}
         </div>
@@ -454,14 +467,14 @@ export default function Projects() {
               variant="outline"
               onClick={() => setShowCreateModal(false)}
               disabled={form.isSubmitting}
-              className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800/50 hover:border-gray-500 disabled:opacity-50"
             >
               Cancel
             </Button>
             <Button
               type="button"
               disabled={form.isSubmitting}
-              className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#c0c0c0] text-black font-semibold hover:bg-[#a8a8a8] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               onClick={(e) => form.handleSubmit(e as never)}
             >
               {form.isSubmitting ? "Creating..." : "Create"}
@@ -479,16 +492,16 @@ export default function Projects() {
               onChange={form.handleChange}
               placeholder="My AI Project"
               disabled={form.isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg bg-[#050607] border transition text-white placeholder-gray-600 focus:outline-none ${
+              className={`w-full px-4 py-3 rounded-lg bg-black/60 border transition text-white placeholder-gray-500 focus:outline-none focus:shadow-[0_0_0_1px_rgba(192,192,192,0.4),0_0_12px_rgba(192,192,192,0.1)] ${
                 hasFieldError(form.errors, "name")
-                  ? "border-red-500/50 focus:border-red-500/70"
-                  : "border-[rgba(255,255,255,0.06)] focus:border-[rgba(255,255,255,0.12)]"
+                  ? "border-[rgba(255,255,255,0.2)] focus:border-[rgba(192,192,192,0.5)]"
+                  : "border-[rgba(255,255,255,0.08)] focus:border-[rgba(192,192,192,0.5)]"
               } disabled:opacity-50`}
             />
             {hasFieldError(form.errors, "name") && (
               <div className="flex items-center gap-2 mt-1">
-                <AlertCircle size={14} className="text-red-500" />
-                <p className="text-xs text-red-500">{getFieldError(form.errors, "name")}</p>
+                <AlertCircle size={14} className="text-gray-400" />
+                <p className="text-xs text-gray-400">{getFieldError(form.errors, "name")}</p>
               </div>
             )}
           </div>
@@ -501,7 +514,7 @@ export default function Projects() {
               onChange={form.handleChange}
               placeholder="What is this project for?"
               disabled={form.isSubmitting}
-              className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.06)] text-white placeholder-gray-600 focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition resize-none h-20 disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg bg-black/60 border border-[rgba(255,255,255,0.08)] text-white placeholder-gray-500 focus:border-[rgba(192,192,192,0.5)] focus:outline-none focus:shadow-[0_0_0_1px_rgba(192,192,192,0.3)] transition resize-none h-20 disabled:opacity-50"
             />
           </div>
 
@@ -512,7 +525,7 @@ export default function Projects() {
               value={form.values.model}
               onChange={form.handleChange}
               disabled={form.isSubmitting}
-              className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.06)] text-white focus:border-[rgba(255,255,255,0.12)] focus:outline-none transition disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg bg-black/60 border border-[rgba(255,255,255,0.08)] text-white focus:border-[rgba(192,192,192,0.5)] focus:outline-none focus:shadow-[0_0_0_1px_rgba(192,192,192,0.3)] transition disabled:opacity-50"
             >
               <option>ALEXZA</option>
             </select>

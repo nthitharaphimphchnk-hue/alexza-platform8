@@ -109,13 +109,7 @@ export default function BillingPlans() {
               Current Plan: {currentPlan.name}
             </span>
             <span
-              className={`rounded-full px-3 py-1 text-xs ${
-                changeType === "Upgrade"
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : changeType === "Downgrade"
-                    ? "bg-amber-500/20 text-amber-300"
-                    : "bg-slate-500/20 text-slate-300"
-              }`}
+              className="rounded-full border border-[rgba(192,192,192,0.35)] bg-[rgba(192,192,192,0.14)] px-3 py-1 text-xs text-[#c0c0c0]"
             >
               {changeType}
             </span>

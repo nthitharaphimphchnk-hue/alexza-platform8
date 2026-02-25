@@ -1,5 +1,22 @@
 const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() || "";
 export const API_BASE_URL = configuredApiBaseUrl.replace(/\/+$/, "");
+
+/** Base URL for OAuth redirects (backend). Uses API_BASE_URL or same origin when empty. */
+export function getOAuthBaseUrl(): string {
+  const base = API_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  return base.replace(/\/+$/, "");
+}
+
+/** Full OAuth URL for a provider (e.g. google, github). Optionally pass redirect URL. */
+export function getOAuthUrl(provider: "google" | "github", redirect?: string): string {
+  const base = getOAuthBaseUrl();
+  const url = `${base}/auth/${provider}`;
+  if (redirect && typeof window !== "undefined") {
+    const fullRedirect = redirect.startsWith("/") ? window.location.origin + redirect : redirect;
+    return `${url}?redirect=${encodeURIComponent(fullRedirect)}`;
+  }
+  return url;
+}
 let hasLoggedApiBase = false;
 
 export function logApiBaseUrlOnce() {

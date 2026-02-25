@@ -89,6 +89,34 @@ curl -i -b cookies.txt http://localhost:3002/api/me
 curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/auth/logout
 ```
 
+## OAuth (Google, GitHub)
+
+Sign-in with Google or GitHub is available on the Login and Signup pages. Configure these env vars:
+
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+- `OAUTH_REDIRECT_BASE_URL` – backend base URL (where OAuth callbacks are served)
+- `FRONTEND_APP_URL` – frontend base URL (where users are redirected after login)
+- `SESSION_SECRET` or `JWT_SECRET` – used for OAuth state signing
+
+### Redirect URIs to configure in provider consoles
+
+**Google (Google Cloud Console → APIs & Services → Credentials):**
+
+| Environment | Redirect URI |
+|-------------|--------------|
+| Dev | `http://localhost:3002/auth/google/callback` |
+| Prod | `https://alexza-platform8.onrender.com/auth/google/callback` |
+
+**GitHub (GitHub → Settings → Developer settings → OAuth Apps):**
+
+| Environment | Authorization callback URL |
+|-------------|----------------------------|
+| Dev | `http://localhost:3002/auth/github/callback` |
+| Prod | `https://alexza-platform8.onrender.com/auth/github/callback` |
+
+Use your actual backend URL for `OAUTH_REDIRECT_BASE_URL` and set the same value in the provider console.
+
 ## Projects Smoke Test
 
 Use the same cookie session from auth (`cookies.txt`).

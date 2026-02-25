@@ -211,17 +211,17 @@ export default function Settings() {
               </ContentCard>
             )}
 
-            <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-6">
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-red-200">
+            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-200">
                 <Shield size={18} />
                 Danger Zone
               </h3>
-              <p className="mt-1 text-sm text-red-100/80">Irreversible account operations.</p>
+              <p className="mt-1 text-sm text-gray-400">Irreversible account operations.</p>
               <div className="mt-4 flex gap-2">
-                <Button variant="outline" className="border-red-400/40 text-red-200 hover:bg-red-500/10" onClick={() => setConfirmSignout(true)}>
+                <Button variant="outline" className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]" onClick={() => setConfirmSignout(true)}>
                   Sign Out
                 </Button>
-                <Button variant="outline" className="border-red-400/40 text-red-200 hover:bg-red-500/10" onClick={() => setConfirmDelete(true)}>
+                <Button variant="outline" className="border-[rgba(255,255,255,0.08)] text-gray-200 hover:bg-[rgba(255,255,255,0.06)]" onClick={() => setConfirmDelete(true)}>
                   Delete Account
                 </Button>
               </div>

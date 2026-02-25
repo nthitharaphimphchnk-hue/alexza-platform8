@@ -252,11 +252,11 @@ const response = await client.chat.completions.create({
                 whileHover={{ scale: 1.01 }}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="px-3 py-1 rounded text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/40">
+                  <span className="px-3 py-1 rounded text-xs font-semibold bg-[rgba(192,192,192,0.14)] text-[#c0c0c0] border border-[rgba(192,192,192,0.35)]">
                     POST
                   </span>
                   <code className="text-white font-mono text-sm">/v1/projects/:projectId/run/:actionName</code>
-                  <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">Recommended</span>
+                  <span className="px-2 py-0.5 rounded text-xs bg-[rgba(192,192,192,0.14)] text-[#c0c0c0] border border-[rgba(192,192,192,0.35)]">Recommended</span>
                 </div>
                 <p className="text-gray-300 mb-2 font-medium">Run a saved action by name</p>
                 <p className="text-sm text-gray-400 mb-4">
@@ -280,7 +280,7 @@ const response = await client.chat.completions.create({
                   whileHover={{ scale: 1.01 }}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="px-3 py-1 rounded text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/40">
+                    <span className="px-3 py-1 rounded text-xs font-semibold bg-[rgba(192,192,192,0.14)] text-[#c0c0c0] border border-[rgba(192,192,192,0.35)]">
                       POST
                     </span>
                     <code className="text-white font-mono text-sm">/api/projects</code>
