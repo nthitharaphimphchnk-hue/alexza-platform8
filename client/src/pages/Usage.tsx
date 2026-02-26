@@ -1,4 +1,5 @@
 import AppShell from "@/components/app/AppShell";
+import { safeRemove } from "@/lib/dom";
 import { Button } from "@/components/ui/button";
 import { ApiError, apiRequest } from "@/lib/api";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
@@ -100,7 +101,7 @@ function exportCsv(points: UsageChartPoint[], tokenPoints: TokenChartPoint[]) {
   link.setAttribute("download", "usage-analytics.csv");
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  safeRemove(link);
   URL.revokeObjectURL(url);
   showSuccessToast("Usage CSV exported");
 }

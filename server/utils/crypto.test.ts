@@ -29,4 +29,14 @@ describe("crypto - password hash", () => {
     expect(await verifyPassword("same", a)).toBe(true);
     expect(await verifyPassword("same", b)).toBe(true);
   });
+
+  it("empty hash -> verifyPassword returns false (no bcrypt call)", async () => {
+    expect(await verifyPassword("any", "")).toBe(false);
+    expect(await verifyPassword("any", "   ")).toBe(false);
+  });
+
+  it("null/undefined-like hash -> verifyPassword returns false", async () => {
+    expect(await verifyPassword("any", null as unknown as string)).toBe(false);
+    expect(await verifyPassword("any", undefined as unknown as string)).toBe(false);
+  });
 });

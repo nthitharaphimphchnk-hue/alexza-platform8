@@ -123,18 +123,3 @@ On OAuth failure, the user is redirected to `/login?error=<code>` (or `/signup?e
 | `OAUTH_INCOMPLETE_PROFILE` | Provider did not return email |
 
 The frontend shows a toast with a user-friendly message and clears the error from the URL.
-
----
-
-## Troubleshooting: redirect_uri_mismatch (Google)
-
-If Google shows **Error 400: redirect_uri_mismatch**:
-
-1. **Check domain spelling** — Render uses `onrender.com` (one 'r'), not `onrenderer.com`
-2. **Google Cloud Console** → APIs & Services → Credentials → your OAuth client
-3. **Authorized redirect URIs** — add exactly:
-   ```
-   https://alexza-platform8.onrender.com/auth/google/callback
-   ```
-4. **Render env** — set `OAUTH_REDIRECT_BASE_URL`, `FRONTEND_APP_URL`, `CLIENT_URL` to the same domain
-5. Save and wait a few minutes for Google to propagate changes

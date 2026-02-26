@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { safeRemove } from '@/lib/dom';
 
 interface MetallicSphereProps {
   size?: number;
@@ -116,11 +117,15 @@ const MetallicSphere: React.FC<MetallicSphereProps> = ({
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      envMap.dispose();
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-      containerRef.current?.removeChild(renderer.domElement);
+      try {
+        envMap.dispose();
+        geometry.dispose();
+        material.dispose();
+        renderer.dispose();
+      } catch {
+        /* ignore dispose errors */
+      }
+      safeRemove(renderer.domElement);
     };
   }, [size, glowColor]);
 

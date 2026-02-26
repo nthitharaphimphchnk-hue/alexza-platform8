@@ -9,7 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
-import { sanitizeForLog } from "./utils/sanitize";
+import { sanitizeForLog, maskEmail } from "./utils/sanitize";
 import { authRouter } from "./auth";
 import { oauthRouter } from "./oauth";
 import { getDb, pingDb } from "./db";
@@ -38,6 +38,7 @@ import { slowRequestMiddleware } from "./middleware/slowRequest";
 import * as Sentry from "@sentry/node";
 import { sentryRelease } from "./sentry";
 import { logger } from "./utils/logger";
+import { normalizeEnvUrl } from "./utils/envUrls";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,18 +116,21 @@ async function startServer() {
   }
 
   // CORS: prefer CLIENT_URL, then CORS_ORIGIN (comma-separated)
-  const clientUrl = (process.env.CLIENT_URL || "").trim();
+  const clientUrl = normalizeEnvUrl(process.env.CLIENT_URL);
   const corsOriginEnv = (process.env.CORS_ORIGIN || "").trim();
   const allowedOrigins = [
     ...(clientUrl ? [clientUrl] : []),
-    ...corsOriginEnv.split(",").map((o) => o.trim()).filter(Boolean),
+    ...corsOriginEnv.split(",").map((o) => normalizeEnvUrl(o)).filter(Boolean),
   ];
+  logger.info({ allowedOrigins }, "[Startup] CORS final allowed origins");
   const corsOrigin: CorsOptions["origin"] =
     allowedOrigins.length === 0
       ? true
       : (origin, callback) => {
           // Allow requests without Origin (curl/health checks) and explicitly allow configured origins.
-          if (!origin || allowedOrigins.includes(origin)) {
+          const originNorm = origin ? normalizeEnvUrl(origin) : "";
+          const allowed = !origin || allowedOrigins.some((a) => originNorm === a);
+          if (allowed) {
             callback(null, true);
             return;
           }
@@ -308,33 +312,16 @@ async function startServer() {
     });
   }
 
-  // Resolve client/dist - support both local dev and Render (cwd may differ)
-  const candidates = [
-    path.resolve(__dirname, "..", "..", "client", "dist"), // server/dist -> project -> client/dist
-    path.resolve(__dirname, "..", "client", "dist"), // server/dist -> server -> client/dist (monorepo)
-    path.resolve(process.cwd(), "client", "dist"),
-  ];
-  let staticPath = candidates.find((p) => fs.existsSync(path.join(p, "index.html")));
-  if (!staticPath) {
-    staticPath = path.resolve(__dirname, "..", "..", "client", "dist");
-    logger.warn({ staticPath, candidates, cwd: process.cwd(), __dirname }, "Static path fallback - client/dist may be missing");
-  } else {
-    logger.info({ staticPath }, "Serving static from client/dist");
-  }
+  const rootFromSource = path.resolve(__dirname, "..");
+  const rootFromBuild = path.resolve(__dirname, "..", "..");
+  const projectRoot = fs.existsSync(path.resolve(rootFromSource, "client")) ? rootFromSource : rootFromBuild;
+  const staticPath = path.resolve(projectRoot, "client", "dist");
 
-  app.use(express.static(staticPath, { index: false }));
+  app.use(express.static(staticPath));
 
-  // Handle client-side routing - serve index.html for non-asset routes only
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/assets/")) {
-      return res.status(404).send("Not found");
-    }
-    const indexPath = path.join(staticPath!, "index.html");
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send("Not found");
-    }
+  // Handle client-side routing - serve index.html for all routes
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(staticPath, "index.html"));
   });
 
   Sentry.setupExpressErrorHandler(app);
@@ -348,7 +335,26 @@ async function startServer() {
     ) => {
       const requestId = (req as express.Request & { requestId?: string }).requestId ?? randomUUID();
       const safeMsg = process.env.NODE_ENV === "production" ? "Unexpected server error" : sanitizeForLog(err);
-      logger.error({ err: safeMsg, requestId, route: req.path, method: req.method }, "Unhandled server error");
+      const isLoginRoute =
+        req.path === "/api/auth/login" || req.originalUrl?.includes("/api/auth/login") || false;
+
+      logger.error(
+        {
+          err: safeMsg,
+          requestId,
+          route: req.path,
+          method: req.method,
+          url: req.originalUrl,
+          ...(isLoginRoute && {
+            "[Login Error] stack": err instanceof Error ? err.stack : undefined,
+            "[Login Error] bodyEmailMasked":
+              req.body && typeof req.body === "object" && typeof req.body.email === "string"
+                ? maskEmail(req.body.email)
+                : "(no email in body)",
+          }),
+        },
+        "Unhandled server error"
+      );
       Sentry.setTag("requestId", requestId);
       res.setHeader("x-request-id", requestId);
       res.status(500).json({
@@ -369,11 +375,34 @@ async function startServer() {
       : allowedOrigins.join(", ");
 
   server.listen(port, () => {
+    console.log({
+      CLIENT_URL: process.env.CLIENT_URL,
+      FRONTEND_APP_URL: process.env.FRONTEND_APP_URL,
+      OAUTH_REDIRECT_BASE_URL: process.env.OAUTH_REDIRECT_BASE_URL,
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
+    });
     const hasOpenRouterKey = Boolean(process.env.OPENROUTER_API_KEY?.trim());
     const runtimeDefaultProvider = hasOpenRouterKey ? "openrouter" : "openai";
     const sentryDsn = (process.env.SENTRY_DSN ?? "").trim();
     const sentryEnabled = Boolean(sentryDsn);
     const tracesSampleRate = Number.parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE ?? "0.1");
+
+    const clientUrlNorm = normalizeEnvUrl(process.env.CLIENT_URL);
+    const frontendUrlNorm = normalizeEnvUrl(process.env.FRONTEND_APP_URL);
+    const oauthRedirectNorm = normalizeEnvUrl(process.env.OAUTH_REDIRECT_BASE_URL);
+    const corsOriginNorm = (process.env.CORS_ORIGIN ?? "")
+      .split(",")
+      .map((o) => normalizeEnvUrl(o))
+      .filter(Boolean);
+    logger.info(
+      {
+        CLIENT_URL: clientUrlNorm || "(unset)",
+        FRONTEND_APP_URL: frontendUrlNorm || "(unset)",
+        OAUTH_REDIRECT_BASE_URL: oauthRedirectNorm || "(unset)",
+        CORS_ORIGIN: corsOriginNorm.length ? corsOriginNorm : "(unset)",
+      },
+      "[Startup] Normalized env URLs"
+    );
 
     const logPayload: Record<string, unknown> = {
       msg: "Server started",

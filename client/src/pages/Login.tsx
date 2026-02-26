@@ -73,7 +73,11 @@ export default function Login() {
             showFormSubmitErrorToast("Invalid credentials");
             return;
           }
-          showFormSubmitErrorToast(error.message);
+          if (error.status === 500 || error.code === "INTERNAL_ERROR") {
+            showFormSubmitErrorToast("Something went wrong. Please try again later.");
+            return;
+          }
+          showFormSubmitErrorToast(error.message || "Unable to sign in");
           return;
         }
         showFormSubmitErrorToast("Unable to sign in");
@@ -96,6 +100,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6 cursor-pointer select-none">
             <MorphingBlob
+              useFallback
               size={120}
               intensity={0.7}
               colorAccent="#c0c0c0"

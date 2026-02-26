@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { safeRemove } from '@/lib/dom';
 
 interface InteractiveBlobProps {
   size?: number;
@@ -47,8 +48,10 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
   const timeRef = useRef(0);
   const isHoveringRef = useRef(false);
+  const cleanedRef = useRef(false);
 
   useEffect(() => {
+    cleanedRef.current = false;
     if (!containerRef.current) return;
 
     // Scene setup
@@ -332,20 +335,30 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
 
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
+    // Cleanup - idempotent (safe to run once)
     return () => {
+      if (cleanedRef.current) return;
+      cleanedRef.current = true;
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       containerRef.current?.removeEventListener('mouseenter', handleMouseEnter);
       containerRef.current?.removeEventListener('mouseleave', handleMouseLeave);
-      envMap.dispose();
-      chromeMaterial.dispose();
-      sphereGeometry.dispose();
-      renderer.dispose();
-      spheresRef.current.forEach((sphere) => {
-        (sphere.material as THREE.Material).dispose();
-      });
-      containerRef.current?.removeChild(renderer.domElement);
+      try {
+        envMap.dispose();
+        chromeMaterial.dispose();
+        sphereGeometry.dispose();
+        renderer.dispose();
+        spheresRef.current.forEach((sphere) => {
+          try {
+            (sphere.material as THREE.Material).dispose();
+          } catch {
+            /* ignore */
+          }
+        });
+      } catch {
+        /* ignore dispose errors */
+      }
+      safeRemove(renderer.domElement);
     };
   }, [size, intensity, colorAccent, idleSpeed, hoverStrength, glowStrength, glowColor, chaosLevel, burstMode, spinSpeed, tightness, extraCount]);
 

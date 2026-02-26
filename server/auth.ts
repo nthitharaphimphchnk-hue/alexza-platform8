@@ -15,11 +15,17 @@ import {
   verifyPassword,
 } from "./utils/crypto";
 import { getDbLogContext, maskEmail } from "./utils/sanitize";
+import { logger } from "./utils/logger";
+
+function getRequestId(req: { requestId?: string }): string {
+  return req.requestId ?? "unknown";
+}
 
 interface UserDoc {
   email: string;
   passwordHash: string;
   name: string;
+  oauthProviders?: { provider: string; providerUserId: string }[];
   walletBalanceCredits?: number;
   walletGrantedFreeCredits?: boolean;
   walletUpdatedAt?: Date;
@@ -122,6 +128,11 @@ export async function createSessionAndSetCookie(userId: ObjectId, res: Response)
   const db = await getDb();
   const sessions = db.collection<SessionDoc>("sessions");
 
+  const cookieOpts = getSessionCookieOptions();
+  logger.info(
+    `[createSessionAndSetCookie] cookie options secure=${cookieOpts.secure} sameSite=${cookieOpts.sameSite} path=${cookieOpts.path}`
+  );
+
   const token = generateSessionToken();
   const tokenHash = hashSessionToken(token);
   const now = new Date();
@@ -134,7 +145,7 @@ export async function createSessionAndSetCookie(userId: ObjectId, res: Response)
     expiresAt,
   });
 
-  res.cookie(getSessionCookieName(), token, getSessionCookieOptions());
+  res.cookie(getSessionCookieName(), token, cookieOpts);
 }
 
 router.post("/auth/signup", async (req, res, next) => {
@@ -199,43 +210,140 @@ router.post("/auth/signup", async (req, res, next) => {
 });
 
 router.post("/auth/login", async (req, res, next) => {
+  const requestId = getRequestId(req as { requestId?: string });
+  const hasBody = Boolean(req.body && typeof req.body === "object");
+  const hasEmail = hasBody && typeof (req.body as AuthBody).email === "string";
+  logger.info(
+    `[Login] route hit requestId=${requestId} hasBody=${hasBody} hasEmail=${hasEmail}`
+  );
+
+  const payload = validateLogin(req.body as AuthBody);
+
+  if (!payload.valid) {
+    return res.status(400).json(validationError(payload.message));
+  }
+
   try {
+    logger.info(`[Login Step] ensureAuthCollections ${requestId}`);
     await ensureAuthCollections();
-    const payload = validateLogin(req.body as AuthBody);
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : "Error";
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    logger.warn(
+      { requestId, stepName: "ensureAuthCollections", errStack },
+      `[Login Fail] ensureAuthCollections ${requestId} ${errName} ${errMessage}`
+    );
+    return next(err);
+  }
 
-    if (!payload.valid) {
-      return res.status(400).json(validationError(payload.message));
-    }
+  let db: Awaited<ReturnType<typeof getDb>>;
+  try {
+    logger.info(`[Login Step] getDb ${requestId}`);
+    db = await getDb();
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : "Error";
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    logger.warn(
+      { requestId, stepName: "getDb", errStack },
+      `[Login Fail] getDb ${requestId} ${errName} ${errMessage}`
+    );
+    return next(err);
+  }
 
-    const db = await getDb();
+  let user: WithId<UserDoc> | null;
+  try {
+    logger.info(`[Login Step] findUser ${requestId}`);
     const users = db.collection<UserDoc>("users");
-    const user = (await users.findOne({ email: payload.email })) as WithId<UserDoc> | null;
+    user = (await users.findOne({ email: payload.email })) as WithId<UserDoc> | null;
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : "Error";
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    logger.warn(
+      { requestId, stepName: "findUser", errStack },
+      `[Login Fail] findUser ${requestId} ${errName} ${errMessage}`
+    );
+    return next(err);
+  }
 
-    const ctx = getDbLogContext();
-    const masked = maskEmail(payload.email);
+  const ctx = getDbLogContext();
+  const masked = maskEmail(payload.email);
+  if (!user) {
+    logger.info(
+      `[Auth] login failed result=USER_NOT_FOUND email=${masked} db=${ctx.dbName} hostHash=${ctx.uriHostHash}`
+    );
+    return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: "Invalid credentials." });
+  }
 
-    if (!user) {
-      console.log(
-        `[Auth] login failed result=USER_NOT_FOUND email=${masked} db=${ctx.dbName} hostHash=${ctx.uriHostHash}`
-      );
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: "Invalid credentials." });
-    }
+  const oauthProviders = user.oauthProviders ?? [];
+  const hasOAuth = oauthProviders.length > 0;
+  const hasPasswordHash = Boolean(user.passwordHash && String(user.passwordHash).trim());
+  if (hasOAuth || !hasPasswordHash) {
+    const providers = [...new Set(oauthProviders.map((p) => p.provider))];
+    const msg =
+      providers.length === 0
+        ? "Account uses OAuth. Please login with Google."
+        : providers.length === 1
+          ? `Account uses OAuth. Please login with ${providers[0] === "google" ? "Google" : "GitHub"}.`
+          : "Account uses OAuth. Please login with Google or GitHub.";
+    logger.info(
+      `[Auth] login failed result=OAUTH_ACCOUNT email=${masked} providers=${providers.join(",")}`
+    );
+    return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: msg });
+  }
 
+  try {
+    logger.info(`[Login Step] verifyPassword ${requestId}`);
     const isValidPassword = await verifyPassword(payload.password, user.passwordHash);
     if (!isValidPassword) {
-      console.log(
+      logger.info(
         `[Auth] login failed result=PASSWORD_MISMATCH email=${masked} db=${ctx.dbName} hostHash=${ctx.uriHostHash}`
       );
       return res.status(401).json({ ok: false, error: "UNAUTHORIZED", message: "Invalid credentials." });
     }
-
-    await grantFreeCreditsIfEligible(user._id);
-
-    await createSessionAndSetCookie(user._id, res);
-    return res.json({ ok: true, user: buildUserResponse(user) });
-  } catch (error) {
-    return next(error);
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : "Error";
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    logger.warn(
+      { requestId, stepName: "verifyPassword", errStack },
+      `[Login Fail] verifyPassword ${requestId} ${errName} ${errMessage}`
+    );
+    return next(err);
   }
+
+  try {
+    logger.info(`[Login Step] grantFreeCreditsIfEligible ${requestId}`);
+    await grantFreeCreditsIfEligible(user._id);
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : "Error";
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    logger.warn(
+      { requestId, stepName: "grantFreeCreditsIfEligible", errStack },
+      `[Login Fail] grantFreeCreditsIfEligible ${requestId} ${errName} ${errMessage}`
+    );
+    return next(err);
+  }
+
+  try {
+    logger.info(`[Login Step] createSessionAndSetCookie ${requestId}`);
+    await createSessionAndSetCookie(user._id, res);
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : "Error";
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    logger.warn(
+      { requestId, stepName: "createSessionAndSetCookie", errStack },
+      `[Login Fail] createSessionAndSetCookie ${requestId} ${errName} ${errMessage}`
+    );
+    return next(err);
+  }
+
+  logger.info(`[Login] success requestId=${requestId} email=${masked} userId=${user._id.toString()}`);
+  return res.json({ ok: true, user: buildUserResponse(user) });
 });
 
 router.get("/me", requireAuth, async (req, res, next) => {

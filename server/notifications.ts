@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { Resend } from "resend";
 import { getDb } from "./db";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
+import { normalizeEnvUrl } from "./utils/envUrls";
 
 interface UserNotificationDoc {
   email?: string;
@@ -49,7 +50,7 @@ const LOW_CREDITS_EMAIL_THRESHOLD = (() => {
   const parsed = Number.parseInt(process.env.LOW_CREDITS_THRESHOLD_EMAIL ?? "100", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
 })();
-const BASE_URL = (process.env.BASE_URL || "https://alexza-platform8.onrender.com").replace(/\/+$/, "");
+const BASE_URL = normalizeEnvUrl(process.env.BASE_URL) || "https://alexza-platform8.onrender.com";
 const LOW_CREDITS_EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 interface SessionDoc {

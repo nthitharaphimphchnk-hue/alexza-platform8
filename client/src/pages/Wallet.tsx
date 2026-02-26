@@ -1,4 +1,5 @@
 import AppShell from "@/components/app/AppShell";
+import { safeRemove } from "@/lib/dom";
 import AnimatedCounter from "@/components/app/AnimatedCounter";
 import Modal from "@/components/Modal";
 import { Button } from "@/components/ui/button";
@@ -194,7 +195,7 @@ export default function Wallet() {
     link.setAttribute("download", "credits-transactions.csv");
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    safeRemove(link);
     URL.revokeObjectURL(url);
     showSuccessToast("Transactions CSV downloaded");
   };

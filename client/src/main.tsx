@@ -19,6 +19,7 @@ if (dsn) {
 
   Sentry.init({
     dsn,
+    enabled: import.meta.env.PROD,
     environment,
     release,
     integrations: [Sentry.browserTracingIntegration()],

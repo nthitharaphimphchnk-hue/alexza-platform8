@@ -6,8 +6,9 @@ import { getStripe } from "./stripe.client";
 import { usdToCredits, MIN_TOPUP_USD, MAX_TOPUP_USD } from "./stripe.service";
 import { CREDIT_PRICE } from "../../wallet";
 import { logger } from "../../utils/logger";
+import { normalizeEnvUrl } from "../../utils/envUrls";
 
-const APP_URL = (process.env.APP_URL?.trim() || process.env.CLIENT_URL?.trim() || "").replace(/\/+$/, "");
+const APP_URL = normalizeEnvUrl(process.env.APP_URL || process.env.CLIENT_URL) || "";
 
 export class StripeCheckoutError extends Error {
   constructor(
