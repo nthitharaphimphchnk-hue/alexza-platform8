@@ -100,7 +100,6 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6 cursor-pointer select-none">
             <MorphingBlob
-              useFallback
               size={120}
               intensity={0.7}
               colorAccent="#c0c0c0"

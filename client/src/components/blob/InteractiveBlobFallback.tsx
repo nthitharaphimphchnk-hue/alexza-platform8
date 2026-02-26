@@ -145,17 +145,33 @@ const InteractiveBlobFallback: React.FC<InteractiveBlobFallbackProps> = ({
         </g>
       </svg>
 
-      {/* Glow background effect */}
+      {/* Glow background effect - เคลื่อนไหวแบบ pulse/breathing */}
       <div
-        className="absolute inset-0 rounded-full blur-3xl opacity-30"
+        className="absolute inset-0 rounded-full blur-3xl animate-blob-glow"
         style={{
           background: `radial-gradient(circle, var(--color-accent), transparent)`,
-          transform: `scale(${isHovering ? 1.2 : 1})`,
+          animationDuration: `${4 / idleSpeed}s`,
+          transform: isHovering ? 'scale(1.2)' : undefined,
           transition: 'transform 0.3s ease-out',
         }}
       />
 
       <style>{`
+        @keyframes blob-glow {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.25;
+          }
+          50% {
+            transform: scale(1.2);
+            opacity: 0.35;
+          }
+        }
+
+        .animate-blob-glow {
+          animation: blob-glow ease-in-out infinite;
+        }
+
         @keyframes blob {
           0%, 100% {
             transform: translate(0, 0) scale(1);
