@@ -442,7 +442,6 @@ router.get("/auth/google/callback", async (req, res) => {
       return;
     }
 
-    const base = getRedirectBase();
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
