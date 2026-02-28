@@ -10,7 +10,7 @@
     "build": "pnpm run build:client && pnpm run build:server",
     "build:client": "vite build",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=server/dist",
-    "start": "node server/dist/index.js",
+    "start": "node --import ./server/instrument.mjs server/dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "test": "vitest run",
