@@ -8,6 +8,7 @@ import { CreditsProvider } from "./contexts/CreditsContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from "sonner";
+import { CheckCircle2, XCircle, Info, AlertTriangle, X } from "lucide-react";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Docs from "./pages/Docs";
@@ -207,20 +208,25 @@ function App() {
           <CreditsProvider>
             <TooltipProvider>
             <Toaster
-            position="bottom-right"
-            theme="dark"
-            richColors
-            expand
-            closeButton
-            style={{
-              '--sonner-color-success': '#c0c0c0',
-              '--sonner-color-error': '#dc2626',
-              '--sonner-color-warning': '#f59e0b',
-              '--sonner-color-info': '#3b82f6',
-              '--sonner-color-background': '#0b0e12',
-              '--sonner-color-border': 'rgba(255,255,255,0.06)',
-              '--sonner-color-text': 'rgba(255,255,255,0.92)',
-            } as any}
+              position="bottom-right"
+              theme="dark"
+              richColors
+              expand
+              closeButton
+              icons={{
+                success: <CheckCircle2 size={18} strokeWidth={2} />,
+                error: <XCircle size={18} strokeWidth={2} />,
+                info: <Info size={18} strokeWidth={2} />,
+                warning: <AlertTriangle size={18} strokeWidth={2} />,
+                close: <X size={14} strokeWidth={2} />,
+              }}
+              toastOptions={{
+                classNames: {
+                  toast: "alexza-toast",
+                  title: "alexza-toast-title",
+                  description: "alexza-toast-description",
+                },
+              }}
             />
             <div className="min-h-screen relative">
               <div
