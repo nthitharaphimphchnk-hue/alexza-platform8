@@ -16,7 +16,7 @@ Expected DB response when Mongo is connected:
 ## Run
 
 ```bash
-# Starts both backend (http://localhost:3002) and frontend (Vite)
+# Starts both backend (default PORT=3005) and frontend (Vite)
 pnpm dev
 pnpm build
 pnpm start
@@ -47,16 +47,16 @@ OPENAI_MODEL="gpt-4o-mini"
 
 ### Ports (development)
 
-- Backend API is forced to run on `http://localhost:3002` via `dev:server` script.
+- Backend API uses `PORT` from `.env.local` (default `3005`). Set `PORT=3006` etc. if port is in use.
 - Frontend (Vite dev server) runs on `http://localhost:3000` by default and may move to another port if busy.
-- Frontend API base uses `VITE_API_BASE_URL` and falls back to same-origin when not set.
+- Vite proxy forwards `/api` and `/auth` to the backend. Set `VITE_API_BASE_URL=http://localhost:${PORT}` if calling API directly.
 
 ## Dev Smoke Test (Connection Refused Guard)
 
 Run `pnpm dev`, then verify backend is reachable:
 
 ```bash
-curl -i http://localhost:3002/api/health
+curl -i http://localhost:3005/api/health
 ```
 
 Expected response:
@@ -73,20 +73,20 @@ Set `SESSION_SECRET` in `.env.local` before testing auth endpoints.
 
 ```bash
 # 1) Signup
-curl -i -c cookies.txt -X POST http://localhost:3002/api/auth/signup \
+curl -i -c cookies.txt -X POST http://localhost:3005/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@example.com","password":"password123","name":"Demo User"}'
 
 # 2) Login
-curl -i -c cookies.txt -X POST http://localhost:3002/api/auth/login \
+curl -i -c cookies.txt -X POST http://localhost:3005/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@example.com","password":"password123"}'
 
 # 3) Me
-curl -i -b cookies.txt http://localhost:3002/api/me
+curl -i -b cookies.txt http://localhost:3005/api/me
 
 # 4) Logout
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/auth/logout
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/auth/logout
 ```
 
 ## OAuth (Google, GitHub)
@@ -110,15 +110,15 @@ Use the same cookie session from auth (`cookies.txt`).
 
 ```bash
 # 1) Create project
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects \
   -H "Content-Type: application/json" \
   -d '{"name":"My First Project","description":"From curl","model":"GPT-4"}'
 
 # 2) List current user's projects
-curl -i -b cookies.txt http://localhost:3002/api/projects
+curl -i -b cookies.txt http://localhost:3005/api/projects
 
 # 3) Get one project by id
-curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>
+curl -i -b cookies.txt http://localhost:3005/api/projects/<project_id>
 ```
 
 ## Builder AI (Threads, Messages, Actions)
@@ -127,31 +127,31 @@ Use an authenticated cookie session (`cookies.txt`) and a project id:
 
 ```bash
 # 1) Create thread
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/threads \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects/<project_id>/threads \
   -H "Content-Type: application/json" \
   -d '{"title":"New chat"}'
 
 # 2) List threads
-curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/threads
+curl -i -b cookies.txt http://localhost:3005/api/projects/<project_id>/threads
 
 # 3) List messages
-curl -i -b cookies.txt http://localhost:3002/api/threads/<thread_id>/messages
+curl -i -b cookies.txt http://localhost:3005/api/threads/<thread_id>/messages
 
 # 4) Send message (creates user msg, calls Builder AI, returns assistant + proposedActions)
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/threads/<thread_id>/messages \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/threads/<thread_id>/messages \
   -H "Content-Type: application/json" \
   -d '{"content":"อยากได้ API สรุปข้อความ"}'
 
 # 5) Apply action (upsert)
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/actions \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects/<project_id>/actions \
   -H "Content-Type: application/json" \
   -d '{"actionName":"summarize_text","description":"...","inputSchema":{"type":"object","properties":{"input":{"type":"string"}},"required":["input"]}}'
 
 # 6) List actions
-curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/actions
+curl -i -b cookies.txt http://localhost:3005/api/projects/<project_id>/actions
 
 # 7) Delete action
-curl -i -b cookies.txt -X DELETE http://localhost:3002/api/projects/<project_id>/actions/<action_name>
+curl -i -b cookies.txt -X DELETE http://localhost:3005/api/projects/<project_id>/actions/<action_name>
 ```
 
 - `actionName` must be URL-safe (a-z, 0-9, underscore, hyphen).
@@ -164,15 +164,15 @@ Use a valid project id from the projects API.
 
 ```bash
 # 1) Create key (rawKey is returned only once)
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/keys \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects/<project_id>/keys \
   -H "Content-Type: application/json" \
   -d '{"name":"Production Key"}'
 
 # 2) List keys (rawKey is NOT returned)
-curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/keys
+curl -i -b cookies.txt http://localhost:3005/api/projects/<project_id>/keys
 
 # 3) Revoke key
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/keys/<key_id>/revoke
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects/<project_id>/keys/<key_id>/revoke
 ```
 
 After refresh, raw key cannot be retrieved again from list endpoints.
@@ -186,7 +186,7 @@ After refresh, raw key cannot be retrieved again from list endpoints.
 3. Run the action:
 
 ```bash
-curl -i -X POST "http://localhost:3002/v1/projects/<project_id>/run/<action_name>" \
+curl -i -X POST "http://localhost:3005/v1/projects/<project_id>/run/<action_name>" \
   -H "Content-Type: application/json" \
   -H "x-api-key: <raw_api_key>" \
   -d '{"input":"Hello from curl"}'
@@ -210,10 +210,10 @@ Use the raw API key returned from `POST /api/projects/<project_id>/keys`.
 
 ```bash
 # 1) Health check for OpenAI config
-curl -i http://localhost:3002/api/health/openai
+curl -i http://localhost:3005/api/health/openai
 
 # 2) Run with API key in x-api-key
-curl -i -X POST http://localhost:3002/v1/run \
+curl -i -X POST http://localhost:3005/v1/run \
   -H "Content-Type: application/json" \
   -H "x-api-key: <raw_api_key>" \
   -d '{"input":"Hello from curl"}'
@@ -233,43 +233,43 @@ Use an authenticated cookie session (`cookies.txt`) and a project id:
 
 ```bash
 # 1) Signup + login (or reuse an existing cookie)
-curl -i -c cookies.txt -X POST http://localhost:3002/api/auth/signup \
+curl -i -c cookies.txt -X POST http://localhost:3005/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"usage-demo@example.com","password":"password123","name":"Usage Demo"}'
 
-curl -i -c cookies.txt -X POST http://localhost:3002/api/auth/login \
+curl -i -c cookies.txt -X POST http://localhost:3005/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"usage-demo@example.com","password":"password123"}'
 
 # 2) Create project
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects \
   -H "Content-Type: application/json" \
   -d '{"name":"Usage Project","description":"usage smoke","model":"GPT-4"}'
 
 # 3) Create API key for that project
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3002/api/projects/<project_id>/keys \
+curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3005/api/projects/<project_id>/keys \
   -H "Content-Type: application/json" \
   -d '{"name":"Usage Smoke Key"}'
 
 # 4) Call /v1/run at least 3 times using x-api-key
-curl -i -X POST http://localhost:3002/v1/run \
+curl -i -X POST http://localhost:3005/v1/run \
   -H "Content-Type: application/json" \
   -H "x-api-key: <raw_api_key>" \
   -d '{"input":"hello 1"}'
-curl -i -X POST http://localhost:3002/v1/run \
+curl -i -X POST http://localhost:3005/v1/run \
   -H "Content-Type: application/json" \
   -H "x-api-key: <raw_api_key>" \
   -d '{"input":"hello 2"}'
-curl -i -X POST http://localhost:3002/v1/run \
+curl -i -X POST http://localhost:3005/v1/run \
   -H "Content-Type: application/json" \
   -H "x-api-key: <raw_api_key>" \
   -d '{"input":"hello 3"}'
 
 # 5) Global usage summary
-curl -i -b cookies.txt http://localhost:3002/api/usage/summary?days=7
+curl -i -b cookies.txt http://localhost:3005/api/usage/summary?days=7
 
 # 6) Project usage summary
-curl -i -b cookies.txt http://localhost:3002/api/projects/<project_id>/usage/summary?days=7
+curl -i -b cookies.txt http://localhost:3005/api/projects/<project_id>/usage/summary?days=7
 ```
 
 ## Monitoring (Sentry + Logging)

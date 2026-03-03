@@ -57,7 +57,7 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
     res.status(500).json({
       ok: false,
       error: "STRIPE_WEBHOOK_NOT_CONFIGURED",
-      message: "STRIPE_WEBHOOK_SECRET is required. Local: run 'stripe listen --forward-to localhost:3002/api/billing/stripe/webhook'. Production: use signing secret from Stripe Dashboard.",
+      message: `STRIPE_WEBHOOK_SECRET is required. Local: run 'stripe listen --forward-to localhost:${process.env.PORT || 3005}/api/billing/stripe/webhook'. Production: use signing secret from Stripe Dashboard.`,
     });
     return;
   }

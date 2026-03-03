@@ -365,8 +365,9 @@ async function startServer() {
     }
   );
 
-  const configuredPort = Number.parseInt(process.env.PORT ?? "3002", 10);
-  const port = Number.isNaN(configuredPort) ? 3002 : configuredPort;
+  const defaultPort = 3005;
+  const configuredPort = Number.parseInt(process.env.PORT ?? String(defaultPort), 10);
+  const port = Number.isNaN(configuredPort) ? defaultPort : configuredPort;
 
   const cookieName = getSessionCookieName();
   const corsOriginLog =
@@ -374,13 +375,20 @@ async function startServer() {
       ? "any (no CLIENT_URL/CORS_ORIGIN)"
       : allowedOrigins.join(", ");
 
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      logger.error(
+        { port, err: err.message },
+        `[Startup] Port ${port} is in use. Set PORT=<free_port> in .env.local (e.g. PORT=3006) or kill the process using port ${port}.`
+      );
+    } else {
+      logger.error({ port, err: err.message }, "[Startup] Server failed to listen");
+    }
+    process.exit(1);
+  });
+
   server.listen(port, () => {
-    console.log({
-      CLIENT_URL: process.env.CLIENT_URL,
-      FRONTEND_APP_URL: process.env.FRONTEND_APP_URL,
-      OAUTH_REDIRECT_BASE_URL: process.env.OAUTH_REDIRECT_BASE_URL,
-      CORS_ORIGIN: process.env.CORS_ORIGIN,
-    });
+    const portActual = (server.address() as { port?: number })?.port ?? port;
     const hasOpenRouterKey = Boolean(process.env.OPENROUTER_API_KEY?.trim());
     const runtimeDefaultProvider = hasOpenRouterKey ? "openrouter" : "openai";
     const sentryDsn = (process.env.SENTRY_DSN ?? "").trim();
@@ -404,9 +412,20 @@ async function startServer() {
       "[Startup] Normalized env URLs"
     );
 
+    const apiBaseUrl = `http://localhost:${portActual}`;
+    logger.info(
+      {
+        msg: "[DEV] Server listening",
+        port: portActual,
+        apiBaseUrl,
+        hint: "Set VITE_API_BASE_URL=" + apiBaseUrl + " if client runs on different port",
+      },
+      "[Startup] Server ready"
+    );
+
     const logPayload: Record<string, unknown> = {
       msg: "Server started",
-      port,
+      port: portActual,
       nodeEnv: process.env.NODE_ENV ?? "development",
       cookieName,
       corsOrigin: corsOriginLog,

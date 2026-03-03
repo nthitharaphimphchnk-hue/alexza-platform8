@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 function getSentryRelease(): string {
@@ -188,51 +188,75 @@ const plugins = [
   }),
 ];
 
-export default defineConfig({
-  plugins,
-  define: {
-    __SENTRY_RELEASE__: JSON.stringify(sentryRelease),
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-  },
-  envDir: path.resolve(import.meta.dirname),
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "client", "dist"),
-    emptyOutDir: true,
-    sourcemap: true,
-  },
-  server: {
-    port: 3000,
-    strictPort: false, // Will find next available port if 3000 is busy
-    host: true,
-    allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
-      "localhost",
-      "127.0.0.1",
+const envDir = path.resolve(import.meta.dirname);
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, envDir, "");
+  const serverPort = Number.parseInt(env.PORT ?? "3005", 10) || 3005;
+  const apiBaseUrl = `http://localhost:${serverPort}`;
+
+  return {
+    plugins: [
+      ...plugins,
+      {
+        name: "dev-startup-log",
+        configureServer(server: ViteDevServer) {
+          server.httpServer?.once("listening", () => {
+            const addr = server.httpServer?.address();
+            const port = typeof addr === "object" && addr ? addr.port : 3000;
+            const clientUrl = `http://localhost:${port}`;
+            console.log("\n  [DEV] Client ready");
+            console.log(`  ➜  Local:   ${clientUrl}`);
+            console.log(`  ➜  API proxy target: ${apiBaseUrl} (server port ${serverPort})`);
+            console.log(`  ➜  Set VITE_API_BASE_URL=${apiBaseUrl} if calling API directly\n`);
+          });
+        },
+      },
     ],
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    define: {
+      __SENTRY_RELEASE__: JSON.stringify(sentryRelease),
     },
-    proxy: {
-      "/api": {
-        target: "http://localhost:3002",
-        changeOrigin: true,
-      },
-      "/auth": {
-        target: "http://localhost:3002",
-        changeOrigin: true,
+    resolve: {
+      alias: {
+        "@": path.resolve(import.meta.dirname, "client", "src"),
+        "@shared": path.resolve(import.meta.dirname, "shared"),
+        "@assets": path.resolve(import.meta.dirname, "attached_assets"),
       },
     },
-  },
+    envDir,
+    root: path.resolve(import.meta.dirname, "client"),
+    build: {
+      outDir: path.resolve(import.meta.dirname, "client", "dist"),
+      emptyOutDir: true,
+      sourcemap: true,
+    },
+    server: {
+      port: 3000,
+      strictPort: false, // Will find next available port if 3000 is busy
+      host: true,
+      allowedHosts: [
+        ".manuspre.computer",
+        ".manus.computer",
+        ".manus-asia.computer",
+        ".manuscomputer.ai",
+        ".manusvm.computer",
+        "localhost",
+        "127.0.0.1",
+      ],
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
+      proxy: {
+        "/api": {
+          target: apiBaseUrl,
+          changeOrigin: true,
+        },
+        "/auth": {
+          target: apiBaseUrl,
+          changeOrigin: true,
+        },
+      },
+    },
+  };
 });
