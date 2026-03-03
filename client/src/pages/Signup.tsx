@@ -5,6 +5,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion } from "framer-motion";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { useForm } from "@/hooks/useForm";
 import { validateSignupForm, getFieldError, hasFieldError } from "@/lib/validation";
 import { useState, useEffect } from "react";
@@ -28,6 +29,7 @@ interface SignupFormData {
 
 export default function Signup() {
   const { t } = useTranslation();
+  const { refetch } = useAuth();
   const [, setLocation] = useLocation();
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -73,6 +75,7 @@ export default function Signup() {
         );
         showSuccessToast("Account created!", "Welcome to ALEXZA AI");
         setSubmitSuccess(true);
+        await refetch();
         setTimeout(() => {
           setLocation("/app/dashboard");
         }, 500);

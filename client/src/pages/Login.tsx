@@ -3,6 +3,7 @@ import { ArrowRight, ArrowLeft, Mail, Lock, AlertCircle, CheckCircle } from "luc
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import MorphingBlob from "@/components/blob";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { useForm } from "@/hooks/useForm";
 import { validateLoginForm, getFieldError, hasFieldError } from "@/lib/validation";
 import { useState, useEffect } from "react";
@@ -24,6 +25,7 @@ interface LoginFormData {
 
 export default function Login() {
   const { t } = useTranslation();
+  const { refetch } = useAuth();
   const [, setLocation] = useLocation();
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -62,6 +64,7 @@ export default function Login() {
         );
         showSuccessToast("Welcome back!", "You have been logged in successfully");
         setSubmitSuccess(true);
+        await refetch();
         const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
         const nextPath = params.get("next") || params.get("redirect") || "/app/dashboard";
         setTimeout(() => {
