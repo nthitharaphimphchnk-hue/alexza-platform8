@@ -3,20 +3,17 @@
  */
 
 import { ObjectId } from "mongodb";
-import { getCreditPrice } from "../../config";
+import { getCreditsForUsd } from "../../config/pricing";
 import { addCreditsFromStripe } from "../../wallet";
 
 export const MIN_TOPUP_USD = 10;
 export const MAX_TOPUP_USD = 500;
 
 /**
- * Convert USD amount to credits.
- * Uses CREDIT_PRICE from env (default $0.003 per credit).
+ * Convert USD amount to credits using volume discount tier pricing.
  */
 export function usdToCredits(amountUsd: number): number {
-  const creditPrice = getCreditPrice();
-  const credits = Math.floor(amountUsd / creditPrice + 1e-9);
-  return Math.max(1, credits);
+  return getCreditsForUsd(amountUsd);
 }
 
 /**
