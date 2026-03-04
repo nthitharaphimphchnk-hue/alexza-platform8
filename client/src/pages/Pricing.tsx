@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   containerVariants,
   itemVariants,
@@ -9,11 +10,12 @@ import {
 } from "@/lib/animations";
 import Logo from "@/components/Logo";
 import {
-  pricingTiers,
-  CREDIT_PRICE,
+  getPricingTiers,
+  DEFAULT_CREDIT_PRICE,
   FREE_CREDITS,
   TOKENS_PER_CREDIT,
 } from "@/config/pricing";
+import { fetchPublicConfig } from "@/api/config";
 import {
   Accordion,
   AccordionContent,
@@ -21,15 +23,30 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-function creditsFromDollars(dollars: number): number {
-  return Math.floor(dollars / CREDIT_PRICE);
+function creditsFromDollars(dollars: number, creditPrice: number): number {
+  return Math.floor(dollars / creditPrice);
 }
 
 export default function Pricing() {
+  const [creditPrice, setCreditPrice] = useState(DEFAULT_CREDIT_PRICE);
+
+  useEffect(() => {
+    fetchPublicConfig()
+      .then((res) => {
+        if (res.ok && typeof res.creditPrice === "number" && res.creditPrice > 0) {
+          setCreditPrice(res.creditPrice);
+        }
+      })
+      .catch(() => {
+        setCreditPrice(DEFAULT_CREDIT_PRICE);
+      });
+  }, []);
+
+  const pricingTiers = getPricingTiers(creditPrice);
   const walletExamples = [
-    { dollars: 10, credits: creditsFromDollars(10) },
-    { dollars: 20, credits: creditsFromDollars(20) },
-    { dollars: 50, credits: creditsFromDollars(50) },
+    { dollars: 10, credits: creditsFromDollars(10, creditPrice) },
+    { dollars: 20, credits: creditsFromDollars(20, creditPrice) },
+    { dollars: 50, credits: creditsFromDollars(50, creditPrice) },
   ];
 
   const handleCta = (cta: string) => {
@@ -195,7 +212,7 @@ export default function Pricing() {
               "Add funds to your wallet",
               "Credits are deducted per API call",
               `1 credit = ${TOKENS_PER_CREDIT.toLocaleString()} tokens`,
-              `$${CREDIT_PRICE.toFixed(3)} per credit`,
+              `$${creditPrice.toFixed(3)} per credit`,
               "API stops automatically when balance reaches zero",
             ].map((item, i) => (
               <motion.li key={i} className="flex items-center gap-3" variants={staggerItemVariants}>
