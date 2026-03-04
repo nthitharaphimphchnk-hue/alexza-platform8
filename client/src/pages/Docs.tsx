@@ -71,6 +71,7 @@ export default function Docs() {
       title: t("docs.sdk"),
       subsections: [
         { label: "Official SDKs", id: "sdk", href: "/docs/sdk" },
+        { label: "CLI", id: "cli", href: "/docs/cli" },
         { label: "Python", id: "sdk-python" },
         { label: "JavaScript", id: "sdk-js" },
       ],

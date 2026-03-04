@@ -6,6 +6,7 @@ import { Router, type Response } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
 import { getUserBillingState } from "./billing";
 import { MAX_ACTIONS_PER_PROJECT_FREE } from "./config";
 import { QUALITY_MODELS, QUALITY_MODELS_OPENAI } from "./modelRegistry";
@@ -191,6 +192,25 @@ router.post("/projects/:id/actions", requireAuth, async (req, res, next) => {
 
     if (!result) throw new Error("Failed to save action");
 
+    const project = await db.collection<{ workspaceId?: ObjectId }>("projects").findOne({ _id: projectId });
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project?.workspaceId ?? null,
+      projectId,
+      actionType: existing ? "action.updated" : "action.created",
+      resourceType: "action",
+      resourceId: actionName,
+      metadata: { description },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     if (process.env.NODE_ENV !== "production") {
       console.log(`[Actions] ${existing ? "Updated" : "Created"} action ${actionName} for project ${projectId}`);
     }
@@ -205,7 +225,7 @@ router.post("/projects/:id/actions", requireAuth, async (req, res, next) => {
 });
 
 // GET /api/projects/:id/actions
-router.get("/projects/:id/actions", requireAuth, async (req, res, next) => {
+router.get("/projects/:id/actions", requireAuthOrApiKey, async (req, res, next) => {
   try {
     await ensureIndexes();
     if (!req.user) return err(res, 401, "UNAUTHORIZED", "Unauthorized");
@@ -233,7 +253,7 @@ router.get("/projects/:id/actions", requireAuth, async (req, res, next) => {
 });
 
 // GET /api/projects/:id/actions/:actionName
-router.get("/projects/:id/actions/:actionName", requireAuth, async (req, res, next) => {
+router.get("/projects/:id/actions/:actionName", requireAuthOrApiKey, async (req, res, next) => {
   try {
     await ensureIndexes();
     if (!req.user) return err(res, 401, "UNAUTHORIZED", "Unauthorized");
@@ -294,6 +314,25 @@ router.delete("/projects/:id/actions/:actionName", requireAuth, async (req, res,
     });
 
     if (!result) return err(res, 404, "NOT_FOUND", "Action not found");
+
+    const project = await db.collection<{ ownerUserId: ObjectId; workspaceId?: ObjectId }>("projects").findOne({ _id: projectId });
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: project?.ownerUserId ?? req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project?.workspaceId ?? null,
+      projectId,
+      actionType: "action.deleted",
+      resourceType: "action",
+      resourceId: safeActionName,
+      metadata: { description: result.description },
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     return res.json({ ok: true });
   } catch (e) {

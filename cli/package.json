@@ -1,0 +1,42 @@
+{
+  "name": "alexza-cli",
+  "version": "1.0.0",
+  "description": "Official ALEXZA AI command line interface",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "alexza": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "alexza",
+    "ai",
+    "cli",
+    "api"
+  ],
+  "author": "ALEXZA AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexza-ai/alexza-ai"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

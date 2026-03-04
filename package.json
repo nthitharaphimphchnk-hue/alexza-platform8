@@ -16,7 +16,10 @@
     "test": "vitest run",
     "seed:dev": "tsx scripts/seed-dev-user.ts",
     "seed:templates": "tsx scripts/seed-templates.ts",
-    "format": "prettier --write ."
+    "postman:generate": "tsx scripts/generate-postman.ts",
+    "postman:check": "tsx scripts/check-postman.ts",
+    "format": "prettier --write .",
+    "build:cli": "pnpm --dir cli run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -113,6 +116,7 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "esbuild": "^0.25.0",
+    "openapi-to-postmanv2": "^6.0.0",
     "pnpm": "^10.15.1",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",

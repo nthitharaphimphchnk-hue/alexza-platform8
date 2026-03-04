@@ -7,6 +7,7 @@ import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
 import { ensureUsageIndexes } from "./usage";
 import { logger } from "./utils/logger";
 
@@ -284,7 +285,7 @@ async function getAnalyticsDaily(ownerUserId: ObjectId) {
     }));
 }
 
-router.get("/analytics/overview", requireAuth, async (req, res, next) => {
+router.get("/analytics/overview", requireAuthOrApiKey, async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     const key = cacheKey(req.user._id.toString(), "overview");

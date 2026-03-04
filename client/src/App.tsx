@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Docs from "./pages/Docs";
 import DocsSdk from "./pages/DocsSdk";
+import DocsCli from "./pages/DocsCli";
 import UseCases from "./pages/UseCases";
 import Architecture from "./pages/Architecture";
 import Security from "./pages/Security";
@@ -38,6 +39,7 @@ import Settings from "./pages/Settings";
 import Webhooks from "./pages/Webhooks";
 import Requests from "./pages/Requests";
 import Templates from "./pages/Templates";
+import AuditLogs from "./pages/AuditLogs";
 import RequestDetail from "./pages/RequestDetail";
 import AdminTools from "./pages/AdminTools";
 import Workspaces from "./pages/Workspaces";
@@ -70,6 +72,7 @@ function Router() {
       <Route path={"/roadmap"} component={Roadmap} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/docs/sdk"} component={DocsSdk} />
+      <Route path={"/docs/cli"} component={DocsCli} />
       <Route path={"/docs"} component={Docs} />
       <Route path={"/login"} component={Login} />
       <Route path={"/signup"} component={Signup} />
@@ -143,6 +146,11 @@ function Router() {
       <Route path={"/app/templates"}>
         <AppLayout>
           <Templates />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/audit-logs"}>
+        <AppLayout>
+          <AuditLogs />
         </AppLayout>
       </Route>
       <Route path={"/app/analytics"}>

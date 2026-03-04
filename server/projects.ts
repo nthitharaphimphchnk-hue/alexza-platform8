@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
 import { ensureProjectAccess, getWorkspaceIdsForUser } from "./workspaces/projectAccess";
 import { getMemberRole } from "./workspaces/workspaces.routes";
 import { hasPermission } from "./workspaces/permissions";
@@ -147,13 +148,31 @@ router.post("/projects", requireAuth, async (req, res, next) => {
       throw new Error("Failed to load newly created project");
     }
 
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project.workspaceId ?? null,
+      projectId: insertResult.insertedId,
+      actionType: "project.created",
+      resourceType: "project",
+      resourceId: insertResult.insertedId.toString(),
+      metadata: { name: project.name },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     return res.status(201).json({ ok: true, project: toProjectResponse(project) });
   } catch (error) {
     return next(error);
   }
 });
 
-router.get("/projects", requireAuth, async (req, res, next) => {
+router.get("/projects", requireAuthOrApiKey, async (req, res, next) => {
   try {
     await ensureProjectsIndexes();
     if (!req.user) {
@@ -238,6 +257,25 @@ router.patch("/projects/:id/settings", requireAuth, async (req, res, next) => {
     );
 
     if (!updated) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: project.ownerUserId,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project.workspaceId ?? null,
+      projectId,
+      actionType: "project.updated",
+      resourceType: "project",
+      resourceId: projectId.toString(),
+      metadata: { routingMode },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     return res.json({ ok: true, project: toProjectResponse(updated) });
   } catch (error) {
     return next(error);
@@ -292,6 +330,24 @@ router.delete("/projects/:id", requireAuth, async (req, res, next) => {
     });
 
     if (!deletedProject) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: project.ownerUserId,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project.workspaceId ?? null,
+      projectId,
+      actionType: "project.deleted",
+      resourceType: "project",
+      resourceId: projectId.toString(),
+      metadata: { name: project.name },
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     const threadIds = await db
       .collection("chat_threads")
@@ -396,6 +452,24 @@ router.patch("/projects/:id", requireAuth, async (req, res, next) => {
     if (!updated) {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
+
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: project.ownerUserId,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project.workspaceId ?? null,
+      projectId,
+      actionType: "project.updated",
+      resourceType: "project",
+      resourceId: projectId.toString(),
+      metadata: Object.keys(updateSet).filter((k) => k !== "updatedAt"),
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     return res.json({ ok: true, project: toProjectResponse(updated) });
   } catch (error) {
