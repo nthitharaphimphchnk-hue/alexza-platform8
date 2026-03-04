@@ -41,6 +41,7 @@ import { sentryRelease } from "./sentry";
 import { logger } from "./utils/logger";
 import { normalizeEnvUrl } from "./utils/envUrls";
 import { getCreditPrice } from "./config";
+import { CREDIT_PRICE_TIERS } from "./config/pricing";
 import { TOKENS_PER_CREDIT } from "./wallet";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -189,6 +190,14 @@ async function startServer() {
       ok: true,
       creditPrice: getCreditPrice(),
       creditsPerThousandTokens: TOKENS_PER_CREDIT,
+    });
+  });
+
+  /** Public pricing tiers - volume discount table */
+  app.get("/api/public/pricing", (_req, res) => {
+    res.json({
+      ok: true,
+      tiers: CREDIT_PRICE_TIERS,
     });
   });
 
