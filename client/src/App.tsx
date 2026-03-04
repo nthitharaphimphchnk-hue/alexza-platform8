@@ -6,12 +6,14 @@ import * as Sentry from "@sentry/react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { CreditsProvider } from "./contexts/CreditsContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from "sonner";
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from "lucide-react";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Docs from "./pages/Docs";
+import DocsSdk from "./pages/DocsSdk";
 import UseCases from "./pages/UseCases";
 import Architecture from "./pages/Architecture";
 import Security from "./pages/Security";
@@ -27,13 +29,20 @@ import ChatBuilder from "./pages/ChatBuilder";
 import ApiKeys from "./pages/ApiKeys";
 import Playground from "./pages/Playground";
 import Usage from "./pages/Usage";
+import Analytics from "./pages/Analytics";
 import Credits from "./pages/Credits";
 import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import Settings from "./pages/Settings";
 import Webhooks from "./pages/Webhooks";
+import Requests from "./pages/Requests";
+import Templates from "./pages/Templates";
+import RequestDetail from "./pages/RequestDetail";
 import AdminTools from "./pages/AdminTools";
+import Workspaces from "./pages/Workspaces";
+import WorkspaceMembers from "./pages/WorkspaceMembers";
+import WorkspaceInviteAccept from "./pages/WorkspaceInviteAccept";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { logApiBaseUrlOnce } from "./lib/api";
@@ -60,6 +69,7 @@ function Router() {
       <Route path={"/status"} component={Status} />
       <Route path={"/roadmap"} component={Roadmap} />
       <Route path={"/pricing"} component={Pricing} />
+      <Route path={"/docs/sdk"} component={DocsSdk} />
       <Route path={"/docs"} component={Docs} />
       <Route path={"/login"} component={Login} />
       <Route path={"/signup"} component={Signup} />
@@ -95,6 +105,21 @@ function Router() {
           <Projects />
         </AppLayout>
       </Route>
+      <Route path={"/app/workspaces"}>
+        <AppLayout>
+          <Workspaces />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/workspaces/invite"}>
+        <AppLayout>
+          <WorkspaceInviteAccept />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/workspaces/:id/members"}>
+        <AppLayout>
+          <WorkspaceMembers />
+        </AppLayout>
+      </Route>
       <Route path={"/app/playground"}>
         <AppLayout>
           <Playground />
@@ -103,6 +128,26 @@ function Router() {
       <Route path={"/app/usage"}>
         <AppLayout>
           <Usage />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/requests/:id"}>
+        <AppLayout>
+          <RequestDetail />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/requests"}>
+        <AppLayout>
+          <Requests />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/templates"}>
+        <AppLayout>
+          <Templates />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/analytics"}>
+        <AppLayout>
+          <Analytics />
         </AppLayout>
       </Route>
       <Route path={"/app/billing/credits"}>
@@ -235,7 +280,8 @@ function App() {
     <Sentry.ErrorBoundary fallback={ErrorFallback}>
       <ThemeProvider defaultTheme="dark" switchable>
         <AuthProvider>
-          <CreditsProvider>
+          <WorkspaceProvider>
+            <CreditsProvider>
             <TooltipProvider>
             <ThemeAwareToaster />
             <div className="min-h-screen relative">
@@ -258,7 +304,8 @@ function App() {
               </div>
             </div>
             </TooltipProvider>
-          </CreditsProvider>
+            </CreditsProvider>
+          </WorkspaceProvider>
         </AuthProvider>
       </ThemeProvider>
     </Sentry.ErrorBoundary>

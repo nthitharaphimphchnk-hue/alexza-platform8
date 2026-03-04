@@ -10,7 +10,7 @@ import {
 } from "./wallet";
 import { MAX_CREDITS_PER_REQUEST, MAX_ESTIMATED_TOKENS, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
-import { rateLimitByApiKey } from "./middleware/rateLimitByApiKey";
+import { apiRateLimiter } from "./middleware/rate-limit";
 import { logUsage } from "./usage";
 
 interface RunRequestBody {
@@ -47,7 +47,7 @@ function runError(res: Response, statusCode: number, code: string, message: stri
 }
 
 // DEPRECATED: Use POST /v1/projects/:projectId/run/:actionName for spec-based execution.
-router.post("/v1/run", requireApiKey, rateLimitByApiKey, async (req, res) => {
+router.post("/v1/run", requireApiKey, apiRateLimiter, async (req, res) => {
   const startMs = Date.now();
   const provider = "openai";
   const model = getOpenAIModel();

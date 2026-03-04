@@ -4,9 +4,13 @@ import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { hashApiKey } from "./utils/apiKey";
+import { ensureProjectAccess } from "./workspaces/projectAccess";
+import { getMemberRole } from "./workspaces/workspaces.routes";
+import { hasPermission } from "./workspaces/permissions";
 
 interface ProjectDoc {
   ownerUserId: ObjectId;
+  workspaceId?: ObjectId;
   name: string;
 }
 
@@ -50,11 +54,19 @@ async function ensureKeyIndexes() {
   return keyIndexesReady;
 }
 
-async function verifyProjectOwnership(projectId: ObjectId, ownerUserId: ObjectId): Promise<boolean> {
+async function verifyProjectAccess(projectId: ObjectId, userId: ObjectId): Promise<boolean> {
+  return ensureProjectAccess(projectId, userId);
+}
+
+async function canManageKeys(projectId: ObjectId, userId: ObjectId): Promise<boolean> {
+  const hasAccess = await ensureProjectAccess(projectId, userId);
+  if (!hasAccess) return false;
   const db = await getDb();
-  const projects = db.collection<ProjectDoc>("projects");
-  const project = await projects.findOne({ _id: projectId, ownerUserId });
-  return Boolean(project);
+  const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
+  if (!project) return false;
+  if (!project.workspaceId) return true;
+  const role = await getMemberRole(project.workspaceId, userId);
+  return !!role && hasPermission(role, "keys:manage");
 }
 
 function generateRawApiKey() {
@@ -73,8 +85,8 @@ router.post("/projects/:id/keys", requireAuth, async (req, res, next) => {
       return res.status(400).json(validationError("Invalid project id"));
     }
 
-    const isOwner = await verifyProjectOwnership(projectId, req.user._id);
-    if (!isOwner) {
+    const canManage = await canManageKeys(projectId, req.user._id);
+    if (!canManage) {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
 
@@ -129,14 +141,14 @@ router.get("/projects/:id/keys", requireAuth, async (req, res, next) => {
       return res.status(400).json(validationError("Invalid project id"));
     }
 
-    const isOwner = await verifyProjectOwnership(projectId, req.user._id);
-    if (!isOwner) {
+    const hasAccess = await verifyProjectAccess(projectId, req.user._id);
+    if (!hasAccess) {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
 
     const db = await getDb();
     const keys = db.collection<ApiKeyDoc>("api_keys");
-    const rows = await keys.find({ projectId, ownerUserId: req.user._id }).sort({ createdAt: -1 }).toArray();
+    const rows = await keys.find({ projectId }).sort({ createdAt: -1 }).toArray();
 
     return res.json({
       ok: true,
@@ -169,8 +181,8 @@ router.post("/projects/:id/keys/:keyId/revoke", requireAuth, async (req, res, ne
     }
     const keyId = new ObjectId(keyIdRaw);
 
-    const isOwner = await verifyProjectOwnership(projectId, req.user._id);
-    if (!isOwner) {
+    const canManage = await canManageKeys(projectId, req.user._id);
+    if (!canManage) {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
 
@@ -181,7 +193,6 @@ router.post("/projects/:id/keys/:keyId/revoke", requireAuth, async (req, res, ne
       {
         _id: keyId,
         projectId,
-        ownerUserId: req.user._id,
       },
       {
         $set: { revokedAt: now },

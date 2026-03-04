@@ -5,14 +5,20 @@ import { useLocation } from "wouter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import {
+  BarChart3,
   Bell,
+  Building2,
+  ChevronDown,
   ChevronRight,
   CreditCard,
   FileText,
   Home,
+  LayoutTemplate,
   Search,
   Settings,
   Zap,
+  ListChecks,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest, ApiError } from "@/lib/api";
@@ -28,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Logo from "@/components/Logo";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type Mode = "Production" | "Test";
 
@@ -52,7 +59,12 @@ type AppShellProps = {
 
 const navKeys = [
   { key: "navigation.dashboard", href: "/app/dashboard", icon: Home },
+  { key: "navigation.workspaces", href: "/app/workspaces", icon: Building2 },
   { key: "navigation.projects", href: "/app/projects", icon: FileText },
+  { key: "navigation.requests", href: "/app/requests", icon: ListChecks },
+  { key: "navigation.templates", href: "/app/templates", icon: LayoutTemplate },
+  { key: "navigation.playground", href: "/app/playground", icon: Play },
+  { key: "navigation.analytics", href: "/app/analytics", icon: BarChart3 },
   { key: "navigation.credits", href: "/app/billing/credits", icon: Zap },
   { key: "navigation.billing", href: "/app/billing/plans", icon: CreditCard },
   { key: "navigation.settings", href: "/app/settings", icon: Settings },
@@ -63,6 +75,44 @@ const mockNotifications = [
   { id: "n2", message: "API key copied to clipboard", time: "10m ago" },
   { id: "n3", message: "Credits low warning threshold reached", time: "1h ago" },
 ];
+
+function WorkspaceSwitcher() {
+  const { workspaces, currentWorkspace, setCurrentWorkspace, isLoading } = useWorkspace();
+  const [, setLocation] = useLocation();
+  if (isLoading || workspaces.length === 0) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-sm text-gray-300 hover:text-white">
+          <Building2 size={14} />
+          <span className="max-w-[120px] truncate">{currentWorkspace?.name ?? "Workspace"}</span>
+          <ChevronDown size={14} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="bg-[#0b0e12] border-[rgba(255,255,255,0.08)]">
+        {workspaces.map((ws) => (
+          <DropdownMenuItem
+            key={ws.id}
+            onClick={() => {
+              setCurrentWorkspace(ws);
+              setLocation("/app/projects");
+            }}
+            className="text-gray-200 hover:bg-[rgba(255,255,255,0.06)]"
+          >
+            {ws.name}
+            <span className="ml-2 text-xs text-gray-500 capitalize">({ws.role})</span>
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuItem
+          onClick={() => setLocation("/app/workspaces")}
+          className="text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+        >
+          Manage workspaces
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function AppShell({
   title,
@@ -252,6 +302,7 @@ export default function AppShell({
               </div>
 
               <div className="flex items-center justify-start gap-2 xl:justify-end">
+                <WorkspaceSwitcher />
                 <ThemeSwitcher />
                 <LanguageSwitcher />
                 <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-xs text-gray-300 shadow-[0_0_8px_rgba(0,0,0,0.2)]">

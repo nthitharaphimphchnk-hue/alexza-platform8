@@ -199,6 +199,9 @@ router.post("/auth/signup", async (req, res, next) => {
       throw new Error("Failed to load newly created user");
     }
 
+    const { ensurePersonalWorkspace } = await import("./workspaces/migration");
+    await ensurePersonalWorkspace(insertResult.insertedId);
+
     await createSessionAndSetCookie(insertResult.insertedId, res);
     const { emitWebhookEvent } = await import("./webhooks/events");
     emitWebhookEvent({

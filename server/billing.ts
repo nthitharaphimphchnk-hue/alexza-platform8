@@ -4,11 +4,12 @@ import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { createCreditTransaction } from "./credits";
 
-export type BillingPlan = "free" | "pro";
+export type BillingPlan = "free" | "pro" | "enterprise";
 
 export const PLAN_MONTHLY_ALLOWANCE: Record<BillingPlan, number> = {
   free: 1000,
   pro: 10000,
+  enterprise: 100000,
 };
 
 interface UserBillingDoc {
@@ -29,11 +30,13 @@ interface BillingState {
 const router = Router();
 
 function normalizePlan(raw: unknown): BillingPlan {
-  return raw === "pro" ? "pro" : "free";
+  if (raw === "enterprise") return "enterprise";
+  if (raw === "pro") return "pro";
+  return "free";
 }
 
 function parsePlan(raw: unknown): BillingPlan | null {
-  if (raw === "free" || raw === "pro") return raw;
+  if (raw === "free" || raw === "pro" || raw === "enterprise") return raw;
   return null;
 }
 

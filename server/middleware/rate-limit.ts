@@ -1,0 +1,63 @@
+/**
+ * API rate limiting for runtime endpoints.
+ * Uses express-rate-limit with plan-based limits.
+ * Requires requireApiKey to run first.
+ */
+
+import type { Request, Response } from "express";
+import { rateLimit } from "express-rate-limit";
+import {
+  RATE_LIMIT_FREE_PER_MIN,
+  RATE_LIMIT_PRO_PER_MIN,
+  RATE_LIMIT_ENTERPRISE_PER_MIN,
+} from "../config";
+import { getUserBillingState } from "../billing";
+import { logger } from "../utils/logger";
+
+const WINDOW_MS = 60_000;
+
+function getLimitForPlan(plan: string): number {
+  switch (plan) {
+    case "enterprise":
+      return RATE_LIMIT_ENTERPRISE_PER_MIN;
+    case "pro":
+      return RATE_LIMIT_PRO_PER_MIN;
+    default:
+      return RATE_LIMIT_FREE_PER_MIN;
+  }
+}
+
+export const apiRateLimiter = rateLimit({
+  windowMs: WINDOW_MS,
+  limit: async (req: Request) => {
+    const userId = (req as Request & { apiKey?: { ownerUserId: unknown } }).apiKey?.ownerUserId;
+    if (!userId) return RATE_LIMIT_FREE_PER_MIN;
+    try {
+      const billing = await getUserBillingState(userId as import("mongodb").ObjectId);
+      return getLimitForPlan(billing.plan);
+    } catch {
+      return RATE_LIMIT_FREE_PER_MIN;
+    }
+  },
+  keyGenerator: (req: Request) => {
+    const keyId = (req as Request & { apiKey?: { id: string } }).apiKey?.id;
+    return keyId ?? req.ip ?? "unknown";
+  },
+  standardHeaders: false,
+  legacyHeaders: true,
+  message: { error: "rate_limit_exceeded" },
+  statusCode: 429,
+  handler: (req: Request, res: Response, _next, options) => {
+    const keyId = (req as Request & { apiKey?: { id: string } }).apiKey?.id;
+    logger.warn(
+      {
+        keyId: keyId ?? "unknown",
+        ip: req.ip,
+        path: req.path,
+      },
+      "[RateLimit] rate_limit_exceeded"
+    );
+    res.status(options.statusCode).json(options.message);
+  },
+  validate: { xForwardedForHeader: false },
+});

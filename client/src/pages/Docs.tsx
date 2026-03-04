@@ -42,6 +42,7 @@ export default function Docs() {
     {
       title: t("docs.apiReference"),
       subsections: [
+        { label: "Interactive API (Swagger)", id: "interactive-api" },
         { label: t("docs.projects"), id: "projects" },
         { label: t("docs.runByAction"), id: "run-by-action" },
         { label: t("docs.legacyRun"), id: "legacy-run" },
@@ -69,10 +70,9 @@ export default function Docs() {
     {
       title: t("docs.sdk"),
       subsections: [
+        { label: "Official SDKs", id: "sdk", href: "/docs/sdk" },
         { label: "Python", id: "sdk-python" },
         { label: "JavaScript", id: "sdk-js" },
-        { label: "Go", id: "sdk-go" },
-        { label: "Ruby", id: "sdk-ruby" },
       ],
     },
   ];
@@ -165,7 +165,7 @@ const response = await client.chat.completions.create({
                   {section.subsections.map((sub, i) => (
                     <li key={i}>
                       <a
-                        href={`#${sub.id}`}
+                        href={(sub as { href?: string }).href ?? `#${sub.id}`}
                         className="text-sm text-gray-400 hover:text-white transition flex items-center gap-2"
                       >
                         <ChevronRight size={14} />
@@ -289,6 +289,33 @@ const response = await client.chat.completions.create({
             {/* API Reference - Run by Action (Recommended) */}
             <motion.section id="run-by-action" className="space-y-6 scroll-mt-32" variants={itemVariants}>
               <h2 className="text-3xl font-bold text-white">{t("docs.apiReference")}</h2>
+
+              <motion.div
+                id="interactive-api"
+                className="rounded-xl border-2 border-[#c0c0c0]/40 bg-[#0b0e12] p-4 flex items-center justify-between flex-wrap gap-3 scroll-mt-32"
+                variants={itemVariants}
+              >
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Interactive API Documentation</h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    OpenAPI / Swagger UI with &quot;Try it out&quot; — test endpoints directly.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[rgba(192,192,192,0.4)] text-white hover:bg-[rgba(192,192,192,0.1)]"
+                  onClick={() => {
+                    const apiBase = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(
+                      /\/+$/,
+                      ""
+                    );
+                    const url = apiBase ? `${apiBase}/docs/api` : `${window.location.origin}/docs/api`;
+                    window.open(url, "_blank");
+                  }}
+                >
+                  Open API Docs →
+                </Button>
+              </motion.div>
 
               <motion.div
                 className="showcase-card p-6 rounded-xl bg-[#0b0e12] border-2 border-[#c0c0c0]/40 hover:border-[#c0c0c0]/60 transition-all duration-300"
@@ -551,11 +578,16 @@ function verifySignature(payload, signature, timestamp, secret) {
             {/* SDKs */}
             <motion.section id="sdk" className="space-y-6 scroll-mt-32" variants={itemVariants}>
               <h2 className="text-3xl font-bold text-white">{t("docs.sdk")}</h2>
-              <p className="text-gray-300">Official SDKs: Python, JavaScript, Go, Ruby — coming soon.</p>
+              <p className="text-gray-300">
+                Official JavaScript and Python SDKs.{" "}
+                <a href="/docs/sdk" className="text-[#c0c0c0] hover:text-white underline">
+                  View SDK documentation →
+                </a>
+              </p>
               <h3 id="sdk-python" className="text-lg font-semibold text-white scroll-mt-32">Python</h3>
+              <p className="text-gray-400"><code className="text-[#c0c0c0]">pip install alexza-ai</code></p>
               <h3 id="sdk-js" className="text-lg font-semibold text-white scroll-mt-32">JavaScript</h3>
-              <h3 id="sdk-go" className="text-lg font-semibold text-white scroll-mt-32">Go</h3>
-              <h3 id="sdk-ruby" className="text-lg font-semibold text-white scroll-mt-32">Ruby</h3>
+              <p className="text-gray-400"><code className="text-[#c0c0c0]">npm install @alexza-ai/sdk</code></p>
             </motion.section>
 
             {/* Support */}

@@ -11,6 +11,9 @@ import { MAX_ACTIONS_PER_PROJECT_FREE } from "./config";
 import { QUALITY_MODELS, QUALITY_MODELS_OPENAI } from "./modelRegistry";
 import type { ProjectActionDoc, ProposedAction } from "./models/types";
 import { toPublicAction } from "./models/actionDto";
+import { ensureProjectAccess } from "./workspaces/projectAccess";
+import { getMemberRole } from "./workspaces/workspaces.routes";
+import { hasPermission } from "./workspaces/permissions";
 
 const router = Router();
 
@@ -36,13 +39,14 @@ async function ensureIndexes() {
   return indexesReady;
 }
 
-async function ensureProjectAccess(projectId: ObjectId, userId: ObjectId): Promise<boolean> {
+async function canManageActions(projectId: ObjectId, userId: ObjectId): Promise<boolean> {
+  const hasAccess = await ensureProjectAccess(projectId, userId);
+  if (!hasAccess) return false;
   const db = await getDb();
-  const project = await db.collection("projects").findOne({
-    _id: projectId,
-    ownerUserId: userId,
-  });
-  return !!project;
+  const project = await db.collection<{ workspaceId?: ObjectId }>("projects").findOne({ _id: projectId });
+  if (!project?.workspaceId) return true;
+  const role = await getMemberRole(project.workspaceId, userId);
+  return !!role && hasPermission(role, "actions:manage");
 }
 
 const ACTION_NAME_REGEX = /^[a-z0-9_-]+$/;
@@ -80,8 +84,8 @@ router.post("/projects/:id/actions", requireAuth, async (req, res, next) => {
     const projectId = parseProjectId(req.params.id);
     if (!projectId) return err(res, 404, "NOT_FOUND", "Project not found");
 
-    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
-    if (!hasAccess) return err(res, 404, "NOT_FOUND", "Project not found");
+    const canManage = await canManageActions(projectId, req.user._id);
+    if (!canManage) return err(res, 404, "NOT_FOUND", "Project not found");
 
     const body = req.body as Partial<ProposedAction> & { actionName?: string; routingPolicy?: string };
     const rawActionName = typeof body.actionName === "string" ? body.actionName : "";
@@ -280,8 +284,8 @@ router.delete("/projects/:id/actions/:actionName", requireAuth, async (req, res,
     }
     const safeActionName = actionName.trim().toLowerCase();
 
-    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
-    if (!hasAccess) return err(res, 404, "NOT_FOUND", "Project not found");
+    const canManage = await canManageActions(projectId, req.user._id);
+    if (!canManage) return err(res, 404, "NOT_FOUND", "Project not found");
 
     const db = await getDb();
     const result = await db.collection<ProjectActionDoc>("project_actions").findOneAndDelete({

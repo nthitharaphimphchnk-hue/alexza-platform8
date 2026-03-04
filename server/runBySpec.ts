@@ -19,9 +19,10 @@ import { estimateTokensFromInput } from "./utils/tokenEstimator";
 import { MAX_CREDITS_PER_REQUEST, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
 import { rateLimitByIp } from "./middleware/rateLimitByIp";
-import { rateLimitByApiKey } from "./middleware/rateLimitByApiKey";
+import { apiRateLimiter } from "./middleware/rate-limit";
 import { logUsage } from "./usage";
 import { logRun } from "./runLogs";
+import { logApiRequest } from "./apiRequests";
 import { runWithFallback } from "./providers";
 import { sanitizeForResponse } from "./utils/sanitize";
 import {
@@ -150,7 +151,7 @@ router.post(
   "/v1/projects/:projectId/run/:actionName",
   rateLimitByIp,
   requireApiKey,
-  rateLimitByApiKey,
+  apiRateLimiter,
   async (req, res) => {
     const startMs = Date.now();
     const projectIdRaw = req.params.projectId;
@@ -161,6 +162,8 @@ router.post(
     if (!req.apiKey) {
       return runError(res, 401, "UNAUTHORIZED", "Unauthorized", requestId);
     }
+
+    const source = req.headers["x-playground"] === "true" ? ("playground" as const) : undefined;
 
     const projectId = parseProjectId(projectIdRaw);
     if (!projectId) {
@@ -232,6 +235,7 @@ router.post(
       }
 
       if (!action) {
+        const latencyMs = Date.now() - startMs;
         await safeLogUsage({ statusCode: 404, status: "error", actionDoc: null, routingMode });
         await logRun({
           requestId,
@@ -241,7 +245,17 @@ router.post(
           actionName,
           status: "error",
           statusCode: 404,
-          latencyMs: Date.now() - startMs,
+          latencyMs,
+        });
+        await logApiRequest({
+          id: requestId,
+          ownerUserId: req.apiKey.ownerUserId,
+          projectId: req.apiKey.projectId,
+          actionName,
+          status: "error",
+          latencyMs,
+          error: "Action not found",
+          source,
         });
         return runError(res, 404, "NOT_FOUND", "Action not found", requestId);
       }
@@ -251,6 +265,7 @@ router.post(
 
       const normResult = normalizeRequestBody(body, schema && typeof schema === "object" ? schema : null);
       if ("error" in normResult) {
+        const latencyMs = Date.now() - startMs;
         await safeLogUsage({ statusCode: 400, status: "error", actionDoc: action, routingMode });
         await logRun({
           requestId,
@@ -260,7 +275,17 @@ router.post(
           actionName,
           status: "error",
           statusCode: 400,
-          latencyMs: Date.now() - startMs,
+          latencyMs,
+        });
+        await logApiRequest({
+          id: requestId,
+          ownerUserId: req.apiKey.ownerUserId,
+          projectId: req.apiKey.projectId,
+          actionName,
+          status: "error",
+          latencyMs,
+          error: normResult.error,
+          source,
         });
         return runError(res, 400, "VALIDATION_ERROR", normResult.error, requestId);
       }
@@ -273,6 +298,7 @@ router.post(
         try {
           validate = ajv.compile(schema);
         } catch (schemaErr) {
+          const latencyMs = Date.now() - startMs;
           await safeLogUsage({ statusCode: 500, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
@@ -282,7 +308,17 @@ router.post(
             actionName,
             status: "error",
             statusCode: 500,
-            latencyMs: Date.now() - startMs,
+            latencyMs,
+          });
+          await logApiRequest({
+            id: requestId,
+            ownerUserId: req.apiKey.ownerUserId,
+            projectId: req.apiKey.projectId,
+            actionName,
+            status: "error",
+            latencyMs,
+            error: "Invalid action schema",
+            source,
           });
           return runError(res, 500, "RUNTIME_ERROR", "Invalid action schema", requestId);
         }
@@ -293,6 +329,7 @@ router.post(
             firstErr?.instancePath && firstErr?.message
               ? `${firstErr.instancePath}: ${firstErr.message}`
               : "Body must be { input: {...} }";
+          const latencyMs = Date.now() - startMs;
           await safeLogUsage({ statusCode: 400, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
@@ -302,7 +339,17 @@ router.post(
             actionName,
             status: "error",
             statusCode: 400,
-            latencyMs: Date.now() - startMs,
+            latencyMs,
+          });
+          await logApiRequest({
+            id: requestId,
+            ownerUserId: req.apiKey.ownerUserId,
+            projectId: req.apiKey.projectId,
+            actionName,
+            status: "error",
+            latencyMs,
+            error: msg,
+            source,
           });
           return runError(res, 400, "VALIDATION_ERROR", msg, requestId);
         }
@@ -310,6 +357,7 @@ router.post(
 
       const prompt = substituteVariables(action.promptTemplate, variables);
       if (prompt.length > MAX_INPUT_CHARS) {
+        const latencyMs = Date.now() - startMs;
         await safeLogUsage({ statusCode: 400, status: "error", actionDoc: action, routingMode });
         await logRun({
           requestId,
@@ -319,7 +367,17 @@ router.post(
           actionName,
           status: "error",
           statusCode: 400,
-          latencyMs: Date.now() - startMs,
+          latencyMs,
+        });
+        await logApiRequest({
+          id: requestId,
+          ownerUserId: req.apiKey.ownerUserId,
+          projectId: req.apiKey.projectId,
+          actionName,
+          status: "error",
+          latencyMs,
+          error: "Input too long",
+          source,
         });
         return runError(res, 400, "REQUEST_TOO_LARGE", "Input too long", requestId);
       }
@@ -343,6 +401,7 @@ router.post(
         reserved = true;
       } catch (err) {
         if (err instanceof InsufficientBalanceError) {
+          const latencyMs = Date.now() - startMs;
           await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
           await logRun({
             requestId,
@@ -352,7 +411,17 @@ router.post(
             actionName,
             status: "failed_insufficient_credits",
             statusCode: 402,
-            latencyMs: Date.now() - startMs,
+            latencyMs,
+          });
+          await logApiRequest({
+            id: requestId,
+            ownerUserId: req.apiKey.ownerUserId,
+            projectId: req.apiKey.projectId,
+            actionName,
+            status: "failed_insufficient_credits",
+            latencyMs,
+            error: "Insufficient balance",
+            source,
           });
           return res.status(402).json({
             ok: false,
@@ -421,6 +490,7 @@ router.post(
               meta: { reason: "Insufficient for actual usage", actionName },
             });
             await safeLogUsage({ statusCode: 402, status: "error", actionDoc: action, routingMode });
+            const latencyMs = Date.now() - startMs;
             await logRun({
               requestId,
               projectId: req.apiKey.projectId,
@@ -429,7 +499,17 @@ router.post(
               actionName,
               status: "failed_insufficient_credits",
               statusCode: 402,
-              latencyMs: Date.now() - startMs,
+              latencyMs,
+            });
+            await logApiRequest({
+              id: requestId,
+              ownerUserId: req.apiKey.ownerUserId,
+              projectId: req.apiKey.projectId,
+              actionName,
+              status: "failed_insufficient_credits",
+              latencyMs,
+              error: "Insufficient balance for actual usage",
+              source,
             });
             return res.status(402).json({
               ok: false,
@@ -469,6 +549,16 @@ router.post(
         upstreamProvider: executionProvider,
         upstreamModel: resolvedModel,
       });
+      await logApiRequest({
+        id: requestId,
+        ownerUserId: req.apiKey.ownerUserId,
+        projectId: req.apiKey.projectId,
+        actionName,
+        status: "success",
+        tokensUsed: totalTokens ?? 0,
+        latencyMs,
+        source,
+      });
 
       const { emitWebhookEvent } = await import("./webhooks/events");
       emitWebhookEvent({
@@ -498,6 +588,7 @@ router.post(
       });
     } catch (error) {
       const latencyMs = Date.now() - startMs;
+      const errMsg = sanitizeForResponse(error);
       await safeLogUsage({ statusCode: 502, status: "error", actionDoc: undefined, routingMode: "quality" });
       await logRun({
         requestId,
@@ -508,7 +599,17 @@ router.post(
         status: "error",
         statusCode: 502,
         latencyMs,
-        rawUpstreamError: sanitizeForResponse(error),
+        rawUpstreamError: errMsg,
+      });
+      await logApiRequest({
+        id: requestId,
+        ownerUserId: req.apiKey.ownerUserId,
+        projectId: req.apiKey.projectId,
+        actionName,
+        status: "error",
+        latencyMs,
+        error: errMsg,
+        source,
       });
       if (req.apiKey) {
         const { emitWebhookEvent } = await import("./webhooks/events");

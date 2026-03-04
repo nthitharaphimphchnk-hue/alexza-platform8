@@ -1,0 +1,39 @@
+{
+  "name": "@alexza-ai/sdk",
+  "version": "1.0.0",
+  "description": "Official ALEXZA AI JavaScript SDK",
+  "main": "dist/alexza.js",
+  "types": "dist/alexza.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/alexza.d.ts",
+      "default": "./dist/alexza.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "alexza",
+    "ai",
+    "sdk",
+    "api"
+  ],
+  "author": "ALEXZA AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexza-ai/alexza-ai"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

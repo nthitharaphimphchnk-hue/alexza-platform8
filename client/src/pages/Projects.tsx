@@ -19,6 +19,7 @@ import { showErrorToast, showProjectCreatedToast } from "@/lib/toast";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
 import { useLocation } from "wouter";
 import AppShell from "@/components/app/AppShell";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface ProjectFormData {
   name: string;
@@ -229,10 +230,15 @@ export default function Projects() {
     throw new Error("Invalid projects response payload");
   };
 
+  const { currentWorkspace } = useWorkspace();
+
   const loadProjects = useCallback(async (): Promise<Project[]> => {
     const requestId = ++loadRequestIdRef.current;
     try {
-      const data = await apiRequest<ProjectsApiResponse>("/api/projects");
+      const url = currentWorkspace
+        ? `/api/projects?workspaceId=${encodeURIComponent(currentWorkspace.id)}`
+        : "/api/projects";
+      const data = await apiRequest<ProjectsApiResponse>(url);
       const nextProjects = parseProjectsPayload(data);
 
       if (requestId === loadRequestIdRef.current) {
@@ -261,7 +267,7 @@ export default function Projects() {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [currentWorkspace?.id]);
 
   useEffect(() => {
     void loadProjects();
@@ -276,15 +282,19 @@ export default function Projects() {
     validate: validateProjectForm,
     onSubmit: async (values) => {
       try {
+        const body: Record<string, unknown> = {
+          name: values.name,
+          description: values.description,
+          model: values.model,
+        };
+        if (currentWorkspace) {
+          body.workspaceId = currentWorkspace.id;
+        }
         const response = await apiRequest<{ ok?: boolean; project?: unknown } | unknown>(
           "/api/projects",
           {
             method: "POST",
-            body: {
-              name: values.name,
-              description: values.description,
-              model: values.model,
-            },
+            body,
           }
         );
 

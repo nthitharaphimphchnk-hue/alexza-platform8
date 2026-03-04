@@ -34,11 +34,16 @@ export const RATE_LIMIT_REQUESTS_PER_MINUTE = readPositiveIntFromEnv(
   30
 );
 
-/** Per API key: Free plan */
-export const RATE_LIMIT_FREE_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_FREE_PER_MIN", 30);
+/** Per API key: Free plan (req/min). Env: RATE_LIMIT_FREE or RATE_LIMIT_FREE_PER_MIN */
+export const RATE_LIMIT_FREE_PER_MIN =
+  readPositiveIntFromEnv("RATE_LIMIT_FREE", 0) || readPositiveIntFromEnv("RATE_LIMIT_FREE_PER_MIN", 30);
 
-/** Per API key: Pro plan */
-export const RATE_LIMIT_PRO_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_PRO_PER_MIN", 120);
+/** Per API key: Pro plan (req/min). Env: RATE_LIMIT_PRO or RATE_LIMIT_PRO_PER_MIN */
+export const RATE_LIMIT_PRO_PER_MIN =
+  readPositiveIntFromEnv("RATE_LIMIT_PRO", 0) || readPositiveIntFromEnv("RATE_LIMIT_PRO_PER_MIN", 120);
+
+/** Per API key: Enterprise plan (req/min). Env: RATE_LIMIT_ENTERPRISE */
+export const RATE_LIMIT_ENTERPRISE_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_ENTERPRISE", 600);
 
 /** Per IP: safety net (applies to all requests) */
 export const RATE_LIMIT_IP_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_IP_PER_MIN", 60);

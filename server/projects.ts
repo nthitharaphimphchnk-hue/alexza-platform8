@@ -2,11 +2,15 @@ import { Router } from "express";
 import { ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { ensureProjectAccess, getWorkspaceIdsForUser } from "./workspaces/projectAccess";
+import { getMemberRole } from "./workspaces/workspaces.routes";
+import { hasPermission } from "./workspaces/permissions";
 
 export type RoutingMode = "cheap" | "balanced" | "quality";
 
 interface ProjectDoc {
   ownerUserId: ObjectId;
+  workspaceId?: ObjectId;
   name: string;
   description?: string;
   model?: string;
@@ -20,6 +24,7 @@ interface CreateProjectBody {
   name?: unknown;
   description?: unknown;
   model?: unknown;
+  workspaceId?: unknown;
 }
 
 interface UpdateProjectBody {
@@ -39,6 +44,7 @@ function toProjectResponse(project: WithId<ProjectDoc>) {
     id,
     _id: id,
     ownerUserId: project.ownerUserId.toString(),
+    workspaceId: project.workspaceId?.toString(),
     name: project.name,
     description: project.description ?? "",
     model: project.model ?? "",
@@ -64,6 +70,7 @@ async function ensureProjectsIndexes() {
       const db = await getDb();
       const projects = db.collection<ProjectDoc>("projects");
       await projects.createIndex({ ownerUserId: 1, createdAt: -1 });
+      await projects.createIndex({ workspaceId: 1, createdAt: -1 });
     })();
   }
   return projectsIndexesReady;
@@ -87,14 +94,6 @@ router.post("/projects", requireAuth, async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     }
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        "[Projects][POST] ownerUserId type:",
-        req.user?._id?.constructor?.name,
-        "value:",
-        String(req.user?._id)
-      );
-    }
 
     const body = req.body as CreateProjectBody;
     const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -106,9 +105,25 @@ router.post("/projects", requireAuth, async (req, res, next) => {
       typeof body.model === "string" && body.model.trim().length > 0
         ? body.model.trim()
         : undefined;
+    const workspaceIdRaw = typeof body.workspaceId === "string" ? body.workspaceId.trim() : "";
 
     if (name.length < 2) {
       return res.status(400).json(validationError("Project name must be at least 2 characters"));
+    }
+
+    let workspaceId: ObjectId | undefined;
+    if (workspaceIdRaw && ObjectId.isValid(workspaceIdRaw)) {
+      workspaceId = new ObjectId(workspaceIdRaw);
+      const role = await getMemberRole(workspaceId, req.user._id);
+      if (!role || !hasPermission(role, "projects:manage")) {
+        return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+      }
+    } else {
+      const db = await getDb();
+      const member = await db
+        .collection<{ workspaceId: ObjectId }>("workspace_members")
+        .findOne({ userId: req.user._id, status: "active", role: "owner" });
+      if (member) workspaceId = member.workspaceId;
     }
 
     const db = await getDb();
@@ -117,6 +132,7 @@ router.post("/projects", requireAuth, async (req, res, next) => {
 
     const insertResult = await projects.insertOne({
       ownerUserId: req.user._id,
+      workspaceId,
       name,
       description,
       model,
@@ -143,21 +159,30 @@ router.get("/projects", requireAuth, async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     }
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        "[Projects][GET] ownerUserId type:",
-        req.user?._id?.constructor?.name,
-        "value:",
-        String(req.user?._id)
-      );
-    }
 
+    const workspaceIdRaw = typeof req.query.workspaceId === "string" ? req.query.workspaceId.trim() : "";
     const db = await getDb();
     const projects = db.collection<ProjectDoc>("projects");
-    const rows = await projects
-      .find({ ownerUserId: req.user._id })
-      .sort({ createdAt: -1 })
-      .toArray();
+
+    let filter: { ownerUserId?: ObjectId; workspaceId?: ObjectId | { $in: ObjectId[] } } = {};
+
+    if (workspaceIdRaw && ObjectId.isValid(workspaceIdRaw)) {
+      const workspaceId = new ObjectId(workspaceIdRaw);
+      const role = await getMemberRole(workspaceId, req.user._id);
+      if (!role) {
+        return res.json({ ok: true, projects: [] });
+      }
+      filter = { workspaceId };
+    } else {
+      const workspaceIds = await getWorkspaceIdsForUser(req.user._id);
+      const orConditions: Record<string, unknown>[] = [{ ownerUserId: req.user._id }];
+      if (workspaceIds.length > 0) {
+        orConditions.push({ workspaceId: { $in: workspaceIds } });
+      }
+      filter = { $or: orConditions } as typeof filter;
+    }
+
+    const rows = await projects.find(filter).sort({ createdAt: -1 }).toArray();
 
     return res.json({
       ok: true,
@@ -173,14 +198,26 @@ const ROUTING_MODES: RoutingMode[] = ["cheap", "balanced", "quality"];
 router.patch("/projects/:id/settings", requireAuth, async (req, res, next) => {
   try {
     await ensureProjectsIndexes();
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
-    }
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 
     const projectId = parseProjectId(req.params.id);
-    if (!projectId) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    if (!projectId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
+    if (!hasAccess) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const db = await getDb();
+    const projects = db.collection<ProjectDoc>("projects");
+    const project = await projects.findOne({ _id: projectId });
+    if (!project) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const workspaceId = project.workspaceId;
+    let canManage = true;
+    if (workspaceId) {
+      const role = await getMemberRole(workspaceId, req.user._id);
+      canManage = !!role && hasPermission(role, "projects:manage");
     }
+    if (!canManage) return res.status(403).json({ ok: false, error: "FORBIDDEN" });
 
     const body = req.body as { routingMode?: unknown };
     const routingModeRaw = body.routingMode;
@@ -194,18 +231,13 @@ router.patch("/projects/:id/settings", requireAuth, async (req, res, next) => {
     }
     const routingMode = routingModeRaw as RoutingMode;
 
-    const db = await getDb();
-    const projects = db.collection<ProjectDoc>("projects");
     const updated = await projects.findOneAndUpdate(
-      { _id: projectId, ownerUserId: req.user._id },
+      { _id: projectId },
       { $set: { routingMode, updatedAt: new Date() } },
       { returnDocument: "after" }
     );
 
-    if (!updated) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
-    }
-
+    if (!updated) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     return res.json({ ok: true, project: toProjectResponse(updated) });
   } catch (error) {
     return next(error);
@@ -215,25 +247,17 @@ router.patch("/projects/:id/settings", requireAuth, async (req, res, next) => {
 router.get("/projects/:id", requireAuth, async (req, res, next) => {
   try {
     await ensureProjectsIndexes();
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
-    }
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 
     const projectId = parseProjectId(req.params.id);
-    if (!projectId) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
-    }
+    if (!projectId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
+    if (!hasAccess) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
     const db = await getDb();
-    const projects = db.collection<ProjectDoc>("projects");
-    const project = await projects.findOne({
-      _id: projectId,
-      ownerUserId: req.user._id,
-    });
-
-    if (!project) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
-    }
+    const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
+    if (!project) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
     return res.json({ ok: true, project: toProjectResponse(project) });
   } catch (error) {
@@ -244,25 +268,30 @@ router.get("/projects/:id", requireAuth, async (req, res, next) => {
 router.delete("/projects/:id", requireAuth, async (req, res, next) => {
   try {
     await ensureProjectsIndexes();
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
-    }
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 
     const projectId = parseProjectId(req.params.id);
-    if (!projectId) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
-    }
+    if (!projectId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
+    if (!hasAccess) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
     const db = await getDb();
-    const projects = db.collection<ProjectDoc>("projects");
-    const deletedProject = await projects.findOneAndDelete({
+    const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
+    if (!project) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    if (project.workspaceId) {
+      const role = await getMemberRole(project.workspaceId, req.user._id);
+      if (!role || !hasPermission(role, "projects:manage")) {
+        return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+      }
+    }
+
+    const deletedProject = await db.collection<ProjectDoc>("projects").findOneAndDelete({
       _id: projectId,
-      ownerUserId: req.user._id,
     });
 
-    if (!deletedProject) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
-    }
+    if (!deletedProject) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
     const threadIds = await db
       .collection("chat_threads")
@@ -288,13 +317,23 @@ router.delete("/projects/:id", requireAuth, async (req, res, next) => {
 router.patch("/projects/:id", requireAuth, async (req, res, next) => {
   try {
     await ensureProjectsIndexes();
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
-    }
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 
     const projectId = parseProjectId(req.params.id);
-    if (!projectId) {
-      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    if (!projectId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
+    if (!hasAccess) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const db = await getDb();
+    const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
+    if (!project) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    if (project.workspaceId) {
+      const role = await getMemberRole(project.workspaceId, req.user._id);
+      if (!role || !hasPermission(role, "projects:manage")) {
+        return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+      }
     }
 
     const body = req.body as UpdateProjectBody;
@@ -343,13 +382,9 @@ router.patch("/projects/:id", requireAuth, async (req, res, next) => {
 
     updateSet.updatedAt = new Date();
 
-    const db = await getDb();
     const projects = db.collection<ProjectDoc>("projects");
     const updated = await projects.findOneAndUpdate(
-      {
-        _id: projectId,
-        ownerUserId: req.user._id,
-      },
+      { _id: projectId },
       {
         $set: updateSet,
       },

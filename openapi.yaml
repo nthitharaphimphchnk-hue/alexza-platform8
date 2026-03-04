@@ -1,0 +1,629 @@
+openapi: 3.0.3
+info:
+  title: ALEXZA AI API
+  description: |
+    ALEXZA AI provides a managed AI runtime for running actions, managing projects,
+    and receiving webhooks. Use `x-api-key` for API key authentication on v1 endpoints.
+  version: 1.0.0
+  contact:
+    name: ALEXZA AI
+
+servers:
+  - url: /
+    description: API server (use full base URL in production)
+
+tags:
+  - name: Runtime
+    description: Execute AI actions
+  - name: Projects
+    description: Project management
+  - name: Analytics
+    description: Usage analytics
+  - name: Requests
+    description: API request logs
+  - name: Webhooks
+    description: Webhook endpoints
+
+paths:
+  /v1/projects/{projectId}/run/{actionName}:
+    post:
+      tags: [Runtime]
+      summary: Run action by name
+      description: |
+        Execute a saved action by project ID and action name.
+        Validates input against the action's inputSchema, runs via ALEXZA Managed Runtime,
+        logs usage, and deducts credits.
+      operationId: runAction
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "507f1f77bcf86cd799439011"
+          description: MongoDB ObjectId of the project
+        - name: actionName
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "summarize_text"
+          description: Name of the action to run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunActionInput"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunActionSuccess"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "402":
+          description: Insufficient credits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project or action not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Runtime error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - ApiKeyAuth: []
+
+  /v1/run:
+    post:
+      tags: [Runtime]
+      summary: Legacy run (deprecated)
+      description: |
+        Deprecated. Use `POST /v1/projects/{projectId}/run/{actionName}` for action-based execution.
+        Single-input legacy endpoint.
+      operationId: runLegacy
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [input]
+              properties:
+                input:
+                  type: string
+                  description: Text input to process
+                  example: "Hello, run my AI flow"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  output:
+                    type: string
+                  requestId:
+                    type: string
+        "400":
+        "401":
+        "402":
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - ApiKeyAuth: []
+
+  /api/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      description: Returns projects the user owns or has workspace access to.
+      operationId: listProjects
+      parameters:
+        - name: workspaceId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by workspace ID
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Project"
+        "401":
+          description: Unauthorized - session required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: Analytics overview
+      description: Returns aggregated analytics for the user.
+      operationId: getAnalyticsOverview
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  totalCreditsUsed:
+                    type: number
+                  totalApiCalls:
+                    type: number
+                  totalTokensUsed:
+                    type: number
+                  totalActionsRun:
+                    type: number
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/analytics/projects:
+    get:
+      tags: [Analytics]
+      summary: Analytics by project
+      operationId: getAnalyticsProjects
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  projects:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        projectId:
+                          type: string
+                        projectName:
+                          type: string
+                        totalApiCalls:
+                          type: number
+                        totalTokensUsed:
+                          type: number
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/analytics/actions:
+    get:
+      tags: [Analytics]
+      summary: Analytics by action
+      operationId: getAnalyticsActions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  actions:
+                    type: array
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/analytics/daily:
+    get:
+      tags: [Analytics]
+      summary: Daily analytics
+      operationId: getAnalyticsDaily
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  daily:
+                    type: array
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/requests:
+    get:
+      tags: [Requests]
+      summary: List API request logs
+      description: Paginated list of API request history for debugging.
+      operationId: listRequests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: actionName
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [success, error, failed_insufficient_credits]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  requests:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiRequestItem"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      pageSize:
+                        type: integer
+                      total:
+                        type: integer
+                      totalPages:
+                        type: integer
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/requests/{id}:
+    get:
+      tags: [Requests]
+      summary: Get request detail
+      operationId: getRequestDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  request:
+                    $ref: "#/components/schemas/ApiRequestItem"
+        "401":
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+  /api/webhooks:
+    get:
+      tags: [Webhooks]
+      summary: List webhook endpoints
+      operationId: listWebhooks
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  endpoints:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookEndpoint"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+    post:
+      tags: [Webhooks]
+      summary: Create webhook endpoint
+      operationId: createWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  example: "https://example.com/webhook"
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - auth.user.created
+                      - wallet.topup.succeeded
+                      - wallet.low_balance
+                      - action.run.succeeded
+                      - action.run.failed
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  endpoint:
+                    $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API key (e.g. axza_live_...)
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Session cookie (set via login)
+
+  schemas:
+    RunActionInput:
+      type: object
+      required: [input]
+      properties:
+        input:
+          oneOf:
+            - type: object
+              description: Input object matching action's inputSchema
+            - type: string
+              description: For simple text input (backward compat)
+      example:
+        input:
+          text: "Long text to summarize..."
+
+    RunActionSuccess:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        requestId:
+          type: string
+        output:
+          type: string
+        creditsCharged:
+          type: number
+        usage:
+          type: object
+          properties:
+            tokens:
+              type: number
+            creditsCharged:
+              type: number
+        latencyMs:
+          type: number
+
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: false
+        error:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                code:
+                  type: string
+                message:
+                  type: string
+        requestId:
+          type: string
+          description: Present on v1 run endpoints
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, paused]
+        routingMode:
+          type: string
+          enum: [cheap, balanced, quality]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ApiRequestItem:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        projectName:
+          type: string
+        actionName:
+          type: string
+        status:
+          type: string
+          enum: [success, error, failed_insufficient_credits]
+        tokensUsed:
+          type: number
+        latencyMs:
+          type: number
+        error:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        enabled:
+          type: boolean
+        events:
+          type: array
+          items:
+            type: string
+        projectId:
+          type: string
+          nullable: true
+        secret:
+          type: string
+          description: Only returned on create
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

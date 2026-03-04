@@ -10,6 +10,7 @@ import { requireAuth } from "./middleware/requireAuth";
 import type { ChatThreadDoc, ChatMessageDoc, ProposedAction } from "./models/types";
 import { toPublicProposedAction } from "./models/actionDto";
 import { runOpenAI } from "./providers/openai";
+import { ensureProjectAccess } from "./workspaces/projectAccess";
 
 const router = Router();
 
@@ -68,15 +69,6 @@ async function ensureIndexes() {
     })();
   }
   return indexesReady;
-}
-
-async function ensureProjectAccess(projectId: ObjectId, userId: ObjectId): Promise<boolean> {
-  const db = await getDb();
-  const project = await db.collection("projects").findOne({
-    _id: projectId,
-    ownerUserId: userId,
-  });
-  return !!project;
 }
 
 // POST /api/projects/:id/threads

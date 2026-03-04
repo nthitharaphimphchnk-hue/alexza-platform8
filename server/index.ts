@@ -28,10 +28,16 @@ import { runWalletMigration } from "./wallet";
 import { billingRouter, runBillingUserMigration } from "./billing";
 import { stripeRouter, createWebhookRoute } from "./modules/stripe/stripe.routes";
 import { runRoutingModeMigration } from "./projects";
+import { runWorkspaceMigration } from "./workspaces/migration";
+import { workspacesRouter } from "./workspaces/workspaces.routes";
 import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
 import { webhooksRouter } from "./webhooks/webhooks.routes";
 import { estimateRouter } from "./estimate";
+import { analyticsRouter } from "./analytics";
+import { requestsRouter } from "./requestsRoutes";
+import { templatesRouter } from "./templatesRoutes";
+import { adminTemplatesRouter } from "./adminTemplatesRoutes";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { sentryScopeMiddleware } from "./middleware/sentryScope";
 import { requestLogger } from "./middleware/requestLogger";
@@ -43,6 +49,8 @@ import { normalizeEnvUrl } from "./utils/envUrls";
 import { getCreditPrice } from "./config";
 import { CREDIT_PRICE_TIERS } from "./config/pricing";
 import { TOKENS_PER_CREDIT } from "./wallet";
+import swaggerUi from "swagger-ui-express";
+import { parse as parseYaml } from "yaml";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -107,6 +115,7 @@ async function startServer() {
   await runWalletMigration();
   await runLowCreditsEmailMigration();
   await runRoutingModeMigration();
+  await runWorkspaceMigration();
   const app = express();
   const server = createServer(app);
 
@@ -202,6 +211,7 @@ async function startServer() {
   });
 
   app.use("/api", authRouter);
+  app.use("/api", workspacesRouter);
   app.use("/api", projectsRouter);
   app.use("/api", keysRouter);
   app.use("/api", builderRouter);
@@ -210,6 +220,10 @@ async function startServer() {
   app.use("/api", creditsRouter);
   app.use("/api", walletRouter);
   app.use("/api", estimateRouter);
+  app.use("/api", analyticsRouter);
+  app.use("/api", requestsRouter);
+  app.use("/api", templatesRouter);
+  app.use("/api", adminTemplatesRouter);
   app.use("/api", onboardingRouter);
   app.use("/api", billingRouter);
   app.use("/api/billing/stripe", stripeRouter);
@@ -218,6 +232,43 @@ async function startServer() {
   app.use("/api", adminRunLogsRouter);
   app.use(runRouter);
   app.use(runBySpecRouter);
+
+  // OpenAPI / Swagger documentation at /docs/api
+  const openapiPaths = [
+    path.join(__dirname, "..", "..", "openapi.yaml"),
+    path.join(__dirname, "..", "openapi.yaml"),
+    path.join(process.cwd(), "openapi.yaml"),
+  ];
+  let openapiDoc: Record<string, unknown> | null = null;
+  for (const openapiPath of openapiPaths) {
+    try {
+      const yamlContent = fs.readFileSync(openapiPath, "utf-8");
+      openapiDoc = parseYaml(yamlContent) as Record<string, unknown>;
+      break;
+    } catch {
+      continue;
+    }
+  }
+  if (!openapiDoc) {
+    logger.warn({ paths: openapiPaths }, "[OpenAPI] Failed to load spec from any path");
+  }
+  if (openapiDoc) {
+    app.get("/docs/api/openapi.json", (_req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.json(openapiDoc);
+    });
+    app.use(
+      "/docs/api",
+      swaggerUi.serve,
+      swaggerUi.setup(openapiDoc, {
+        swaggerOptions: {
+          persistAuthorization: true,
+          displayRequestDuration: true,
+        },
+      })
+    );
+    logger.info("[OpenAPI] Swagger UI mounted at /docs/api");
+  }
 
   app.get("/api/_debug/routes", (req, res) => {
     if (!canAccessDebugRoutes(req)) {

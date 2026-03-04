@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import AppShell from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
@@ -7,7 +8,7 @@ import { invalidateWallet, useWalletBalance } from "@/hooks/useWallet";
 import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
 import type { Project, PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import { ArrowLeft, Play, MessageSquare, Key, Calculator } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Play, MessageSquare, Key, Calculator, Copy, Terminal } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -41,6 +42,7 @@ export default function Playground() {
   const [output, setOutput] = useState("");
   const [requestId, setRequestId] = useState<string | null>(null);
   const [creditsCharged, setCreditsCharged] = useState<number | null>(null);
+  const [tokensUsed, setTokensUsed] = useState<number | null>(null);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [keys, setKeys] = useState<ProjectApiKeyItem[]>([]);
@@ -183,6 +185,7 @@ export default function Playground() {
       setRunError(null);
       setRequestId(null);
       setCreditsCharged(null);
+      setTokensUsed(null);
       try {
         const startedAt = performance.now();
         const response = await fetch(`${API_BASE_URL}/v1/run`, {
@@ -240,14 +243,18 @@ export default function Playground() {
     setRunError(null);
     setRequestId(null);
     setCreditsCharged(null);
+    setTokensUsed(null);
     try {
       const startedAt = performance.now();
-      const res = await runAction(projectId, selectedActionName, payload, trimmedApiKey);
+      const res = await runAction(projectId, selectedActionName, payload, trimmedApiKey, {
+        source: "playground",
+      });
       const elapsed = Math.round(performance.now() - startedAt);
       setLatencyMs(elapsed);
       setOutput(res.output);
       setRequestId(res.requestId ?? null);
-      setCreditsCharged(res.usage?.creditsCharged ?? null);
+      setCreditsCharged(res.usage?.creditsCharged ?? res.creditsCharged ?? null);
+      setTokensUsed(res.usage?.tokens ?? null);
       invalidateWallet();
       showSuccessToast("Run complete", `Latency ${elapsed} ms`);
     } catch (error) {
@@ -280,35 +287,59 @@ export default function Playground() {
       apiKey.trim().length >= 1 &&
       !insufficientCredits;
 
-  return (
-    <div className="min-h-screen text-foreground">
-      <div className="border-b border-[rgba(255,255,255,0.06)] p-8">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Playground</h1>
-            <p className="text-gray-400 mt-2">
-              Run actions via ALEXZA Managed Runtime
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (projectId) {
-                setLocation(`/app/projects/${projectId}`);
-              } else {
-                setLocation("/app/projects");
-              }
-            }}
-            className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.08)]"
-          >
-            <ArrowLeft size={16} className="mr-2" />
-            Back
-          </Button>
-        </div>
-      </div>
+  const codeExamples = useMemo(() => {
+    if (!projectId || !selectedActionName) return null;
+    const url = `${API_BASE_URL}/v1/projects/${projectId}/run/${encodeURIComponent(selectedActionName)}`;
+    const payloadStr = payloadJson.trim() || "{}";
+    const escapedPayload = payloadStr.replace(/'/g, "'\\''");
+    return {
+      curl: `curl -X POST "${url}" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -d '${escapedPayload}'`,
+      node: `const res = await fetch("${url}", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "YOUR_API_KEY"
+  },
+  body: JSON.stringify(${payloadStr.replace(/\n/g, " ").replace(/\s+/g, " ")})
+});
+const data = await res.json();`,
+      python: `import requests
 
-      <div className="p-8">
-        <div className="max-w-5xl mx-auto space-y-6">
+response = requests.post(
+    "${url}",
+    headers={
+        "Content-Type": "application/json",
+        "x-api-key": "YOUR_API_KEY"
+    },
+    json=${payloadStr.replace(/\n/g, " ").replace(/\s+/g, " ") || "{}"}
+)
+data = response.json()`,
+    };
+  }, [projectId, selectedActionName, payloadJson]);
+
+  const copySnippet = useCallback((text: string) => {
+    navigator.clipboard.writeText(text).then(() => showSuccessToast("Copied to clipboard"));
+  }, []);
+
+  const [codeTab, setCodeTab] = useState<"curl" | "node" | "python">("curl");
+  const [codeExamplesOpen, setCodeExamplesOpen] = useState(false);
+
+  return (
+    <AppShell
+      title="API Playground"
+      subtitle="Test AI Actions directly in the web UI"
+      backHref={projectId ? `/app/projects/${projectId}` : "/app/projects"}
+      backLabel="Back"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/app/dashboard" },
+        { label: "Projects", href: "/app/projects" },
+        { label: "Playground" },
+      ]}
+    >
+      <div className="space-y-6">
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -611,18 +642,71 @@ export default function Playground() {
           <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-white font-semibold">Output</h3>
-              <div className="flex items-center gap-3 text-xs text-gray-400">
+              <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
                 <span>Latency: {latencyMs !== null ? `${latencyMs} ms` : "-"}</span>
+                {tokensUsed != null && <span>Tokens: {tokensUsed.toLocaleString()}</span>}
+                {creditsCharged != null && <span>Credits: {creditsCharged}</span>}
                 {requestId && <span>Request ID: {requestId}</span>}
-                {creditsCharged !== null && <span>Credits: {creditsCharged}</span>}
               </div>
             </div>
             <pre className="whitespace-pre-wrap text-sm text-gray-200 bg-[#050607] border border-[rgba(255,255,255,0.08)] rounded-lg p-4 min-h-[90px]">
               {output || "-"}
             </pre>
           </div>
+
+          {codeExamples && (
+            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setCodeExamplesOpen((o) => !o)}
+                className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-white hover:bg-[rgba(255,255,255,0.04)]"
+              >
+                Code examples (curl, Node.js, Python)
+                {codeExamplesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              {codeExamplesOpen && (
+                <div className="border-t border-[rgba(255,255,255,0.08)] p-4 space-y-4">
+                  <div className="flex gap-2 flex-wrap">
+                    {(["curl", "node", "python"] as const).map((tab) => (
+                      <Button
+                        key={tab}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCodeTab(tab)}
+                        className={codeTab === tab ? "border-[#c0c0c0] text-white bg-[rgba(255,255,255,0.08)]" : "border-[rgba(255,255,255,0.12)] text-gray-400"}
+                      >
+                        {tab === "curl" && <Terminal size={12} className="mr-1" />}
+                        {tab === "curl" && "curl"}
+                        {tab === "node" && "Node.js"}
+                        {tab === "python" && "Python"}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="relative">
+                    <pre className="overflow-x-auto rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.08)] p-4 text-sm font-mono text-gray-300 whitespace-pre-wrap">
+                      {codeTab === "curl" && codeExamples.curl}
+                      {codeTab === "node" && codeExamples.node}
+                      {codeTab === "python" && codeExamples.python}
+                    </pre>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        copySnippet(
+                          codeTab === "curl" ? codeExamples.curl : codeTab === "node" ? codeExamples.node : codeExamples.python
+                        )
+                      }
+                      className="absolute top-2 right-2 border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+                    >
+                      <Copy size={14} className="mr-1" />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+    </AppShell>
   );
 }

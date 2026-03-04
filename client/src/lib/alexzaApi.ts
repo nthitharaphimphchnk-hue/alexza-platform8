@@ -208,18 +208,27 @@ export async function deleteAction(
   });
 }
 
+export interface RunActionOptions {
+  source?: "playground";
+}
+
 export async function runAction(
   projectId: string,
   actionName: string,
   payload: Record<string, unknown>,
-  apiKey: string
+  apiKey: string,
+  options?: RunActionOptions
 ): Promise<RunResponse> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey,
+  };
+  if (options?.source === "playground") {
+    headers["x-playground"] = "true";
+  }
   const res = await fetch(`${API_BASE_URL}/v1/projects/${projectId}/run/${encodeURIComponent(actionName)}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
