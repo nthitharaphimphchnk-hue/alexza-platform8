@@ -56,7 +56,8 @@ async function createDelivery(
   attemptCount: number,
   nextRetryAt?: Date,
   lastStatusCode?: number,
-  lastError?: string
+  lastError?: string,
+  latencyMs?: number
 ): Promise<ObjectId> {
   const db = await getDb();
   const now = new Date();
@@ -68,6 +69,7 @@ async function createDelivery(
     status,
     lastStatusCode,
     lastError,
+    latencyMs,
     nextRetryAt,
     createdAt: now,
     updatedAt: now,
@@ -81,22 +83,20 @@ async function updateDelivery(
   attemptCount: number,
   lastStatusCode?: number,
   lastError?: string,
-  nextRetryAt?: Date
+  nextRetryAt?: Date,
+  latencyMs?: number
 ): Promise<void> {
   const db = await getDb();
-  await db.collection("webhook_deliveries").updateOne(
-    { _id: deliveryId },
-    {
-      $set: {
-        status,
-        attemptCount,
-        lastStatusCode,
-        lastError,
-        nextRetryAt,
-        updatedAt: new Date(),
-      },
-    }
-  );
+  const set: Record<string, unknown> = {
+    status,
+    attemptCount,
+    lastStatusCode,
+    lastError,
+    nextRetryAt,
+    updatedAt: new Date(),
+  };
+  if (latencyMs != null) set.latencyMs = latencyMs;
+  await db.collection("webhook_deliveries").updateOne({ _id: deliveryId }, { $set: set });
 }
 
 async function sendRequest(
@@ -104,13 +104,14 @@ async function sendRequest(
   event: WebhookEventType,
   payload: Record<string, unknown>,
   secret: string
-): Promise<{ statusCode: number; ok: boolean; error?: string }> {
+): Promise<{ statusCode: number; ok: boolean; error?: string; latencyMs: number }> {
   const timestamp = String(Date.now());
   const rawBody = JSON.stringify(payload);
   const signature = computeWebhookSignature(secret, timestamp, rawBody);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const startMs = Date.now();
 
   try {
     const res = await fetch(url, {
@@ -126,17 +127,19 @@ async function sendRequest(
     });
 
     clearTimeout(timeout);
+    const latencyMs = Date.now() - startMs;
     const ok = res.status >= 200 && res.status < 300;
     let error: string | undefined;
     if (!ok) {
       const text = await res.text();
       error = text?.slice(0, 500) || `HTTP ${res.status}`;
     }
-    return { statusCode: res.status, ok, error };
+    return { statusCode: res.status, ok, error, latencyMs };
   } catch (err) {
     clearTimeout(timeout);
     const msg = err instanceof Error ? err.message : String(err);
-    return { statusCode: 0, ok: false, error: msg };
+    const latencyMs = Date.now() - startMs;
+    return { statusCode: 0, ok: false, error: msg, latencyMs };
   }
 }
 
@@ -172,9 +175,9 @@ export async function dispatchWebhookEvent(params: {
       const result = await sendRequest(ep.url, params.event, params.payload, ep.secret);
 
       if (result.ok) {
-        await updateDelivery(deliveryId, "success", attemptCount, result.statusCode);
+        await updateDelivery(deliveryId, "success", attemptCount, result.statusCode, undefined, undefined, result.latencyMs);
         logger.info(
-          { endpointId: ep._id.toString(), event: params.event, attemptCount },
+          { endpointId: ep._id.toString(), event: params.event, attemptCount, latencyMs: result.latencyMs },
           "[Webhooks] Delivery success"
         );
         return;
@@ -191,7 +194,8 @@ export async function dispatchWebhookEvent(params: {
           attemptCount,
           result.statusCode,
           result.error,
-          undefined
+          undefined,
+          result.latencyMs
         );
         logger.warn(
           { endpointId: ep._id.toString(), event: params.event, attemptCount, error: result.error },
@@ -204,7 +208,8 @@ export async function dispatchWebhookEvent(params: {
           attemptCount,
           result.statusCode,
           result.error,
-          nextRetryAt
+          nextRetryAt,
+          result.latencyMs
         );
         logger.info(
           { endpointId: ep._id.toString(), event: params.event, attemptCount, nextRetryAt },

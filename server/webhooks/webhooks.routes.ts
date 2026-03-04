@@ -180,13 +180,14 @@ router.get("/webhooks/:id/deliveries", requireAuth, async (req: Request, res: Re
 
     return res.json({
       ok: true,
-      deliveries: deliveries.map((d: { _id: ObjectId; event: string; status: string; attemptCount: number; lastStatusCode?: number; lastError?: string; createdAt: Date }) => ({
+      deliveries: deliveries.map((d: { _id: ObjectId; event: string; status: string; attemptCount: number; lastStatusCode?: number; lastError?: string; latencyMs?: number; createdAt: Date }) => ({
         id: d._id.toString(),
         event: d.event,
         status: d.status,
         attemptCount: d.attemptCount,
         lastStatusCode: d.lastStatusCode,
         lastError: d.lastError,
+        latencyMs: d.latencyMs,
         createdAt: d.createdAt,
       })),
     });

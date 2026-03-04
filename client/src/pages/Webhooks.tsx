@@ -157,12 +157,13 @@ export default function Webhooks() {
     <AppShell
       title="Webhooks"
       subtitle="Receive real-time events via HTTP callbacks"
-      backHref="/app/dashboard"
-      backLabel="Back to Dashboard"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/app/dashboard" },
-        { label: "Webhooks" },
-      ]}
+        backHref="/app/settings"
+        backLabel="Back to Settings"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/app/dashboard" },
+          { label: "Settings", href: "/app/settings" },
+          { label: "Webhooks" },
+        ]}
       actions={
         <Button
           className="bg-[#c0c0c0] text-black hover:bg-[#a8a8a8]"

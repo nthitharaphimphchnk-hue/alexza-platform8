@@ -120,9 +120,14 @@ function Router() {
           <Settings />
         </AppLayout>
       </Route>
-      <Route path={"/app/webhooks"}>
+      <Route path={"/app/settings/webhooks"}>
         <AppLayout>
           <Webhooks />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/webhooks"}>
+        <AppLayout>
+          <Redirect to={"/app/settings/webhooks"} />
         </AppLayout>
       </Route>
       <Route path={"/app/admin/tools"}>
