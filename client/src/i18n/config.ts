@@ -68,6 +68,10 @@ i18n
       caches: ['localStorage'],
       lookupLocalStorage: ALEXZA_LANG_STORAGE_KEY,
     },
+    react: {
+      bindI18n: 'languageChanged',
+      useSuspense: false,
+    },
   });
 
 export default i18n;

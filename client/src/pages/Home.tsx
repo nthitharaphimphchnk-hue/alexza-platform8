@@ -55,18 +55,18 @@ export default function Home() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#0b0e12] border-t-2 border-[rgba(255,255,255,0.15)] p-4 space-y-4">
-            <a href="/" className="block text-sm text-gray-300 hover:text-white">Home</a>
-            <a href="/use-cases" className="block text-sm text-gray-300 hover:text-white">Use Cases</a>
-            <a href="/architecture" className="block text-sm text-gray-300 hover:text-white">Architecture</a>
-            <a href="/docs" className="block text-sm text-gray-300 hover:text-white">Docs</a>
-            <a href="/pricing" className="block text-sm text-gray-300 hover:text-white">Pricing</a>
-            <a href="/security" className="block text-sm text-gray-300 hover:text-white">Security</a>
-            <a href="/status" className="block text-sm text-gray-300 hover:text-white">Status</a>
-            <a href="/roadmap" className="block text-sm text-gray-300 hover:text-white">Roadmap</a>
-            <a href="/enterprise" className="block text-sm text-gray-300 hover:text-white">Enterprise</a>
+            <a href="/" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.home")}</a>
+            <a href="/use-cases" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.useCases")}</a>
+            <a href="/architecture" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.architecture")}</a>
+            <a href="/docs" className="block text-sm text-gray-300 hover:text-white">{t("navigation.docs")}</a>
+            <a href="/pricing" className="block text-sm text-gray-300 hover:text-white">{t("navigation.pricing")}</a>
+            <a href="/security" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.security")}</a>
+            <a href="/status" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.status")}</a>
+            <a href="/roadmap" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.roadmap")}</a>
+            <a href="/enterprise" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.enterprise")}</a>
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" className="flex-1 border-[rgba(255,255,255,0.06)] text-white" onClick={() => window.location.href = "/login"}>Sign In</Button>
-              <Button className="flex-1 btn-silver-bright" onClick={() => window.location.href = "/signup"}>Get Started</Button>
+              <Button variant="outline" className="flex-1 border-[rgba(255,255,255,0.06)] text-white" onClick={() => window.location.href = "/login"}>{t("navigation.signIn")}</Button>
+              <Button className="flex-1 btn-silver-bright" onClick={() => window.location.href = "/signup"}>{t("navigation.getStarted")}</Button>
             </div>
           </div>
         )}
@@ -121,22 +121,22 @@ export default function Home() {
           >
             <div className="space-y-4">
               <h1 className="hero-title-gradient font-brand text-5xl md:text-6xl font-extrabold md:font-black leading-tight tracking-tight">
-                ALEXZA AI — Solution Orchestration Platform
+                {t("home.title")}
               </h1>
               <p className="text-xl text-gray-300">
-                Build, Orchestrate, and Optimize AI Systems Automatically
+                {t("home.subtitle")}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="btn-black-glow h-12 px-8 text-base font-semibold w-full sm:w-auto rounded-lg">
-                  Get Started
+                <Button className="btn-black-glow h-12 px-8 text-base font-semibold w-full sm:w-auto rounded-lg" onClick={() => (window.location.href = "/signup")}>
+                  {t("home.cta1")}
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" className="bg-transparent border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center rounded-lg">
-                  View Docs <ArrowRight size={18} />
+                <Button variant="outline" className="bg-transparent border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center rounded-lg" onClick={() => (window.location.href = "/docs")}>
+                  {t("home.cta2")} <ArrowRight size={18} />
                 </Button>
               </motion.div>
             </div>
@@ -535,7 +535,7 @@ export default function Home() {
                     If you have any questions or need assistance, our team is here to help.
                   </p>
                   <a href="/signup" className="btn-black-glow inline-block px-6 py-2.5 rounded-lg text-sm font-medium">
-                    Get Started
+                    {t("home.cta1")}
                   </a>
                   <p className="text-xs text-gray-500 pt-2">
                     Cheers,<br />The ALEXZA AI Team
@@ -574,13 +574,13 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="btn-gold h-12 px-8 text-base font-semibold rounded-lg">
-                Get Started Free
+              <Button className="btn-gold h-12 px-8 text-base font-semibold rounded-lg" onClick={() => (window.location.href = "/signup")}>
+                {t("home.ctaFree")}
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="btn-outline-silver h-12 px-8 text-base font-semibold rounded-lg">
-                View Documentation
+              <Button className="btn-outline-silver h-12 px-8 text-base font-semibold rounded-lg" onClick={() => (window.location.href = "/docs")}>
+                {t("home.cta2")}
               </Button>
             </motion.div>
           </div>
@@ -629,23 +629,23 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-[#c0c0c0]" />
-                <span className="text-sm text-gray-400">All systems operational</span>
+                <span className="text-sm text-gray-400">{t("marketing.footer.allSystemsOperational")}</span>
               </a>
             </div>
 
             {/* Right: Link columns */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
               <div>
-                <h4 className="text-white font-semibold mb-4 text-sm">Product</h4>
+                <h4 className="text-white font-semibold mb-4 text-sm">{t("navigation.product")}</h4>
                 <ul className="space-y-2">
-                  <li><a href="/use-cases" className="text-gray-400 hover:text-white text-sm">Use Cases</a></li>
-                  <li><a href="/architecture" className="text-gray-400 hover:text-white text-sm">Architecture</a></li>
-                  <li><a href="/docs" className="text-gray-400 hover:text-white text-sm">Docs</a></li>
-                  <li><a href="/pricing" className="text-gray-400 hover:text-white text-sm">Pricing</a></li>
+                  <li><a href="/use-cases" className="text-gray-400 hover:text-white text-sm">{t("marketing.nav.useCases")}</a></li>
+                  <li><a href="/architecture" className="text-gray-400 hover:text-white text-sm">{t("marketing.nav.architecture")}</a></li>
+                  <li><a href="/docs" className="text-gray-400 hover:text-white text-sm">{t("navigation.docs")}</a></li>
+                  <li><a href="/pricing" className="text-gray-400 hover:text-white text-sm">{t("navigation.pricing")}</a></li>
                 </ul>
               </div>
               <div>
-                <h4 className="text-white font-semibold mb-4 text-sm">Resources</h4>
+                <h4 className="text-white font-semibold mb-4 text-sm">{t("marketing.footer.resources")}</h4>
                 <ul className="space-y-2">
                   <li><a href="/security" className="text-gray-400 hover:text-white text-sm">Security</a></li>
                   <li><a href="/status" className="text-gray-400 hover:text-white text-sm">Status</a></li>
@@ -654,7 +654,7 @@ export default function Home() {
                 </ul>
               </div>
               <div>
-                <h4 className="text-white font-semibold mb-4 text-sm">Company</h4>
+                <h4 className="text-white font-semibold mb-4 text-sm">{t("navigation.company")}</h4>
                 <ul className="space-y-2">
                   {['About', 'Blog', 'Careers', 'Contact'].map((link) => (
                     <li key={link}><a href="#" className="text-gray-400 hover:text-white text-sm">{link}</a></li>

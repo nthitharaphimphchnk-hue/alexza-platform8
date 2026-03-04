@@ -45,6 +45,10 @@ export default function LanguageSwitcher() {
       window.localStorage.setItem(ALEXZA_LANG_STORAGE_KEY, langCode);
     }
     setIsOpen(false);
+    // Sanity debug: confirm language change triggers UI update
+    if (import.meta.env.DEV) {
+      console.log('[i18n] language:', i18n.language);
+    }
   };
 
   return (

@@ -32,6 +32,7 @@ import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import Settings from "./pages/Settings";
+import Webhooks from "./pages/Webhooks";
 import AdminTools from "./pages/AdminTools";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
@@ -117,6 +118,11 @@ function Router() {
       <Route path={"/app/settings"}>
         <AppLayout>
           <Settings />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/webhooks"}>
+        <AppLayout>
+          <Webhooks />
         </AppLayout>
       </Route>
       <Route path={"/app/admin/tools"}>

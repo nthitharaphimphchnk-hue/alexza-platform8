@@ -30,6 +30,7 @@ import { stripeRouter, createWebhookRoute } from "./modules/stripe/stripe.routes
 import { runRoutingModeMigration } from "./projects";
 import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
+import { webhooksRouter } from "./webhooks/webhooks.routes";
 import { estimateRouter } from "./estimate";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { sentryScopeMiddleware } from "./middleware/sentryScope";
@@ -192,6 +193,7 @@ async function startServer() {
   app.use("/api", billingRouter);
   app.use("/api/billing/stripe", stripeRouter);
   app.use("/api", notificationsRouter);
+  app.use("/api", webhooksRouter);
   app.use("/api", adminRunLogsRouter);
   app.use(runRouter);
   app.use(runBySpecRouter);
@@ -269,6 +271,44 @@ async function startServer() {
       res.status(404).json({ ok: false, error: "NOT_FOUND" });
     });
     app.use("/api/debug", (_req, res) => {
+      res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    });
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    app.post("/api/dev/test-webhook", async (_req, res, next) => {
+      const TEST_WEBHOOK_URL = "https://webhook.site/24f646b9-0338-4a5b-abee-7cd57e66736b";
+      const payload = {
+        event: "test.webhook",
+        data: {
+          message: "Hello from ALEXZA AI",
+          timestamp: Date.now(),
+        },
+      };
+      try {
+        const response = await fetch(TEST_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Alexza-Event": "test.webhook",
+            "X-Alexza-Source": "alexza-dev",
+          },
+          body: JSON.stringify(payload),
+        });
+        if (response.ok) {
+          logger.info({ status: response.status }, "[Dev] Test webhook sent successfully");
+          return res.json({ ok: true, message: "Webhook sent", status: response.status });
+        }
+        const text = await response.text();
+        logger.warn({ status: response.status, body: text?.slice(0, 200) }, "[Dev] Test webhook failed");
+        return res.status(502).json({ ok: false, error: "WEBHOOK_FAILED", status: response.status, body: text?.slice(0, 200) });
+      } catch (err) {
+        logger.error({ err: String(err) }, "[Dev] Test webhook failed");
+        return next(err);
+      }
+    });
+  } else {
+    app.post("/api/dev/test-webhook", (_req, res) => {
       res.status(404).json({ ok: false, error: "NOT_FOUND" });
     });
   }

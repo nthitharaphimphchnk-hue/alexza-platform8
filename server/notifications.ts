@@ -164,6 +164,12 @@ async function sendLowCreditsEmailForUser(
     }
   );
   console.log(`[NotifyLowCredits] userId=${userId.toString()} balance=${balance} sentAt=${now.toISOString()}`);
+  const { emitWebhookEvent } = await import("./webhooks/events");
+  emitWebhookEvent({
+    event: "wallet.low_balance",
+    payload: { userId: userId.toString(), balanceCredits: balance, threshold: LOW_CREDITS_EMAIL_THRESHOLD },
+    ownerUserId: userId,
+  });
   return { sent: true, balance };
 }
 

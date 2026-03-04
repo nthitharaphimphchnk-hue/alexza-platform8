@@ -200,6 +200,12 @@ router.post("/auth/signup", async (req, res, next) => {
     }
 
     await createSessionAndSetCookie(insertResult.insertedId, res);
+    const { emitWebhookEvent } = await import("./webhooks/events");
+    emitWebhookEvent({
+      event: "auth.user.created",
+      payload: { userId: insertResult.insertedId.toString(), email: payload.email, name: payload.name },
+      ownerUserId: insertResult.insertedId,
+    });
     return res.status(201).json({ ok: true, user: buildUserResponse(user) });
   } catch (error) {
     if (error instanceof MongoServerError && error.code === 11000) {

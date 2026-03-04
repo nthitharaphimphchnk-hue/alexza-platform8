@@ -125,7 +125,7 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
   const userId = new ObjectId(userIdRaw);
 
   try {
-    await addCreditsToWallet({
+    const result = await addCreditsToWallet({
       userId,
       amountUsd,
       requestId: sessionId,
@@ -134,6 +134,18 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
       { sessionId, userId: userIdRaw, amountUsd },
       "[Stripe] Webhook processed"
     );
+    const { emitWebhookEvent } = await import("../../webhooks/events");
+    emitWebhookEvent({
+      event: "wallet.topup.succeeded",
+      payload: {
+        userId: userIdRaw,
+        amountUsd,
+        creditsAdded: result.creditsAdded,
+        balanceCredits: result.balanceCredits,
+        requestId: sessionId,
+      },
+      ownerUserId: userId,
+    });
   } catch (err) {
     logger.error({ err }, "[Stripe] Webhook processing failed");
     const db = await getDb();

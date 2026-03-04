@@ -98,9 +98,14 @@ export default function Settings() {
                   </button>
                 );
               })}
-              <button className="ripple-btn mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-[rgba(255,255,255,0.06)] hover:text-white">
+              <button
+                onClick={() => setLocation("/app/webhooks")}
+                className={`ripple-btn mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
+                  false ? "bg-[rgba(192,192,192,0.18)] text-white" : "text-gray-500 hover:bg-[rgba(255,255,255,0.06)] hover:text-white"
+                }`}
+              >
                 <Webhook size={16} />
-                Webhooks (Soon)
+                Webhooks
               </button>
             </div>
           </aside>

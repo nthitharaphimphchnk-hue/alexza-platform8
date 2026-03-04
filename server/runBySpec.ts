@@ -470,6 +470,21 @@ router.post(
         upstreamModel: resolvedModel,
       });
 
+      const { emitWebhookEvent } = await import("./webhooks/events");
+      emitWebhookEvent({
+        event: "action.run.succeeded",
+        payload: {
+          requestId,
+          projectId: projectIdRaw,
+          actionName,
+          creditsCharged: cappedCredits,
+          latencyMs,
+          output: result.output,
+        },
+        ownerUserId: req.apiKey.ownerUserId,
+        projectId: req.apiKey.projectId,
+      });
+
       return res.json({
         ok: true,
         requestId,
@@ -495,6 +510,22 @@ router.post(
         latencyMs,
         rawUpstreamError: sanitizeForResponse(error),
       });
+      if (req.apiKey) {
+        const { emitWebhookEvent } = await import("./webhooks/events");
+        emitWebhookEvent({
+          event: "action.run.failed",
+          payload: {
+            requestId,
+            projectId: projectIdRaw,
+            actionName,
+            statusCode: 502,
+            latencyMs,
+            error: sanitizeForResponse(error),
+          },
+          ownerUserId: req.apiKey.ownerUserId,
+          projectId: req.apiKey.projectId,
+        });
+      }
       return runError(res, 502, "RUNTIME_ERROR", "Request failed", requestId);
     }
   }

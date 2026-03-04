@@ -11,14 +11,17 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Box, BookOpen, Cpu, FileText, Layout, MapPin } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 
 export default function NavMegaMenu() {
+  const { t } = useTranslation();
+
   return (
     <NavigationMenu className="max-w-none nav-mega-menu">
       <NavigationMenuList className="gap-1">
         <NavigationMenuItem>
           <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-0 text-sm font-normal data-[state=open]:text-white">
-            Product
+            {t("navigation.product")}
           </NavigationMenuTrigger>
           <NavigationMenuContent>
             <div className="w-[420px] p-4">
@@ -74,7 +77,7 @@ export default function NavMegaMenu() {
 
         <NavigationMenuItem>
           <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-0 text-sm font-normal data-[state=open]:text-white">
-            Company
+            {t("navigation.company")}
           </NavigationMenuTrigger>
           <NavigationMenuContent>
             <div className="w-[480px] p-4">
@@ -122,7 +125,7 @@ export default function NavMegaMenu() {
         <NavigationMenuItem>
           <Link href="/docs">
             <NavigationMenuLink className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
-              Docs
+              {t("navigation.docs")}
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>
@@ -130,7 +133,7 @@ export default function NavMegaMenu() {
         <NavigationMenuItem>
           <Link href="/pricing">
             <NavigationMenuLink className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
-              Pricing
+              {t("navigation.pricing")}
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>

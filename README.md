@@ -51,6 +51,18 @@ OPENAI_MODEL="gpt-4o-mini"
 - Frontend (Vite dev server) runs on `http://localhost:3000` by default and may move to another port if busy.
 - Vite proxy forwards `/api` and `/auth` to the backend. Set `VITE_API_BASE_URL=http://localhost:${PORT}` if calling API directly.
 
+## Webhooks
+
+Create webhook endpoints at `/app/webhooks` (or Settings → Webhooks). Events: `auth.user.created`, `wallet.topup.succeeded`, `wallet.low_balance`, `action.run.succeeded`, `action.run.failed`.
+
+See [docs/WEBHOOKS.md](docs/WEBHOOKS.md) for payload examples, signature verification, and retry policy.
+
+Smoke test (requires a URL that accepts POST):
+
+```bash
+WEBHOOK_TEST_URL=https://webhook.site/your-id pnpm exec tsx scripts/smoke-webhooks.ts
+```
+
 ## Dev Smoke Test (Connection Refused Guard)
 
 Run `pnpm dev`, then verify backend is reachable:
