@@ -40,6 +40,8 @@ import * as Sentry from "@sentry/node";
 import { sentryRelease } from "./sentry";
 import { logger } from "./utils/logger";
 import { normalizeEnvUrl } from "./utils/envUrls";
+import { getCreditPrice } from "./config";
+import { TOKENS_PER_CREDIT } from "./wallet";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,6 +126,7 @@ async function startServer() {
     ...corsOriginEnv.split(",").map((o) => normalizeEnvUrl(o)).filter(Boolean),
   ];
   logger.info({ allowedOrigins }, "[Startup] CORS final allowed origins");
+  logger.info({ creditPrice: getCreditPrice() }, "[Startup] Credit price (USD per credit)");
   const corsOrigin: CorsOptions["origin"] =
     allowedOrigins.length === 0
       ? true
@@ -178,6 +181,15 @@ async function startServer() {
       return res.json({ ok: true, configured: false });
     }
     return res.json({ ok: true, configured: true });
+  });
+
+  /** Public config - safe for unauthenticated clients (pricing display, etc.) */
+  app.get("/api/public/config", (_req, res) => {
+    res.json({
+      ok: true,
+      creditPrice: getCreditPrice(),
+      creditsPerThousandTokens: TOKENS_PER_CREDIT,
+    });
   });
 
   app.use("/api", authRouter);
