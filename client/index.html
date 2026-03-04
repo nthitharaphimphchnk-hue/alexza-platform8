@@ -3,6 +3,16 @@
 
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function() {
+        var key = "alexza_theme";
+        var stored = localStorage.getItem(key);
+        var mode = (stored === "dark" || stored === "light" || stored === "system") ? stored : "dark";
+        var dark = mode === "dark" || (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.classList.toggle("light", !dark);
+      })();
+    </script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta
