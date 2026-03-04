@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 import {
   Bell,
   ChevronRight,
@@ -251,6 +252,7 @@ export default function AppShell({
               </div>
 
               <div className="flex items-center justify-start gap-2 xl:justify-end">
+                <ThemeSwitcher />
                 <LanguageSwitcher />
                 <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-xs text-gray-300 shadow-[0_0_8px_rgba(0,0,0,0.2)]">
                   {t("appShell.environment")}:
