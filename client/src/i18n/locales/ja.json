@@ -1,0 +1,706 @@
+{
+  "common": {
+    "language": "Language",
+    "english": "English",
+    "thai": "ไทย",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "create": "Create",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next"
+  },
+  "navigation": {
+    "product": "Product",
+    "docs": "Docs",
+    "pricing": "Pricing",
+    "company": "Company",
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "apiKeys": "API Keys",
+    "playground": "Playground",
+    "usage": "Usage",
+    "credits": "Credits",
+    "billing": "Billing",
+    "settings": "Settings",
+    "backToHome": "Back to Home",
+    "backToProjects": "Back to Projects",
+    "newProject": "New Project",
+    "openUsage": "Open Usage"
+  },
+  "appShell": {
+    "searchPlaceholder": "Search projects, keys, events...",
+    "environment": "Environment",
+    "switchMode": "Switch Mode",
+    "applicationMode": "Application Mode",
+    "notifications": "Notifications",
+    "account": "Account",
+    "profileSettings": "Profile Settings",
+    "adminTools": "Admin Tools",
+    "signOut": "Sign Out",
+    "low": "Low",
+    "topUp": "Top up"
+  },
+  "home": {
+    "title": "ALEXZA AI — Solution Orchestration Platform",
+    "subtitle": "Build, Orchestrate, and Optimize AI Systems Automatically",
+    "cta1": "Get Started",
+    "cta2": "View Docs",
+    "features": {
+      "title": "Powerful Features",
+      "feature1": "Build complex AI workflows without code",
+      "feature2": "Orchestrate multiple AI models seamlessly",
+      "feature3": "Monitor and optimize in real-time"
+    }
+  },
+  "orchestration": {
+    "header": {
+      "title": "One API. Many Leading AI Models. Zero Complexity.",
+      "subtitle": "Access multiple best-in-class AI model families through ALEXZA AI — without wiring providers, picking models, or building fallback logic."
+    },
+    "traditional": {
+      "title": "Traditional AI API Gateway",
+      "bullet1": "Choose model for each request",
+      "bullet2": "Write routing + fallback logic",
+      "bullet3": "Handle retries, timeouts, rate limits",
+      "bullet4": "Track costs & prevent cost spikes",
+      "bullet5": "Maintain multiple integrations & keys",
+      "tabModel": "Model selection",
+      "tabFallback": "Fallback",
+      "tabCost": "Cost control"
+    },
+    "alexza": {
+      "title": "ALEXZA AI Orchestration",
+      "bullet1": "Call one endpoint",
+      "bullet2": "Intelligent model selection",
+      "bullet3": "Automatic fallback + reliability layer",
+      "bullet4": "Smart cost optimization (prevents cost spikes)",
+      "bullet5": "Unified usage logging & credits",
+      "behindTheScenes": "Behind the scenes",
+      "step1": "Analyze task",
+      "step2": "Select best model family",
+      "step3": "Run",
+      "step4": "Fallback if needed",
+      "step5": "Return output + usage"
+    },
+    "models": {
+      "title": "Model families available behind ALEXZA AI",
+      "subtitle": "Choose outcomes — not providers. We route the best fit for your workload.",
+      "bestFor": "Best for:",
+      "openai": {
+        "title": "OpenAI Models",
+        "bestFor": "general purpose, tool calling, structured output"
+      },
+      "claude": {
+        "title": "Claude (Anthropic)",
+        "bestFor": "long-form writing, strong reasoning, long documents"
+      },
+      "llama": {
+        "title": "Meta Llama",
+        "bestFor": "cost-efficient workloads, cheap tier, scalable automation"
+      },
+      "gemini": {
+        "title": "Google Gemini",
+        "bestFor": "very long context, multimodal tasks"
+      },
+      "mistral": {
+        "title": "Mistral",
+        "bestFor": "low cost, everyday tasks"
+      },
+      "cohere": {
+        "title": "Cohere",
+        "bestFor": "RAG, enterprise search"
+      },
+      "opensource": {
+        "title": "Open Source / Community",
+        "bestFor": "flexible experimentation"
+      }
+    },
+    "cta": {
+      "copy": "Build once. Scale with intelligent orchestration.",
+      "getStarted": "Get Started",
+      "viewDocs": "View Docs"
+    }
+  },
+  "landing": {
+    "useCases": {
+      "title": "Built for real-world AI workloads",
+      "subtitle": "Start with proven templates. Scale to custom orchestration.",
+      "learnMore": "Learn more",
+      "support": {
+        "title": "Customer Support Copilot",
+        "desc": "Summarize tickets, draft replies, route by intent. Reduce response time and improve satisfaction."
+      },
+      "document": {
+        "title": "Document Intelligence",
+        "desc": "Extract, classify, reason over long documents. Build pipelines for contracts, reports, and research."
+      },
+      "marketing": {
+        "title": "Marketing Automation",
+        "desc": "Generate ad copy, landing pages, multivariate content. Scale campaigns with AI-powered creation."
+      },
+      "rag": {
+        "title": "RAG Search",
+        "desc": "Enterprise search and knowledge base Q&A. Connect your data to AI for accurate, contextual answers."
+      },
+      "data": {
+        "title": "Data-to-Insights",
+        "desc": "Analysis, reporting, structured output. Turn raw data into actionable insights and summaries."
+      },
+      "workflow": {
+        "title": "Workflow Automation",
+        "desc": "Agents, routing, fallback, retries. Build resilient AI pipelines that handle failures gracefully."
+      }
+    },
+    "architecture": {
+      "title": "How ALEXZA AI works",
+      "subtitle": "A unified runtime that selects the best model fit and controls spend.",
+      "label1": "Intelligent model selection",
+      "label2": "Automatic fallback",
+      "label3": "Credit & cost control",
+      "label4": "Unified logging",
+      "cta": "View architecture"
+    },
+    "trust": {
+      "title": "Reliability built in",
+      "usage": {
+        "title": "Usage & Credits",
+        "desc": "Real-time usage logging. Track credits, tokens, and costs per project."
+      },
+      "guardrails": {
+        "title": "Guardrails",
+        "desc": "Budget limits and cost controls. Prevent cost spikes before they happen."
+      },
+      "observability": {
+        "title": "Observability",
+        "desc": "Request traces and error monitoring. Debug and optimize with full visibility."
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "desc": "Run events and completion notifications. Integrate with your stack in real time."
+      },
+      "statusLink": "Status",
+      "securityLink": "Security"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "welcomeBack": "Welcome back to ALEXZA AI",
+      "email": "Email Address",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "orContinueWith": "Or continue with",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "loginSuccess": "Login successful! Redirecting..."
+    },
+    "signup": {
+      "title": "Create your account",
+      "joinUs": "Join ALEXZA AI",
+      "email": "Email Address",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "company": "Company (Optional)",
+      "companyPlaceholder": "Your company",
+      "agreeToTermsPrefix": "I agree to the",
+      "agreeToTermsAnd": "and",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy",
+      "createAccount": "Create Account",
+      "creatingAccount": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "orSignUpWith": "Or sign up with",
+      "accountCreated": "Account created! Redirecting...",
+      "passwordStrong": "✓ Password is strong"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Real-time AI orchestration visibility",
+    "gettingStarted": "Getting Started",
+    "createProject": "Create Project",
+    "createApiKey": "Create API Key",
+    "openChatBuilder": "Open ChatBuilder and Apply an Action",
+    "testInPlayground": "Test Action in Playground",
+    "apiLatency": "API Latency",
+    "gatewayHealth": "Gateway Health",
+    "modelCluster": "Model Cluster",
+    "creditsRemaining": "Credits Remaining",
+    "healthy": "Healthy",
+    "operational": "Operational",
+    "online": "Online",
+    "budgetSafe": "Budget Safe",
+    "status": "Status",
+    "creditsBalance": "Credits Balance",
+    "last24hUsage": "Last 24h Usage",
+    "calls": "calls",
+    "errors": "errors",
+    "systemStatus": "System Status",
+    "allSystemsNormal": "All Systems Normal",
+    "overview": "Overview",
+    "activityFeed": "Activity Feed",
+    "totalRequests": "Total Requests (Last 7 Days)",
+    "requests": "Requests"
+  },
+  "pricing": {
+    "title": "Pricing Plans",
+    "subtitle": "Choose the perfect plan for your needs",
+    "trial": "Free Trial",
+    "payAsYouGo": "Pay as You Go",
+    "credits": "credits/month",
+    "getStarted": "Get Started",
+    "chooseplan": "Choose Plan"
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage all your AI projects",
+    "newProject": "New Project",
+    "search": "Search projects...",
+    "noProjects": "No projects found",
+    "untitled": "Untitled",
+    "noDescription": "No description provided.",
+    "createModal": {
+      "title": "Create Project",
+      "name": "Project Name",
+      "description": "Description (Optional)",
+      "model": "AI Model",
+      "create": "Create",
+      "cancel": "Cancel"
+    }
+  },
+  "projectDetail": {
+    "back": "Back",
+    "openChatBuilder": "Open ChatBuilder",
+    "playground": "Playground",
+    "edit": "Edit",
+    "deleteProject": "Delete Project",
+    "projectDetail": "Project Detail",
+    "loadingProject": "Loading project...",
+    "projectUnavailable": "Project data is unavailable",
+    "overview": "Overview",
+    "apiKeys": "API Keys",
+    "usage": "Usage",
+    "actionsApis": "Actions / APIs",
+    "projectInformation": "Project Information",
+    "name": "Name",
+    "description": "Description",
+    "runtime": "Runtime",
+    "routingMode": "Routing Mode",
+    "status": "Status",
+    "quality": "Quality (Best results)",
+    "balanced": "Balanced (Cost / Quality)",
+    "cheap": "Cheap (Lowest cost)",
+    "routingDesc": "Quality: Best models with fallback. Balanced: Mid-tier models. Cheap: Lowest cost, simpler models.",
+    "timestamps": "Timestamps",
+    "created": "Created",
+    "updated": "Updated",
+    "projectId": "Project ID",
+    "active": "Active",
+    "paused": "Paused",
+    "routingModeUpdated": "Routing mode updated",
+    "routingModeUpdateFailed": "Failed to update routing mode",
+    "chatBuilder": "Chat Builder",
+    "actionsApisTitle": "Actions / APIs",
+    "actionsDesc": "Actions are created in Chat Builder and called via the runtime endpoint.",
+    "reload": "Reload",
+    "loadingActions": "Loading actions...",
+    "noActionsYet": "No actions yet",
+    "createActionInChatBuilder": "Create Action in ChatBuilder",
+    "openChatBuilderLink": "Open ChatBuilder",
+    "deleteAction": "Delete Action",
+    "test": "Test",
+    "copyEndpoint": "Copy endpoint",
+    "deleteActionConfirm": "Delete action \"{{name}}\"? This cannot be undone",
+    "deleteProjectConfirm": "Type \"{{name}}\" to confirm deletion",
+    "deleteProjectPlaceholder": "Type project name to confirm deletion",
+    "projectName": "Project Name",
+    "testAction": "Test Action",
+    "testActionDesc": "Run the action with a JSON payload. Use an API key from this project.",
+    "running": "Running...",
+    "pasteApiKey": "Paste your project API key",
+    "jsonPayload": "JSON Payload",
+    "editProject": "Edit Project",
+    "editProjectDesc": "Update your project details",
+    "saving": "Saving...",
+    "nameMinChars": "Name must be at least 2 characters",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "endpoint": "Endpoint",
+    "curl": "cURL",
+    "jsFetch": "JS fetch",
+    "requestId": "Request ID",
+    "credits": "Credits",
+    "latency": "Latency",
+    "updatedLabel": "Updated"
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "subtitle": "Manage your API keys and authentication",
+    "createKey": "Create Key",
+    "security": "Keep your API keys secure. Never share them publicly or commit them to version control. Rotate keys regularly for security.",
+    "lastUsed": "Last Used",
+    "rotate": "Rotate",
+    "createModal": {
+      "title": "Create API Key",
+      "name": "Key Name",
+      "info": "Your API key will be displayed only once. Make sure to copy and save it in a secure location.",
+      "create": "Create",
+      "cancel": "Cancel"
+    }
+  },
+  "playground": {
+    "title": "Playground",
+    "subtitle": "Test and experiment with your AI model",
+    "typeMessage": "Type your message...",
+    "settings": "Settings",
+    "model": "Model",
+    "temperature": "Temperature",
+    "maxTokens": "Max Tokens",
+    "systemPrompt": "System Prompt"
+  },
+  "wallet": {
+    "title": "Credits & Wallet",
+    "subtitle": "Manage your credits and billing",
+    "availableCredits": "Available Credits",
+    "monthlyLimit": "Monthly Limit",
+    "usedThisMonth": "Used This Month",
+    "remaining": "Remaining",
+    "addCredits": "Add Credits",
+    "setBudgetAlert": "Set Budget Alert",
+    "monthlyUsage": "Monthly Usage",
+    "transactionHistory": "Transaction History",
+    "viewAll": "View All Transactions"
+  },
+  "billingPlans": {
+    "title": "Billing Plans",
+    "subtitle": "Choose the perfect plan for your needs",
+    "starter": "Starter",
+    "professional": "Professional",
+    "enterprise": "Enterprise",
+    "popular": "Popular",
+    "faq": "Frequently Asked Questions"
+  },
+  "estimate": {
+    "button": "Estimate",
+    "loading": "Estimating...",
+    "success": "Estimate complete",
+    "tokens": "Estimated tokens",
+    "credits": "Estimated credits",
+    "costLabel": "Estimated cost",
+    "creditsUnit": "credits",
+    "insufficientCredits": "Insufficient credits. Need {{needed}}, balance {{balance}}"
+  },
+  "routing": {
+    "mode": {
+      "label": "Routing",
+      "cheap": "Cheap",
+      "balanced": "Balanced",
+      "quality": "Quality",
+      "description": {
+        "cheap": "Lowest cost",
+        "balanced": "Cost / quality balance",
+        "quality": "Best results with fallback"
+      }
+    },
+    "projectMode": "Project Routing Mode",
+    "description": {
+      "cheap": "Uses lightweight models for lowest cost.",
+      "balanced": "Mid-tier models for balanced output.",
+      "quality": "Best models with automatic fallback."
+    }
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordStrength": "Password must have 1 uppercase letter and 1 number",
+    "passwordMismatch": "Passwords do not match",
+    "nameTooShort": "Name must be at least 3 characters",
+    "nameTooLong": "Name must not exceed 50 characters"
+  },
+  "marketing": {
+    "nav": {
+      "home": "Home",
+      "useCases": "Use Cases",
+      "architecture": "Architecture",
+      "security": "Security",
+      "enterprise": "Enterprise",
+      "status": "Status",
+      "roadmap": "Roadmap",
+      "docs": "Docs",
+      "pricing": "Pricing"
+    },
+    "footer": {
+      "product": "Product",
+      "resources": "Resources",
+      "company": "Company",
+      "legal": "Legal",
+      "pricing": "Pricing",
+      "security": "Security",
+      "docs": "Docs",
+      "status": "Status",
+      "allSystemsOperational": "All systems operational"
+    }
+  },
+  "useCases": {
+    "hero": {
+      "title": "Use Cases",
+      "subtitle": "See how ALEXZA AI powers real-world applications"
+    },
+    "customerSupport": {
+      "title": "Customer Support",
+      "problem": "High volume of support tickets with repetitive questions.",
+      "actions": "Classify tickets, suggest responses, escalate when needed.",
+      "tier": "Starter+",
+      "cta": "Get Started"
+    },
+    "documentIntelligence": {
+      "title": "Document Intelligence",
+      "problem": "Extracting insights from contracts, reports, and unstructured docs.",
+      "actions": "Summarize, extract entities, answer questions over documents.",
+      "tier": "Business",
+      "cta": "Get Started"
+    },
+    "marketingAutomation": {
+      "title": "Marketing Automation",
+      "problem": "Creating personalized content at scale for campaigns.",
+      "actions": "Generate copy, segment audiences, A/B test variants.",
+      "tier": "Starter+",
+      "cta": "Get Started"
+    },
+    "ragSearch": {
+      "title": "RAG Search",
+      "problem": "Building semantic search over your knowledge base.",
+      "actions": "Embed, retrieve, and generate answers from your data.",
+      "tier": "Business",
+      "cta": "Get Started"
+    },
+    "dataToInsights": {
+      "title": "Data-to-Insights",
+      "problem": "Turning raw data into actionable insights and reports.",
+      "actions": "Analyze trends, generate summaries, create visualizations.",
+      "tier": "Starter+",
+      "cta": "Get Started"
+    },
+    "workflowAutomation": {
+      "title": "Workflow Automation",
+      "problem": "Orchestrating multi-step AI workflows with triggers.",
+      "actions": "Chain models, call tools, handle webhooks and events.",
+      "tier": "Business",
+      "cta": "Get Started"
+    }
+  },
+  "architecture": {
+    "hero": {
+      "title": "Architecture",
+      "subtitle": "How ALEXZA AI orchestrates your AI workloads"
+    },
+    "diagram": {
+      "title": "Request Flow",
+      "subtitle": "From your client to model output"
+    },
+    "modules": {
+      "title": "Key Modules",
+      "subtitle": "Core components that power the platform",
+      "modelRegistry": {
+        "title": "Model Registry",
+        "body": "Central registry of available models with routing rules, cost tiers, and capability metadata."
+      },
+      "fallback": {
+        "title": "Fallback",
+        "body": "Automatic failover to alternative models when primary fails or is rate-limited."
+      },
+      "creditReservation": {
+        "title": "Credit Reservation",
+        "body": "Reserve credits before execution to prevent overspend and ensure budget control."
+      },
+      "usageLogging": {
+        "title": "Usage Logging",
+        "body": "Track every API call for billing, analytics, and debugging."
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "body": "Real-time notifications for run completion, failures, and lifecycle events."
+      }
+    },
+    "why": {
+      "title": "Why It Matters",
+      "reliability": {
+        "title": "Reliability",
+        "body": "Automatic fallback and retries keep your app running even when providers have issues."
+      },
+      "scalability": {
+        "title": "Scalability",
+        "body": "Scale across model families without changing your integration code."
+      },
+      "costControl": {
+        "title": "Cost Control",
+        "body": "Credit reservation and usage logging prevent surprise bills."
+      }
+    }
+  },
+  "security": {
+    "hero": {
+      "title": "Security",
+      "subtitle": "Enterprise-grade security for your AI workloads"
+    },
+    "items": {
+      "data": {
+        "title": "Data",
+        "body": "Your data is processed securely. We do not train on your inputs. Data in transit is encrypted with TLS."
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "body": "API keys are hashed and never stored in plaintext. Rotate keys anytime from the dashboard."
+      },
+      "auth": {
+        "title": "Auth",
+        "body": "OAuth 2.0 and API key authentication. Optional MFA for enterprise accounts."
+      },
+      "rateLimiting": {
+        "title": "Rate Limiting",
+        "body": "Per-key rate limits to protect your account and ensure fair usage."
+      },
+      "logging": {
+        "title": "Logging",
+        "body": "Audit logs for API access. Configurable retention for compliance."
+      }
+    },
+    "compliance": {
+      "title": "Compliance",
+      "subtitle": "We are working towards SOC 2 and GDPR compliance.",
+      "comingSoon": "Coming soon"
+    },
+    "disclosure": {
+      "title": "Responsible Disclosure",
+      "body": "Found a vulnerability? Please report it to us. We respond within 48 hours.",
+      "cta": "Report to security@alexza.ai"
+    }
+  },
+  "enterprise": {
+    "hero": {
+      "title": "Enterprise",
+      "subtitle": "Plans for teams and organizations at scale"
+    },
+    "plans": {
+      "team": {
+        "title": "Team",
+        "desc": "Collaboration features, shared projects, and team billing. Perfect for small teams."
+      },
+      "business": {
+        "title": "Business",
+        "desc": "SLA, dedicated support, and advanced analytics. For growing companies."
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "desc": "Custom models, on-prem options, and white-glove onboarding."
+      }
+    },
+    "comingSoon": "Coming soon",
+    "contactSales": "Contact Sales",
+    "table": {
+      "title": "Feature Comparison",
+      "feature": "Feature",
+      "sla": "SLA guarantee",
+      "dedicatedSupport": "Dedicated support",
+      "customModels": "Custom model fine-tuning",
+      "onPrem": "On-premise deployment"
+    },
+    "cta": {
+      "title": "Need a custom solution?",
+      "subtitle": "Our team can help design a plan for your organization.",
+      "button": "Contact Sales"
+    }
+  },
+  "status": {
+    "hero": {
+      "title": "Status",
+      "subtitle": "Real-time status of ALEXZA AI services"
+    },
+    "allOperational": "All systems operational",
+    "allOperationalDesc": "All services are running normally.",
+    "operational": "Operational",
+    "components": {
+      "api": "API",
+      "dashboard": "Dashboard",
+      "billing": "Billing",
+      "webhooks": "Webhooks",
+      "runtime": "Runtime"
+    }
+  },
+  "docs": {
+    "title": "Documentation",
+    "subtitle": "Learn how to build, orchestrate, and optimize AI systems with ALEXZA.",
+    "searchPlaceholder": "Search docs...",
+    "gettingStarted": "Getting Started",
+    "introduction": "Introduction",
+    "authentication": "Authentication",
+    "apiKeys": "API Keys",
+    "rateLimits": "Rate Limits",
+    "builderFlow": "Builder Flow",
+    "chatBuilder": "Chat Builder",
+    "applyAction": "Apply Action",
+    "runAction": "Run Action",
+    "apiReference": "API Reference",
+    "projects": "Projects",
+    "runByAction": "Run by Action",
+    "legacyRun": "Legacy Run",
+    "webhooks": "Webhooks",
+    "clientResponsibilities": "What You Must Do",
+    "systemManaged": "What We Handle",
+    "events": "Events",
+    "signatureVerification": "Signature Verification",
+    "retryPolicy": "Retry Policy",
+    "statusCodes": "HTTP Status Codes",
+    "guides": "Guides",
+    "sdk": "SDKs",
+    "needHelp": "Need Help?",
+    "prereq1": "An ALEXZA AI account",
+    "prereq2": "API key from your dashboard",
+    "prereq3": "Basic knowledge of REST APIs",
+    "flow1": "Create a project — From the dashboard, create a new project.",
+    "flow2": "Chat in Builder and Apply an Action — Open Chat Builder in your project, describe what you need. The AI suggests API specs. Click \"Apply to Project\" to save an action.",
+    "flow3": "Call the Action endpoint — Use POST /v1/projects/:projectId/run/:actionName with x-api-key to execute.",
+    "status200": "Success",
+    "status2xx": "Success",
+    "status4xx": "Client Error",
+    "status5xx": "Server Error",
+    "statusTimeout": "Timeout (>10s)",
+    "statusRetry": "Will retry per policy",
+    "statusNoRetry": "No retry",
+    "contactSupport": "Contact Support",
+    "communityForum": "Community Forum"
+  },
+  "roadmap": {
+    "hero": {
+      "title": "Roadmap",
+      "subtitle": "What we're building next"
+    },
+    "now": {
+      "title": "Now",
+      "items": ["Stable REST API", "Model orchestration", "Credits & billing", "Webhooks"]
+    },
+    "next": {
+      "title": "Next",
+      "items": ["Team plans", "Advanced analytics", "More model families", "RAG support"]
+    },
+    "later": {
+      "title": "Later",
+      "items": ["On-prem deployment", "Custom model fine-tuning", "SOC 2 compliance", "Enterprise SSO"]
+    },
+    "disclaimer": "Roadmap items and timelines are subject to change. We ship iteratively based on customer feedback."
+  }
+}
