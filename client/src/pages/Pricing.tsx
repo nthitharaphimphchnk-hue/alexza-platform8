@@ -16,6 +16,7 @@ import {
   TOKENS_PER_CREDIT,
 } from "@/config/pricing";
 import { fetchPublicConfig } from "@/api/config";
+import { fetchPublicPricing, getCreditsForUsd, type PricingTier } from "@/api/pricing";
 import {
   Accordion,
   AccordionContent,
@@ -23,12 +24,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-function creditsFromDollars(dollars: number, creditPrice: number): number {
-  return Math.floor(dollars / creditPrice);
-}
+const DEFAULT_VOLUME_TIERS: PricingTier[] = [
+  { minCredits: 0, price: 0.003 },
+  { minCredits: 10_000, price: 0.0027 },
+  { minCredits: 100_000, price: 0.0024 },
+];
 
 export default function Pricing() {
   const [creditPrice, setCreditPrice] = useState(DEFAULT_CREDIT_PRICE);
+  const [volumeTiers, setVolumeTiers] = useState<PricingTier[]>(DEFAULT_VOLUME_TIERS);
 
   useEffect(() => {
     fetchPublicConfig()
@@ -42,11 +46,23 @@ export default function Pricing() {
       });
   }, []);
 
+  useEffect(() => {
+    fetchPublicPricing()
+      .then((res) => {
+        if (res.ok && Array.isArray(res.tiers) && res.tiers.length > 0) {
+          setVolumeTiers(res.tiers);
+        }
+      })
+      .catch(() => {
+        setVolumeTiers(DEFAULT_VOLUME_TIERS);
+      });
+  }, []);
+
   const pricingTiers = getPricingTiers(creditPrice);
   const walletExamples = [
-    { dollars: 10, credits: creditsFromDollars(10, creditPrice) },
-    { dollars: 20, credits: creditsFromDollars(20, creditPrice) },
-    { dollars: 50, credits: creditsFromDollars(50, creditPrice) },
+    { dollars: 10, credits: getCreditsForUsd(10, volumeTiers) },
+    { dollars: 20, credits: getCreditsForUsd(20, volumeTiers) },
+    { dollars: 50, credits: getCreditsForUsd(50, volumeTiers) },
   ];
 
   const handleCta = (cta: string) => {
@@ -156,6 +172,65 @@ export default function Pricing() {
         </motion.div>
       </section>
 
+      {/* Volume Discount Table */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          <motion.h2
+            className="text-2xl font-bold text-white text-center mb-6"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            Volume Discounts
+          </motion.h2>
+          <motion.p
+            className="text-muted-foreground text-center mb-6"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            Larger purchases get better rates.
+          </motion.p>
+          <motion.div
+            className="rounded-xl border border-border bg-card overflow-hidden"
+            variants={staggerContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">Credits</th>
+                  <th className="px-4 py-3 text-right font-semibold text-foreground">Price per credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...volumeTiers]
+                  .sort((a, b) => a.minCredits - b.minCredits)
+                  .map((tier, idx, arr) => {
+                    const nextMin = arr[idx + 1]?.minCredits;
+                    const range =
+                      nextMin != null
+                        ? `${tier.minCredits.toLocaleString()} – ${(nextMin - 1).toLocaleString()}`
+                        : tier.minCredits.toLocaleString() + "+";
+                    return (
+                      <tr key={idx} className="border-b border-border last:border-b-0">
+                        <td className="px-4 py-3 text-muted-foreground">{range}</td>
+                        <td className="px-4 py-3 text-right font-medium text-foreground">
+                          ${tier.price.toFixed(4)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Wallet Example */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
@@ -212,7 +287,9 @@ export default function Pricing() {
               "Add funds to your wallet",
               "Credits are deducted per API call",
               `1 credit = ${TOKENS_PER_CREDIT.toLocaleString()} tokens`,
-              `$${creditPrice.toFixed(3)} per credit`,
+              volumeTiers.length > 1
+                ? `Volume discounts: from $${volumeTiers[0]?.price.toFixed(3) ?? creditPrice.toFixed(3)}/credit`
+                : `$${creditPrice.toFixed(3)} per credit`,
               "API stops automatically when balance reaches zero",
             ].map((item, i) => (
               <motion.li key={i} className="flex items-center gap-3" variants={staggerItemVariants}>
