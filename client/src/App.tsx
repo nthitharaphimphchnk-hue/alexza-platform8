@@ -3,7 +3,7 @@ import NotFound from "@/pages/NotFound";
 import AppNotFound from "@/pages/AppNotFound";
 import { Route, Switch, Redirect } from "wouter";
 import * as Sentry from "@sentry/react";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { CreditsProvider } from "./contexts/CreditsContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -176,10 +176,32 @@ function Router() {
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
+function ThemeAwareToaster() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <Toaster
+      position="bottom-right"
+      theme={resolvedTheme}
+      richColors
+      expand
+      closeButton
+      icons={{
+        success: <CheckCircle2 size={18} strokeWidth={2} />,
+        error: <XCircle size={18} strokeWidth={2} />,
+        info: <Info size={18} strokeWidth={2} />,
+        warning: <AlertTriangle size={18} strokeWidth={2} />,
+        close: <X size={14} strokeWidth={2} />,
+      }}
+      toastOptions={{
+        classNames: {
+          toast: "alexza-toast",
+          title: "alexza-toast-title",
+          description: "alexza-toast-description",
+        },
+      }}
+    />
+  );
+}
 
 function App() {
   const [location] = useLocation();
@@ -211,39 +233,22 @@ function App() {
 
   return (
     <Sentry.ErrorBoundary fallback={ErrorFallback}>
-      <ThemeProvider
-        defaultTheme="dark"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark" switchable>
         <AuthProvider>
           <CreditsProvider>
             <TooltipProvider>
-            <Toaster
-              position="bottom-right"
-              theme="dark"
-              richColors
-              expand
-              closeButton
-              icons={{
-                success: <CheckCircle2 size={18} strokeWidth={2} />,
-                error: <XCircle size={18} strokeWidth={2} />,
-                info: <Info size={18} strokeWidth={2} />,
-                warning: <AlertTriangle size={18} strokeWidth={2} />,
-                close: <X size={14} strokeWidth={2} />,
-              }}
-              toastOptions={{
-                classNames: {
-                  toast: "alexza-toast",
-                  title: "alexza-toast-title",
-                  description: "alexza-toast-description",
-                },
-              }}
-            />
+            <ThemeAwareToaster />
             <div className="min-h-screen relative">
               <div
-                className="fixed inset-0 -z-30 pointer-events-none"
+                className="fixed inset-0 -z-30 pointer-events-none dark:opacity-100 opacity-0"
                 style={{
                   background: 'linear-gradient(to bottom, #050607 0%, #0b0e12 50%, #050607 100%)',
+                }}
+              />
+              <div
+                className="fixed inset-0 -z-30 pointer-events-none dark:opacity-0 opacity-100"
+                style={{
+                  background: 'linear-gradient(to bottom, #f8f9fa 0%, #ffffff 50%, #f3f4f6 100%)',
                 }}
               />
               <DotGridBackground />
