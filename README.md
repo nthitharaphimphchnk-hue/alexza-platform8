@@ -54,6 +54,22 @@ OPENAI_MODEL="gpt-4o-mini"
 - Frontend (Vite dev server) runs on `http://localhost:3000` by default and may move to another port if busy.
 - Vite proxy forwards `/api` and `/auth` to the backend. Set `VITE_API_BASE_URL=http://localhost:${PORT}` if calling API directly.
 
+## Theme (Light/Dark/System)
+
+Theme preference is stored in `localStorage` under the key `alexza_theme`. Supported values: `dark`, `light`, `system`.
+
+- **Default**: `dark` (keeps existing behavior)
+- **System**: Follows `prefers-color-scheme` and updates live when the OS preference changes
+- **Persistence**: Saved on change; applied immediately on load via a blocking script in `<head>` to avoid flash of wrong theme
+- **UI**: Settings → Appearance, and theme switcher in the app topbar
+
+### How theme persistence works
+
+1. On first load, a synchronous script in `index.html` runs before any content.
+2. It reads `localStorage.getItem("alexza_theme")` and applies the correct class (`dark` or `light`) to `<html>`.
+3. React's `ThemeProvider` then hydrates with the same value and keeps it in sync.
+4. Changing theme updates both the DOM class and localStorage.
+
 ## Webhooks
 
 Create webhook endpoints at `/app/webhooks` (or Settings → Webhooks). Events: `auth.user.created`, `wallet.topup.succeeded`, `wallet.low_balance`, `action.run.succeeded`, `action.run.failed`.
