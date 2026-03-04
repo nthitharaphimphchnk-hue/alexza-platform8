@@ -43,6 +43,9 @@ EXECUTION_DEFAULT_MODEL="..."  # optional
 
 # Legacy /v1/run
 OPENAI_MODEL="gpt-4o-mini"
+
+# Pricing (optional; default 0.003 USD per credit)
+# CREDIT_PRICE=0.003
 ```
 
 ### Ports (development)
@@ -311,10 +314,23 @@ With DSNs empty, the app runs normally; Sentry is disabled.
 
 ## Wallet (Prepaid Credits)
 
-- 1 credit = 1,000 tokens. $0.003 per credit.
+- 1 credit = 1,000 tokens. Price per credit is configurable via `CREDIT_PRICE` (default $0.003).
 - New users receive 500 free credits on signup (one-time).
 - API stops when balance reaches zero (HTTP 402).
 - No subscription; prepaid wallet only.
+
+### How to change price
+
+Set `CREDIT_PRICE` in `.env.local` (or your deployment env) to change the USD cost per credit:
+
+```bash
+CREDIT_PRICE=0.003
+```
+
+- Must be a positive number (e.g. `0.003`, `0.005`).
+- Backend: wallet top-up, Stripe checkout, and `/api/wallet/balance` use this value.
+- Frontend: Pricing page fetches from `GET /api/public/config` and displays the configured price.
+- Restart the server after changing.
 
 ### Backfill existing users
 
@@ -365,6 +381,7 @@ Backend/runtime:
 - `OPENROUTER_BASE_URL` (optional)
 - `BUILDER_MODEL` (optional)
 - `EXECUTION_DEFAULT_MODEL` (optional)
+- `CREDIT_PRICE` (optional; default 0.003, USD per credit)
 
 Frontend build-time:
 
