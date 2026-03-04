@@ -7,7 +7,6 @@ import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 
 export const TOKENS_PER_CREDIT = 1000;
-export const CREDIT_PRICE = 0.003;
 export const FREE_CREDITS = 500;
 
 export type WalletTransactionType = "grant" | "topup" | "reserve" | "usage" | "refund";

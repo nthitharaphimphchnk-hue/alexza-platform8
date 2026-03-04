@@ -4,7 +4,7 @@
 
 import { getStripe } from "./stripe.client";
 import { usdToCredits, MIN_TOPUP_USD, MAX_TOPUP_USD } from "./stripe.service";
-import { CREDIT_PRICE } from "../../wallet";
+import { getCreditPrice } from "../../config";
 import { logger } from "../../utils/logger";
 import { normalizeEnvUrl } from "../../utils/envUrls";
 
@@ -73,7 +73,7 @@ export async function createCheckoutSession(
           unit_amount: amountCents,
           product_data: {
             name: "ALEXZA Wallet Top-up",
-            description: `${credits.toLocaleString()} credits at $${CREDIT_PRICE}/credit`,
+            description: `${credits.toLocaleString()} credits at $${getCreditPrice()}/credit`,
           },
         },
         quantity: 1,

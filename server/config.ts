@@ -6,6 +6,29 @@ function readPositiveIntFromEnv(name: string, fallback: number): number {
   return parsed;
 }
 
+function readPositiveFloatFromEnv(name: string, fallback: number): number {
+  return parseCreditPrice(process.env[name], fallback);
+}
+
+/**
+ * Parse credit price from env string. Exported for unit tests.
+ * Returns fallback if raw is empty, NaN, or <= 0.
+ */
+export function parseCreditPrice(raw: string | undefined, fallback: number): number {
+  if (!raw || raw.trim() === "") return fallback;
+  const parsed = Number.parseFloat(raw.trim());
+  if (Number.isNaN(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+/** Credit price in USD per credit. Default 0.003. Configurable via CREDIT_PRICE env. */
+export const CREDIT_PRICE = readPositiveFloatFromEnv("CREDIT_PRICE", 0.003);
+
+/** Get credit price (for use in modules that import config lazily). Safe to log (numeric only). */
+export function getCreditPrice(): number {
+  return CREDIT_PRICE;
+}
+
 export const RATE_LIMIT_REQUESTS_PER_MINUTE = readPositiveIntFromEnv(
   "RATE_LIMIT_REQUESTS_PER_MINUTE",
   30

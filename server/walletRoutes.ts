@@ -7,11 +7,11 @@ import { Router, type Request } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import { getCreditPrice } from "./config";
 import {
   getBalance,
   adminTopup,
   TOKENS_PER_CREDIT,
-  CREDIT_PRICE,
   FREE_CREDITS,
 } from "./wallet";
 
@@ -42,7 +42,7 @@ router.get("/wallet/balance", requireAuth, async (req, res, next) => {
       ok: true,
       balanceCredits,
       tokensPerCredit: TOKENS_PER_CREDIT,
-      creditPrice: CREDIT_PRICE,
+      creditPrice: getCreditPrice(),
       freeCredits: FREE_CREDITS,
     });
   } catch (error) {
