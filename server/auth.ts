@@ -203,6 +203,21 @@ router.post("/auth/signup", async (req, res, next) => {
     await ensurePersonalWorkspace(insertResult.insertedId);
 
     await createSessionAndSetCookie(insertResult.insertedId, res);
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: insertResult.insertedId,
+      actorUserId: insertResult.insertedId,
+      actorEmail: payload.email,
+      actionType: "auth.user.created",
+      resourceType: "user",
+      resourceId: insertResult.insertedId.toString(),
+      metadata: { name: payload.name },
+      ip,
+      userAgent,
+      status: "success",
+    });
     const { emitWebhookEvent } = await import("./webhooks/events");
     emitWebhookEvent({
       event: "auth.user.created",

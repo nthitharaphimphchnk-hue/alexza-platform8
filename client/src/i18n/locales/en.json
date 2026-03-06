@@ -31,6 +31,7 @@
     "analytics": "Analytics",
     "requests": "Requests",
     "templates": "Templates",
+    "auditLogs": "Audit Logs",
     "workspaces": "Workspaces",
     "credits": "Credits",
     "billing": "Billing",

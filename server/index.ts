@@ -38,6 +38,10 @@ import { analyticsRouter } from "./analytics";
 import { requestsRouter } from "./requestsRoutes";
 import { templatesRouter } from "./templatesRoutes";
 import { adminTemplatesRouter } from "./adminTemplatesRoutes";
+import { auditRoutes } from "./auditRoutes";
+import { healthRouter } from "./healthRoutes";
+import { statusRouter } from "./statusRoutes";
+import { startStatusMonitor } from "./statusService";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { sentryScopeMiddleware } from "./middleware/sentryScope";
 import { requestLogger } from "./middleware/requestLogger";
@@ -171,6 +175,9 @@ async function startServer() {
 
   app.use(oauthRouter);
 
+  // Health endpoints (GET /health, /health/db, /health/stripe, /health/webhooks)
+  app.use("/", healthRouter);
+
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true });
   });
@@ -224,11 +231,13 @@ async function startServer() {
   app.use("/api", requestsRouter);
   app.use("/api", templatesRouter);
   app.use("/api", adminTemplatesRouter);
+  app.use("/api", auditRoutes);
   app.use("/api", onboardingRouter);
   app.use("/api", billingRouter);
   app.use("/api/billing/stripe", stripeRouter);
   app.use("/api", notificationsRouter);
   app.use("/api", webhooksRouter);
+  app.use("/api", statusRouter);
   app.use("/api", adminRunLogsRouter);
   app.use(runRouter);
   app.use(runBySpecRouter);
@@ -552,6 +561,8 @@ async function startServer() {
     }
 
     logger.info(logPayload);
+
+    startStatusMonitor();
   });
 }
 
