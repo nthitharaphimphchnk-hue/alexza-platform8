@@ -2,12 +2,17 @@
   "name": "alexza-ai",
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10.0.0"
+  },
   "license": "MIT",
   "scripts": {
     "dev": "concurrently -k -n server,client -c cyan,magenta \"pnpm run dev:server\" \"pnpm run dev:client\"",
     "dev:server": "cross-env NODE_ENV=development tsx server/index.ts",
     "dev:client": "vite --host",
-    "build": "pnpm run build:client && pnpm run build:server",
+    "prebuild": "node -e \"const fs=require('fs');['client/dist','server/dist','cli/dist'].forEach(d=>{try{fs.rmSync(d,{recursive:true,force:true})}catch{}})\"",
+    "build": "pnpm run build:client && pnpm run build:server && pnpm run build:cli",
     "build:client": "vite build",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=server/dist",
     "start": "node --import ./server/instrument.mjs server/dist/index.js",
