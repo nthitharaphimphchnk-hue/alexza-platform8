@@ -7,6 +7,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
+import { requireApiScope } from "./middleware/requireApiScope";
 import { getUserBillingState } from "./billing";
 import { MAX_ACTIONS_PER_PROJECT_FREE } from "./config";
 import { QUALITY_MODELS, QUALITY_MODELS_OPENAI } from "./modelRegistry";
@@ -225,7 +226,7 @@ router.post("/projects/:id/actions", requireAuth, async (req, res, next) => {
 });
 
 // GET /api/projects/:id/actions
-router.get("/projects/:id/actions", requireAuthOrApiKey, async (req, res, next) => {
+router.get("/projects/:id/actions", requireAuthOrApiKey, requireApiScope("read:projects"), async (req, res, next) => {
   try {
     await ensureIndexes();
     if (!req.user) return err(res, 401, "UNAUTHORIZED", "Unauthorized");
@@ -253,7 +254,7 @@ router.get("/projects/:id/actions", requireAuthOrApiKey, async (req, res, next) 
 });
 
 // GET /api/projects/:id/actions/:actionName
-router.get("/projects/:id/actions/:actionName", requireAuthOrApiKey, async (req, res, next) => {
+router.get("/projects/:id/actions/:actionName", requireAuthOrApiKey, requireApiScope("read:projects"), async (req, res, next) => {
   try {
     await ensureIndexes();
     if (!req.user) return err(res, 401, "UNAUTHORIZED", "Unauthorized");

@@ -16,8 +16,8 @@ import { getDb, pingDb } from "./db";
 import { keysRouter } from "./keys";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
 import { projectsRouter } from "./projects";
-import { runRouter } from "./run";
-import { runBySpecRouter } from "./runBySpec";
+import { v1Router } from "./routes/v1";
+import { v2Router } from "./routes/v2";
 import { adminRunLogsRouter } from "./adminRunLogs";
 import { builderRouter } from "./builder";
 import { actionsRouter } from "./actions";
@@ -52,6 +52,7 @@ import { logger } from "./utils/logger";
 import { normalizeEnvUrl } from "./utils/envUrls";
 import { getCreditPrice } from "./config";
 import { CREDIT_PRICE_TIERS } from "./config/pricing";
+import { API_KEY_SCOPES } from "./config/scopes";
 import { TOKENS_PER_CREDIT } from "./wallet";
 import swaggerUi from "swagger-ui-express";
 import { parse as parseYaml } from "yaml";
@@ -217,6 +218,14 @@ async function startServer() {
     });
   });
 
+  /** Public API key scopes - for UI when creating keys */
+  app.get("/api/public/scopes", (_req, res) => {
+    res.json({
+      ok: true,
+      scopes: API_KEY_SCOPES,
+    });
+  });
+
   app.use("/api", authRouter);
   app.use("/api", workspacesRouter);
   app.use("/api", projectsRouter);
@@ -239,8 +248,10 @@ async function startServer() {
   app.use("/api", webhooksRouter);
   app.use("/api", statusRouter);
   app.use("/api", adminRunLogsRouter);
-  app.use(runRouter);
-  app.use(runBySpecRouter);
+
+  // Versioned API: /v1 (stable), /v2 (scaffold)
+  app.use("/v1", v1Router);
+  app.use("/v2", v2Router);
 
   // OpenAPI / Swagger documentation at /docs/api
   const openapiPaths = [

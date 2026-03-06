@@ -70,6 +70,29 @@ Theme preference is stored in `localStorage` under the key `alexza_theme`. Suppo
 3. React's `ThemeProvider` then hydrates with the same value and keeps it in sync.
 4. Changing theme updates both the DOM class and localStorage.
 
+## API Versioning
+
+The public API is versioned. Use `/v1` for all runtime calls:
+
+- `POST /v1/projects/:projectId/run/:actionName` — Run action (recommended)
+- `POST /v1/run` — Legacy (deprecated, use action-based endpoint)
+
+See [docs/API_VERSIONING.md](docs/API_VERSIONING.md) for details.
+
+## Rate Limits (by Plan)
+
+Runtime endpoints (`POST /v1/projects/:id/run/:action`, `POST /v1/run`) are rate-limited per API key based on billing plan:
+
+| Plan       | Requests/minute |
+|------------|-----------------|
+| Free       | 30              |
+| Pro        | 120             |
+| Enterprise | 600             |
+
+Env overrides: `RATE_LIMIT_FREE`, `RATE_LIMIT_PRO`, `RATE_LIMIT_ENTERPRISE`.
+
+Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. When exceeded: HTTP 429 `{ "error": "rate_limit_exceeded" }`.
+
 ## Webhooks
 
 Create webhook endpoints at `/app/webhooks` (or Settings → Webhooks). Events: `auth.user.created`, `wallet.topup.succeeded`, `wallet.low_balance`, `action.run.succeeded`, `action.run.failed`.

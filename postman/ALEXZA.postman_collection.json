@@ -1,7 +1,7 @@
 {
   "event": [],
   "info": {
-    "_postman_id": "123b9f12-dc96-4999-b4f6-c648b30c0ee6",
+    "_postman_id": "ce4a719e-24ca-4e49-8374-7daa80ca5b82",
     "description": "ALEXZA AI API - Run actions, manage projects, webhooks, analytics, audit logs.",
     "name": "ALEXZA AI",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -77,7 +77,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"email\": \"bzvnIFDH@SSXvDzODxOHyk.af\",\n  \"password\": \"string\"\n}"
+                  "raw": "{\n  \"email\": \"U9q5FUNUKzhntJC@UnRHygWLOerJVaCJCexhduDW.cvc\",\n  \"password\": \"string\"\n}"
                 },
                 "method": "POST",
                 "url": {
@@ -116,7 +116,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"email\": \"bzvnIFDH@SSXvDzODxOHyk.af\",\n  \"password\": \"string\"\n}"
+                  "raw": "{\n  \"email\": \"U9q5FUNUKzhntJC@UnRHygWLOerJVaCJCexhduDW.cvc\",\n  \"password\": \"string\"\n}"
                 },
                 "method": "POST",
                 "url": {
@@ -155,7 +155,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"email\": \"bzvnIFDH@SSXvDzODxOHyk.af\",\n  \"password\": \"string\"\n}"
+                  "raw": "{\n  \"email\": \"U9q5FUNUKzhntJC@UnRHygWLOerJVaCJCexhduDW.cvc\",\n  \"password\": \"string\"\n}"
                 },
                 "method": "POST",
                 "url": {
@@ -237,7 +237,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"email\": \"uFOCqRxRo-A@VJjTrZNmXgUMBzC.bfo\",\n  \"password\": \"string\",\n  \"name\": \"string\"\n}"
+                  "raw": "{\n  \"email\": \"zSKuizu2@QJrlIcJDywMAmjhqEBclSTMhG.wj\",\n  \"password\": \"string\",\n  \"name\": \"string\"\n}"
                 },
                 "method": "POST",
                 "url": {
@@ -276,7 +276,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"email\": \"uFOCqRxRo-A@VJjTrZNmXgUMBzC.bfo\",\n  \"password\": \"string\",\n  \"name\": \"string\"\n}"
+                  "raw": "{\n  \"email\": \"zSKuizu2@QJrlIcJDywMAmjhqEBclSTMhG.wj\",\n  \"password\": \"string\",\n  \"name\": \"string\"\n}"
                 },
                 "method": "POST",
                 "url": {
@@ -315,7 +315,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"email\": \"uFOCqRxRo-A@VJjTrZNmXgUMBzC.bfo\",\n  \"password\": \"string\",\n  \"name\": \"string\"\n}"
+                  "raw": "{\n  \"email\": \"zSKuizu2@QJrlIcJDywMAmjhqEBclSTMhG.wj\",\n  \"password\": \"string\",\n  \"name\": \"string\"\n}"
                 },
                 "method": "POST",
                 "url": {
@@ -432,7 +432,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"requestId\": \"string\",\n  \"output\": \"string\",\n  \"creditsCharged\": 2185.042673952227,\n  \"usage\": {\n    \"tokens\": 4030.44663212647,\n    \"creditsCharged\": 6870.752549563504\n  },\n  \"latencyMs\": 79.08540437882917\n}",
+              "body": "{\n  \"ok\": true,\n  \"requestId\": \"string\",\n  \"output\": \"string\",\n  \"creditsCharged\": 4316.942345957393,\n  \"usage\": {\n    \"tokens\": 3283.83760884964,\n    \"creditsCharged\": 760.8594393190904\n  },\n  \"latencyMs\": 4864.909350355329\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -890,7 +890,7 @@
               "raw": "{\n  \"input\": \"Hello, run my AI flow\"\n}"
             },
             "description": {
-              "content": "Deprecated. Use `POST /v1/projects/{projectId}/run/{actionName}` for action-based execution.\nSingle-input legacy endpoint.\n",
+              "content": "Deprecated. Use `POST /v1/projects/{projectId}/run/{actionName}` for action-based execution.\nSingle-input legacy endpoint.\nResponses include `X-Alexza-Deprecated: true` and `X-Alexza-Replacement: /v1/projects/:projectId/run/:actionName`.\n",
               "type": "text/plain"
             },
             "header": [
@@ -925,12 +925,24 @@
               "cookie": [],
               "header": [
                 {
+                  "description": "Indicates this endpoint is deprecated",
+                  "disabled": false,
+                  "key": "X-Alexza-Deprecated",
+                  "value": "true"
+                },
+                {
+                  "description": "Preferred replacement endpoint",
+                  "disabled": false,
+                  "key": "X-Alexza-Replacement",
+                  "value": "/v1/projects/:projectId/run/:actionName"
+                },
+                {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
-              "id": "39fb58c6ad7a2bac1ba7bc48",
-              "name": "Success",
+              "id": "8bb0e2b7a922a914b1c504c8",
+              "name": "Success (includes X-Alexza-Deprecated and X-Alexza-Replacement headers)",
               "originalRequest": {
                 "body": {
                   "mode": "raw",
@@ -1094,7 +1106,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"projects\": [\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"description\": \"string\",\n      \"status\": \"paused\",\n      \"routingMode\": \"quality\",\n      \"createdAt\": \"2025-01-20T13:38:50.152Z\",\n      \"updatedAt\": \"2018-10-20T20:48:35.964Z\"\n    },\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"description\": \"string\",\n      \"status\": \"paused\",\n      \"routingMode\": \"balanced\",\n      \"createdAt\": \"1975-11-24T22:05:30.839Z\",\n      \"updatedAt\": \"1990-10-25T06:09:52.190Z\"\n    }\n  ]\n}",
+              "body": "{\n  \"ok\": true,\n  \"projects\": [\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"description\": \"string\",\n      \"status\": \"active\",\n      \"routingMode\": \"quality\",\n      \"createdAt\": \"2020-05-17T06:51:56.734Z\",\n      \"updatedAt\": \"1996-07-14T10:30:55.347Z\"\n    },\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"description\": \"string\",\n      \"status\": \"paused\",\n      \"routingMode\": \"quality\",\n      \"createdAt\": \"2003-11-03T01:05:42.731Z\",\n      \"updatedAt\": \"1960-02-12T23:06:59.943Z\"\n    }\n  ]\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -2485,7 +2497,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"totalCreditsUsed\": 694.6764106138125,\n  \"totalApiCalls\": 3579.1750803326972,\n  \"totalTokensUsed\": 9582.094132082437,\n  \"totalActionsRun\": 6840.449599526819\n}",
+              "body": "{\n  \"ok\": true,\n  \"totalCreditsUsed\": 6693.272955206253,\n  \"totalApiCalls\": 2022.3934762966867,\n  \"totalTokensUsed\": 9120.658507076516,\n  \"totalActionsRun\": 3937.2018126259945\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -2625,7 +2637,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": false,\n  \"projects\": [\n    {\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"totalApiCalls\": 5792.337988853451,\n      \"totalTokensUsed\": 6569.045890065666\n    },\n    {\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"totalApiCalls\": 8169.380216257871,\n      \"totalTokensUsed\": 1388.9538925211675\n    }\n  ]\n}",
+              "body": "{\n  \"ok\": false,\n  \"projects\": [\n    {\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"totalApiCalls\": 5160.44536480283,\n      \"totalTokensUsed\": 8119.28784450961\n    },\n    {\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"totalApiCalls\": 9474.401883745051,\n      \"totalTokensUsed\": 1949.9999451064486\n    }\n  ]\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -2905,7 +2917,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true\n}",
+              "body": "{\n  \"ok\": false\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -3070,17 +3082,17 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "success"
+                  "value": "error"
                 },
                 {
                   "disabled": false,
                   "key": "from",
-                  "value": "1967-11-21T02:49:46.339Z"
+                  "value": "1961-01-24T16:07:27.037Z"
                 },
                 {
                   "disabled": false,
                   "key": "to",
-                  "value": "1967-11-21T02:49:46.339Z"
+                  "value": "1961-01-24T16:07:27.037Z"
                 }
               ],
               "variable": []
@@ -3089,7 +3101,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"requests\": [\n    {\n      \"id\": \"string\",\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"actionName\": \"string\",\n      \"status\": \"success\",\n      \"tokensUsed\": 4816.102090312151,\n      \"latencyMs\": 3038.857979043883,\n      \"error\": \"string\",\n      \"createdAt\": \"1983-06-30T07:57:12.957Z\"\n    },\n    {\n      \"id\": \"string\",\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"actionName\": \"string\",\n      \"status\": \"error\",\n      \"tokensUsed\": 5765.124844908582,\n      \"latencyMs\": 9058.1341948522,\n      \"error\": \"string\",\n      \"createdAt\": \"1985-05-28T14:05:40.790Z\"\n    }\n  ],\n  \"pagination\": {\n    \"page\": 7980,\n    \"pageSize\": 9663,\n    \"total\": 4372,\n    \"totalPages\": 3260\n  }\n}",
+              "body": "{\n  \"ok\": true,\n  \"requests\": [\n    {\n      \"id\": \"string\",\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"actionName\": \"string\",\n      \"status\": \"error\",\n      \"tokensUsed\": 7793.329342480431,\n      \"latencyMs\": 8625.215493341859,\n      \"error\": \"string\",\n      \"createdAt\": \"1958-09-04T17:43:18.656Z\"\n    },\n    {\n      \"id\": \"string\",\n      \"projectId\": \"string\",\n      \"projectName\": \"string\",\n      \"actionName\": \"string\",\n      \"status\": \"error\",\n      \"tokensUsed\": 1102.8230430424935,\n      \"latencyMs\": 6550.503245037027,\n      \"error\": \"string\",\n      \"createdAt\": \"1962-10-07T23:21:03.140Z\"\n    }\n  ],\n  \"pagination\": {\n    \"page\": 4570,\n    \"pageSize\": 9171,\n    \"total\": 684,\n    \"totalPages\": 4279\n  }\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -3140,15 +3152,15 @@
                     },
                     {
                       "key": "status",
-                      "value": "success"
+                      "value": "error"
                     },
                     {
                       "key": "from",
-                      "value": "1967-11-21T02:49:46.339Z"
+                      "value": "1961-01-24T16:07:27.037Z"
                     },
                     {
                       "key": "to",
-                      "value": "1967-11-21T02:49:46.339Z"
+                      "value": "1961-01-24T16:07:27.037Z"
                     }
                   ],
                   "variable": []
@@ -3209,15 +3221,15 @@
                     },
                     {
                       "key": "status",
-                      "value": "success"
+                      "value": "error"
                     },
                     {
                       "key": "from",
-                      "value": "1967-11-21T02:49:46.339Z"
+                      "value": "1961-01-24T16:07:27.037Z"
                     },
                     {
                       "key": "to",
-                      "value": "1967-11-21T02:49:46.339Z"
+                      "value": "1961-01-24T16:07:27.037Z"
                     }
                   ],
                   "variable": []
@@ -3285,7 +3297,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"request\": {\n    \"id\": \"string\",\n    \"projectId\": \"string\",\n    \"projectName\": \"string\",\n    \"actionName\": \"string\",\n    \"status\": \"error\",\n    \"tokensUsed\": 1220.5511550468827,\n    \"latencyMs\": 293.0647724311664,\n    \"error\": \"string\",\n    \"createdAt\": \"1952-12-28T10:34:59.237Z\"\n  }\n}",
+              "body": "{\n  \"ok\": true,\n  \"request\": {\n    \"id\": \"string\",\n    \"projectId\": \"string\",\n    \"projectName\": \"string\",\n    \"actionName\": \"string\",\n    \"status\": \"failed_insufficient_credits\",\n    \"tokensUsed\": 4957.168238119088,\n    \"latencyMs\": 9283.294950155985,\n    \"error\": \"string\",\n    \"createdAt\": \"2020-08-22T15:18:20.735Z\"\n  }\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -3451,7 +3463,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": false,\n  \"endpoints\": [\n    {\n      \"id\": \"string\",\n      \"url\": \"string\",\n      \"enabled\": true,\n      \"events\": [\n        \"string\",\n        \"string\"\n      ],\n      \"projectId\": \"string\",\n      \"secret\": \"string\",\n      \"createdAt\": \"2002-04-30T13:32:20.493Z\",\n      \"updatedAt\": \"1971-01-07T13:15:09.173Z\"\n    },\n    {\n      \"id\": \"string\",\n      \"url\": \"string\",\n      \"enabled\": true,\n      \"events\": [\n        \"string\",\n        \"string\"\n      ],\n      \"projectId\": \"string\",\n      \"secret\": \"string\",\n      \"createdAt\": \"1993-10-26T21:19:36.897Z\",\n      \"updatedAt\": \"2024-07-27T11:30:56.191Z\"\n    }\n  ]\n}",
+              "body": "{\n  \"ok\": true,\n  \"endpoints\": [\n    {\n      \"id\": \"string\",\n      \"url\": \"string\",\n      \"enabled\": true,\n      \"events\": [\n        \"string\",\n        \"string\"\n      ],\n      \"projectId\": \"string\",\n      \"secret\": \"string\",\n      \"createdAt\": \"1981-02-11T12:26:11.142Z\",\n      \"updatedAt\": \"1947-03-22T20:59:09.958Z\"\n    },\n    {\n      \"id\": \"string\",\n      \"url\": \"string\",\n      \"enabled\": false,\n      \"events\": [\n        \"string\",\n        \"string\"\n      ],\n      \"projectId\": \"string\",\n      \"secret\": \"string\",\n      \"createdAt\": \"1999-11-15T06:09:56.729Z\",\n      \"updatedAt\": \"1990-11-06T06:16:32.637Z\"\n    }\n  ]\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -3571,7 +3583,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"action.run.succeeded\",\n    \"wallet.topup.succeeded\"\n  ]\n}"
+              "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"action.run.failed\",\n    \"action.run.succeeded\"\n  ]\n}"
             },
             "description": {},
             "header": [
@@ -3601,7 +3613,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"endpoint\": {\n    \"id\": \"string\",\n    \"url\": \"string\",\n    \"enabled\": false,\n    \"events\": [\n      \"string\",\n      \"string\"\n    ],\n    \"projectId\": \"string\",\n    \"secret\": \"string\",\n    \"createdAt\": \"1946-06-04T14:04:00.118Z\",\n    \"updatedAt\": \"1987-06-13T00:22:59.813Z\"\n  }\n}",
+              "body": "{\n  \"ok\": false,\n  \"endpoint\": {\n    \"id\": \"string\",\n    \"url\": \"string\",\n    \"enabled\": true,\n    \"events\": [\n      \"string\",\n      \"string\"\n    ],\n    \"projectId\": \"string\",\n    \"secret\": \"string\",\n    \"createdAt\": \"1989-07-05T13:18:08.741Z\",\n    \"updatedAt\": \"1978-12-28T09:50:05.899Z\"\n  }\n}",
               "code": 201,
               "cookie": [],
               "header": [
@@ -3620,7 +3632,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"action.run.failed\",\n    \"action.run.succeeded\"\n  ]\n}"
+                  "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"wallet.topup.succeeded\",\n    \"wallet.topup.succeeded\"\n  ]\n}"
                 },
                 "header": [
                   {
@@ -3672,7 +3684,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"action.run.failed\",\n    \"action.run.succeeded\"\n  ]\n}"
+                  "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"wallet.topup.succeeded\",\n    \"wallet.topup.succeeded\"\n  ]\n}"
                 },
                 "header": [
                   {
@@ -3724,7 +3736,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"action.run.failed\",\n    \"action.run.succeeded\"\n  ]\n}"
+                  "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"wallet.topup.succeeded\",\n    \"wallet.topup.succeeded\"\n  ]\n}"
                 },
                 "header": [
                   {
@@ -3789,7 +3801,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"url\": \"http://wMvWuwusPilk.chvdq.HHX,BWTcBJNXBVGtyUi5AN5QwpdAHqXteXeotstok5bNEyayLT\",\n  \"enabled\": false,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
+              "raw": "{\n  \"url\": \"https://tHUUpTuuxXNhTksaRipiYzzbZG.ezros-6MV6L8HVlKLwEka9kf\",\n  \"enabled\": false,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
             },
             "description": {},
             "header": [
@@ -3843,7 +3855,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"url\": \"http://pJDREzGZxVIlD.jtwHm0a6XMugLgYNXB50AF6gw\",\n  \"enabled\": true,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
+                  "raw": "{\n  \"url\": \"https://kgfXCexZvRbToXuwMSUfaJHhTcKPfHdNs.sfjo6Mc3IR0Y\",\n  \"enabled\": true,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
                 },
                 "header": [
                   {
@@ -3900,7 +3912,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"url\": \"http://pJDREzGZxVIlD.jtwHm0a6XMugLgYNXB50AF6gw\",\n  \"enabled\": true,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
+                  "raw": "{\n  \"url\": \"https://kgfXCexZvRbToXuwMSUfaJHhTcKPfHdNs.sfjo6Mc3IR0Y\",\n  \"enabled\": true,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
                 },
                 "header": [
                   {
@@ -3957,7 +3969,7 @@
                       "language": "json"
                     }
                   },
-                  "raw": "{\n  \"url\": \"http://pJDREzGZxVIlD.jtwHm0a6XMugLgYNXB50AF6gw\",\n  \"enabled\": true,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
+                  "raw": "{\n  \"url\": \"https://kgfXCexZvRbToXuwMSUfaJHhTcKPfHdNs.sfjo6Mc3IR0Y\",\n  \"enabled\": true,\n  \"events\": [\n    \"string\",\n    \"string\"\n  ]\n}"
                 },
                 "header": [
                   {
@@ -4286,12 +4298,12 @@
                 {
                   "disabled": false,
                   "key": "dateFrom",
-                  "value": "1968-02-28"
+                  "value": "2008-10-18"
                 },
                 {
                   "disabled": false,
                   "key": "dateTo",
-                  "value": "1968-02-28"
+                  "value": "2008-10-18"
                 }
               ],
               "variable": []
@@ -4300,7 +4312,7 @@
           "response": [
             {
               "_postman_previewlanguage": "json",
-              "body": "{\n  \"ok\": true,\n  \"total\": 9373,\n  \"page\": 7908,\n  \"pageSize\": 8378\n}",
+              "body": "{\n  \"ok\": true,\n  \"total\": 9335,\n  \"page\": 9434,\n  \"pageSize\": 2649\n}",
               "code": 200,
               "cookie": [],
               "header": [
@@ -4367,11 +4379,11 @@
                     },
                     {
                       "key": "dateFrom",
-                      "value": "1968-02-28"
+                      "value": "2008-10-18"
                     },
                     {
                       "key": "dateTo",
-                      "value": "1968-02-28"
+                      "value": "2008-10-18"
                     }
                   ],
                   "variable": []
@@ -4444,11 +4456,11 @@
                     },
                     {
                       "key": "dateFrom",
-                      "value": "1968-02-28"
+                      "value": "2008-10-18"
                     },
                     {
                       "key": "dateTo",
-                      "value": "1968-02-28"
+                      "value": "2008-10-18"
                     }
                   ],
                   "variable": []

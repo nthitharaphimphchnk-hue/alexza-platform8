@@ -196,7 +196,75 @@ router.get("/webhooks/:id/deliveries", requireAuth, async (req: Request, res: Re
     const id = req.params.id;
     if (!ObjectId.isValid(id)) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
-    const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? "10"), 10) || 10));
+    const page = Math.max(1, Number.parseInt(String(req.query.page ?? "1"), 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(String(req.query.pageSize ?? "20"), 10) || 20));
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const event = typeof req.query.event === "string" ? req.query.event : undefined;
+    const dateFrom = typeof req.query.dateFrom === "string" ? req.query.dateFrom : undefined;
+    const dateTo = typeof req.query.dateTo === "string" ? req.query.dateTo : undefined;
+
+    const db = await getDb();
+    const epCol = db.collection<WebhookEndpointDoc>("webhook_endpoints");
+    const endpoint = await epCol.findOne({ _id: new ObjectId(id), ownerUserId: req.user._id });
+    if (!endpoint) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const filter: Record<string, unknown> = { endpointId: endpoint._id };
+    if (status && ["success", "failed", "pending"].includes(status)) {
+      filter.status = status;
+    }
+    if (event) filter.event = event;
+    if (dateFrom || dateTo) {
+      const dateFilter: Record<string, Date> = {};
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (!Number.isNaN(from.getTime())) dateFilter.$gte = from;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        if (!Number.isNaN(to.getTime())) dateFilter.$lte = to;
+      }
+      if (Object.keys(dateFilter).length > 0) filter.createdAt = dateFilter;
+    }
+
+    const delCol = db.collection("webhook_deliveries");
+    const [deliveries, total] = await Promise.all([
+      delCol
+        .find(filter as Parameters<typeof delCol.find>[0])
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .toArray(),
+      delCol.countDocuments(filter as Parameters<typeof delCol.countDocuments>[0]),
+    ]);
+
+    return res.json({
+      ok: true,
+      items: deliveries.map((d: { _id: ObjectId; event: string; status: string; attemptCount: number; lastStatusCode?: number; lastError?: string; latencyMs?: number; createdAt: Date }) => ({
+        id: d._id.toString(),
+        event: d.event,
+        status: d.status,
+        statusCode: d.lastStatusCode,
+        latencyMs: d.latencyMs,
+        attemptCount: d.attemptCount,
+        error: d.lastError,
+        createdAt: d.createdAt,
+      })),
+      total,
+      page,
+      pageSize,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/webhooks/:id/deliveries/:deliveryId", requireAuth, async (req: Request, res: Response, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+    const id = req.params.id;
+    const deliveryId = req.params.deliveryId;
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(deliveryId)) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
     const db = await getDb();
     const epCol = db.collection<WebhookEndpointDoc>("webhook_endpoints");
@@ -204,24 +272,73 @@ router.get("/webhooks/:id/deliveries", requireAuth, async (req: Request, res: Re
     if (!endpoint) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
 
     const delCol = db.collection("webhook_deliveries");
-    const deliveries = await delCol
-      .find({ endpointId: endpoint._id })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .toArray();
+    const delivery = await delCol.findOne({
+      _id: new ObjectId(deliveryId),
+      endpointId: endpoint._id,
+    });
+    if (!delivery) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Alexza-Event": delivery.event,
+      "X-Alexza-Timestamp": "(sent at delivery time)",
+      "X-Alexza-Signature": "(redacted)",
+    };
 
     return res.json({
       ok: true,
-      deliveries: deliveries.map((d: { _id: ObjectId; event: string; status: string; attemptCount: number; lastStatusCode?: number; lastError?: string; latencyMs?: number; createdAt: Date }) => ({
-        id: d._id.toString(),
-        event: d.event,
-        status: d.status,
-        attemptCount: d.attemptCount,
-        lastStatusCode: d.lastStatusCode,
-        lastError: d.lastError,
-        latencyMs: d.latencyMs,
-        createdAt: d.createdAt,
-      })),
+      delivery: {
+        id: delivery._id.toString(),
+        event: delivery.event,
+        status: delivery.status,
+        statusCode: delivery.lastStatusCode,
+        latencyMs: delivery.latencyMs,
+        attemptCount: delivery.attemptCount,
+        error: delivery.lastError,
+        payload: delivery.payload,
+        headers,
+        response: delivery.lastError ? { statusCode: delivery.lastStatusCode, body: delivery.lastError } : (delivery.lastStatusCode ? { statusCode: delivery.lastStatusCode } : null),
+        createdAt: delivery.createdAt,
+        updatedAt: delivery.updatedAt,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/webhooks/:id/deliveries/:deliveryId/retry", requireAuth, async (req: Request, res: Response, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+    const id = req.params.id;
+    const deliveryId = req.params.deliveryId;
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(deliveryId)) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const { retryWebhookDelivery } = await import("./dispatcher");
+    const result = await retryWebhookDelivery({
+      endpointId: new ObjectId(id),
+      deliveryId: new ObjectId(deliveryId),
+      ownerUserId: req.user._id,
+    });
+
+    if (!result.ok) {
+      return res.status(result.statusCode).json({ ok: false, error: result.error });
+    }
+
+    logger.info(
+      { endpointId: id, deliveryId, userId: req.user.id },
+      "[Webhooks] Manual retry completed"
+    );
+
+    return res.json({
+      ok: true,
+      delivery: {
+        id: result.deliveryId,
+        status: result.status,
+        statusCode: result.statusCode,
+        latencyMs: result.latencyMs,
+      },
     });
   } catch (error) {
     return next(error);

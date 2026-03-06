@@ -3,6 +3,7 @@ import { ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
+import { requireApiScope } from "./middleware/requireApiScope";
 import { ensureProjectAccess, getWorkspaceIdsForUser } from "./workspaces/projectAccess";
 import { getMemberRole } from "./workspaces/workspaces.routes";
 import { hasPermission } from "./workspaces/permissions";
@@ -172,7 +173,7 @@ router.post("/projects", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/projects", requireAuthOrApiKey, async (req, res, next) => {
+router.get("/projects", requireAuthOrApiKey, requireApiScope("read:projects"), async (req, res, next) => {
   try {
     await ensureProjectsIndexes();
     if (!req.user) {

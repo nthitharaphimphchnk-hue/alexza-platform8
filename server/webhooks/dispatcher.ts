@@ -224,3 +224,79 @@ export async function dispatchWebhookEvent(params: {
     });
   }
 }
+
+/** Manual retry of a failed delivery. Returns result for API response. */
+export async function retryWebhookDelivery(params: {
+  endpointId: ObjectId;
+  deliveryId: ObjectId;
+  ownerUserId: ObjectId;
+}): Promise<
+  | { ok: true; deliveryId: string; status: string; statusCode?: number; latencyMs?: number }
+  | { ok: false; error: string; statusCode: number }
+> {
+  await ensureCollections();
+
+  const db = await getDb();
+  const epCol = db.collection<WebhookEndpointDoc>("webhook_endpoints");
+  const endpoint = await epCol.findOne({ _id: params.endpointId, ownerUserId: params.ownerUserId });
+  if (!endpoint) {
+    return { ok: false, error: "NOT_FOUND", statusCode: 404 };
+  }
+
+  const delCol = db.collection("webhook_deliveries");
+  const delivery = await delCol.findOne({
+    _id: params.deliveryId,
+    endpointId: params.endpointId,
+  });
+  if (!delivery) {
+    return { ok: false, error: "NOT_FOUND", statusCode: 404 };
+  }
+
+  const payload = (delivery.payload as Record<string, unknown>) || {};
+  const event = delivery.event as WebhookEventType;
+  const result = await sendRequest(endpoint.url, event, payload, endpoint.secret);
+
+  const attemptCount = (delivery.attemptCount as number) + 1;
+  if (result.ok) {
+    await updateDelivery(
+      params.deliveryId,
+      "success",
+      attemptCount,
+      result.statusCode,
+      undefined,
+      undefined,
+      result.latencyMs
+    );
+    logger.info(
+      { endpointId: params.endpointId.toString(), deliveryId: params.deliveryId.toString(), latencyMs: result.latencyMs },
+      "[Webhooks] Manual retry success"
+    );
+    return {
+      ok: true,
+      deliveryId: params.deliveryId.toString(),
+      status: "success",
+      statusCode: result.statusCode,
+      latencyMs: result.latencyMs,
+    };
+  }
+
+  await updateDelivery(
+    params.deliveryId,
+    "failed",
+    attemptCount,
+    result.statusCode,
+    result.error,
+    undefined,
+    result.latencyMs
+  );
+  logger.warn(
+    { endpointId: params.endpointId.toString(), deliveryId: params.deliveryId.toString(), error: result.error },
+    "[Webhooks] Manual retry failed"
+  );
+  const statusCode = result.statusCode >= 400 ? result.statusCode : 502;
+  return {
+    ok: false,
+    error: result.error || "Delivery failed",
+    statusCode,
+  };
+}

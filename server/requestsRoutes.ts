@@ -8,6 +8,7 @@ import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
+import { requireApiScope } from "./middleware/requireApiScope";
 import { getWorkspaceIdsForUser } from "./workspaces/projectAccess";
 import { logger } from "./utils/logger";
 import type { ApiRequestDoc } from "./apiRequests";
@@ -26,7 +27,7 @@ function parseDate(raw: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-router.get("/requests", requireAuthOrApiKey, async (req, res, next) => {
+router.get("/requests", requireAuthOrApiKey, requireApiScope("read:requests"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 
@@ -119,7 +120,7 @@ router.get("/requests", requireAuthOrApiKey, async (req, res, next) => {
   }
 });
 
-router.get("/requests/:id", requireAuthOrApiKey, async (req, res, next) => {
+router.get("/requests/:id", requireAuthOrApiKey, requireApiScope("read:requests"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 

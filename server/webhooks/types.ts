@@ -38,6 +38,7 @@ export interface WebhookDeliveryDoc {
   status: DeliveryStatus;
   lastStatusCode?: number;
   lastError?: string;
+  latencyMs?: number;
   nextRetryAt?: Date;
   createdAt: Date;
   updatedAt: Date;

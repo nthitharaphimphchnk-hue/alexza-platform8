@@ -4,6 +4,19 @@ info:
   description: |
     ALEXZA AI provides a managed AI runtime for running actions, managing projects,
     and receiving webhooks. Use `x-api-key` for API key authentication on v1 endpoints.
+
+    ## API Versioning
+
+    - **v1** (stable): Current public API. All `/v1/*` endpoints are versioned and stable.
+    - **v2** (future): Reserved for future versions. May introduce breaking changes when released.
+    - Deprecated endpoints include `X-Alexza-Deprecated: true` and `X-Alexza-Replacement` headers.
+    - Migrate deprecated endpoints to their `/v1` replacements before they are removed.
+
+    ## Rate Limits (by Plan)
+
+    Runtime endpoints are rate-limited per API key: Free 30/min, Pro 120/min, Enterprise 600/min.
+    Env overrides: RATE_LIMIT_FREE, RATE_LIMIT_PRO, RATE_LIMIT_ENTERPRISE.
+    Responses include X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset.
   version: 1.0.0
   contact:
     name: ALEXZA AI
@@ -100,6 +113,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded (plan-based: Free 30/min, Pro 120/min, Enterprise 600/min)
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: string }
+              description: Max requests per minute for your plan
+            X-RateLimit-Remaining:
+              schema: { type: string }
+              description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema: { type: string }
+              description: Unix timestamp when the window resets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "rate_limit_exceeded"
       security:
         - ApiKeyAuth: []
 
@@ -110,6 +143,7 @@ paths:
       description: |
         Deprecated. Use `POST /v1/projects/{projectId}/run/{actionName}` for action-based execution.
         Single-input legacy endpoint.
+        Responses include `X-Alexza-Deprecated: true` and `X-Alexza-Replacement: /v1/projects/:projectId/run/:actionName`.
       operationId: runLegacy
       deprecated: true
       requestBody:
@@ -126,7 +160,14 @@ paths:
                   example: "Hello, run my AI flow"
       responses:
         "200":
-          description: Success
+          description: Success (includes X-Alexza-Deprecated and X-Alexza-Replacement headers)
+          headers:
+            X-Alexza-Deprecated:
+              schema: { type: string, example: "true" }
+              description: Indicates this endpoint is deprecated
+            X-Alexza-Replacement:
+              schema: { type: string, example: "/v1/projects/:projectId/run/:actionName" }
+              description: Preferred replacement endpoint
           content:
             application/json:
               schema:
@@ -148,6 +189,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "rate_limit_exceeded"
       security:
         - ApiKeyAuth: []
 

@@ -7,6 +7,7 @@ import { hashApiKey } from "./utils/apiKey";
 import { ensureProjectAccess } from "./workspaces/projectAccess";
 import { getMemberRole } from "./workspaces/workspaces.routes";
 import { hasPermission } from "./workspaces/permissions";
+import { API_KEY_SCOPES, isValidScope, type ApiKeyScope } from "./config/scopes";
 
 interface ProjectDoc {
   ownerUserId: ObjectId;
@@ -22,10 +23,12 @@ interface ApiKeyDoc {
   keyHash: string;
   createdAt: Date;
   revokedAt: Date | null;
+  scopes?: string[];
 }
 
 interface CreateKeyBody {
   name?: unknown;
+  scopes?: unknown;
 }
 
 const router = Router();
@@ -96,6 +99,22 @@ router.post("/projects/:id/keys", requireAuth, async (req, res, next) => {
       return res.status(400).json(validationError("Key name must not exceed 100 characters"));
     }
 
+    let scopes: ApiKeyScope[] | undefined;
+    if (body.scopes !== undefined && body.scopes !== null) {
+      const raw = Array.isArray(body.scopes) ? body.scopes : [body.scopes];
+      const parsed = raw
+        .filter((s): s is string => typeof s === "string")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const invalid = parsed.filter((s) => !isValidScope(s));
+      if (invalid.length > 0) {
+        return res.status(400).json(
+          validationError(`Invalid scopes: ${invalid.join(", ")}. Valid: ${API_KEY_SCOPES.join(", ")}`)
+        );
+      }
+      scopes = parsed.length > 0 ? (parsed as ApiKeyScope[]) : undefined;
+    }
+
     const rawKey = generateRawApiKey();
     const keyPrefix = rawKey.slice(0, 8);
     const keyHash = hashApiKey(rawKey);
@@ -111,6 +130,7 @@ router.post("/projects/:id/keys", requireAuth, async (req, res, next) => {
       keyHash,
       createdAt: now,
       revokedAt: null,
+      ...(scopes && scopes.length > 0 && { scopes }),
     });
 
     const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
@@ -138,6 +158,7 @@ router.post("/projects/:id/keys", requireAuth, async (req, res, next) => {
         id: insertResult.insertedId.toString(),
         prefix: keyPrefix,
         name: nameRaw || "",
+        scopes: scopes ?? [],
         createdAt: now,
         revokedAt: null,
       },
@@ -177,6 +198,7 @@ router.get("/projects/:id/keys", requireAuth, async (req, res, next) => {
         ownerUserId: row.ownerUserId.toString(),
         name: row.name ?? "",
         prefix: row.keyPrefix,
+        scopes: row.scopes ?? [],
         createdAt: row.createdAt,
         revokedAt: row.revokedAt,
       })),

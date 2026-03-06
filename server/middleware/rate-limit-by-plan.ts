@@ -1,7 +1,14 @@
 /**
- * API rate limiting for runtime endpoints.
- * @deprecated Use rateLimitByPlan from ./rate-limit-by-plan for POST /v1/* run endpoints.
- * This module is kept for potential use on other endpoints.
+ * Plan-based API rate limiting for runtime endpoints.
+ *
+ * Applies different limits based on billing plan:
+ * - Free: 30 req/min (RATE_LIMIT_FREE)
+ * - Pro: 120 req/min (RATE_LIMIT_PRO)
+ * - Enterprise: 600 req/min (RATE_LIMIT_ENTERPRISE)
+ *
+ * Requires requireApiKey to run first. Used on:
+ * - POST /v1/projects/:projectId/run/:actionName
+ * - POST /v1/run
  */
 
 import type { Request, Response } from "express";
@@ -27,7 +34,7 @@ function getLimitForPlan(plan: string): number {
   }
 }
 
-export const apiRateLimiter = rateLimit({
+export const rateLimitByPlan = rateLimit({
   windowMs: WINDOW_MS,
   limit: async (req: Request) => {
     const userId = (req as Request & { apiKey?: { ownerUserId: unknown } }).apiKey?.ownerUserId;
@@ -51,9 +58,11 @@ export const apiRateLimiter = rateLimit({
   statusCode: 429,
   handler: (req: Request, res: Response, _next, options) => {
     const keyId = (req as Request & { apiKey?: { id: string } }).apiKey?.id;
+    const keyPrefix = (req as Request & { apiKey?: { keyPrefix?: string } }).apiKey?.keyPrefix;
     logger.warn(
       {
         keyId: keyId ?? "unknown",
+        keyPrefix: keyPrefix ?? undefined,
         ip: req.ip,
         path: req.path,
       },

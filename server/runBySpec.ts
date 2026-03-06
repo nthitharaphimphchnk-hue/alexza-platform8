@@ -18,8 +18,9 @@ import {
 import { estimateTokensFromInput } from "./utils/tokenEstimator";
 import { MAX_CREDITS_PER_REQUEST, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
+import { requireApiScope } from "./middleware/requireApiScope";
 import { rateLimitByIp } from "./middleware/rateLimitByIp";
-import { apiRateLimiter } from "./middleware/rate-limit";
+import { rateLimitByPlan } from "./middleware/rate-limit-by-plan";
 import { logUsage } from "./usage";
 import { logRun } from "./runLogs";
 import { logApiRequest } from "./apiRequests";
@@ -148,10 +149,11 @@ function normalizeRequestBody(
 }
 
 router.post(
-  "/v1/projects/:projectId/run/:actionName",
+  "/projects/:projectId/run/:actionName",
   rateLimitByIp,
   requireApiKey,
-  apiRateLimiter,
+  requireApiScope("run:actions"),
+  rateLimitByPlan,
   async (req, res) => {
     const startMs = Date.now();
     const projectIdRaw = req.params.projectId;

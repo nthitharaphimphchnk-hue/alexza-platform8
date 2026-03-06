@@ -145,6 +145,51 @@ app.post('/webhooks/alexza', express.raw({ type: 'application/json' }), (req, re
 - **Timeout**: 10 seconds per request.
 - **Success**: HTTP status 200–299.
 
+## Webhook Deliveries
+
+View and debug webhook delivery attempts in the UI.
+
+### Access
+
+- Go to [Settings → Webhooks](/app/settings/webhooks)
+- Click **Deliveries** on an endpoint to open `/app/webhooks/:id/deliveries`
+
+### Table columns
+
+| Column      | Description                    |
+|-------------|--------------------------------|
+| Event       | Event type (e.g. `action.run.succeeded`) |
+| Status      | `success`, `failed`, or `pending` |
+| Status code | HTTP status from last attempt  |
+| Latency     | Response time in ms            |
+| Attempts    | Number of delivery attempts    |
+| Time        | When the delivery was created  |
+
+### Filters
+
+- **Status**: success / failed / pending
+- **Event**: Filter by event type
+- **Date range**: From / To dates
+
+### Delivery detail view
+
+Click a row to open a drawer with:
+
+- **Payload**: JSON body sent to your endpoint
+- **Headers**: Request headers (signature redacted)
+- **Response**: Status code and body from your endpoint
+- **Error**: Error message if the delivery failed
+
+### Retry
+
+For failed deliveries, click **Retry** to resend the webhook payload to the endpoint URL. The delivery record is updated with the new attempt result.
+
+### API
+
+- `GET /api/webhooks/:id/deliveries` — Paginated list (query: `page`, `pageSize`, `status`, `event`, `dateFrom`, `dateTo`)
+- `GET /api/webhooks/:id/deliveries/:deliveryId` — Single delivery with full payload
+- `POST /api/webhooks/:id/deliveries/:deliveryId/retry` — Manual retry
+
 ## Project Scope (MVP)
 
 - Endpoints are **user-level** (`projectId` is null). Project-scoped webhooks may be added later.

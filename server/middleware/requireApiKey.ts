@@ -11,6 +11,7 @@ interface ApiKeyDoc {
   keyHash: string;
   createdAt: Date;
   revokedAt: Date | null;
+  scopes?: string[];
 }
 
 export interface AuthorizedApiKey {
@@ -20,6 +21,7 @@ export interface AuthorizedApiKey {
   ownerUserId: ObjectId;
   keyPrefix: string;
   name?: string;
+  scopes?: string[];
 }
 
 declare global {
@@ -77,6 +79,7 @@ export async function requireApiKey(req: Request, res: Response, next: NextFunct
       ownerUserId: keyDoc.ownerUserId,
       keyPrefix: keyDoc.keyPrefix,
       name: keyDoc.name,
+      scopes: keyDoc.scopes,
     };
     req.projectId = keyDoc.projectId;
     req.ownerUserId = keyDoc.ownerUserId;

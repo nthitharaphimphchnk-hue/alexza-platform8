@@ -16,9 +16,20 @@ interface ApiKeyItem {
   id: string;
   name: string;
   prefix: string;
+  scopes: string[];
   createdAt: string;
   revokedAt: string | null;
 }
+
+const API_KEY_SCOPES = [
+  "run:actions",
+  "read:projects",
+  "manage:projects",
+  "read:analytics",
+  "read:requests",
+  "manage:webhooks",
+  "manage:api_keys",
+] as const;
 
 interface ApiKeysProps {
   projectId?: string;
@@ -36,6 +47,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
   const [createdRawKey, setCreatedRawKey] = useState<string | null>(null);
   const [createdPrefix, setCreatedPrefix] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
 
   const projectId = useMemo(() => {
     if (projectIdProp) return projectIdProp;
@@ -58,6 +70,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
         id: String(item.id ?? ""),
         name: typeof item.name === "string" ? item.name : "",
         prefix: typeof item.prefix === "string" ? item.prefix : "",
+        scopes: Array.isArray(item.scopes) ? item.scopes.filter((s): s is string => typeof s === "string") : [],
         createdAt: String(item.createdAt ?? ""),
         revokedAt: item.revokedAt ? String(item.revokedAt) : null,
       }));
@@ -91,17 +104,21 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
     try {
       const response = await apiRequest<{
         ok: true;
-        key: { id: string; prefix: string; name?: string; createdAt: string };
+        key: { id: string; prefix: string; name?: string; scopes?: string[]; createdAt: string };
         rawKey: string;
       }>(`/api/projects/${projectId}/keys`, {
         method: "POST",
-        body: newKeyName.trim() ? { name: newKeyName.trim() } : {},
+        body: {
+          ...(newKeyName.trim() && { name: newKeyName.trim() }),
+          ...(selectedScopes.length > 0 && { scopes: selectedScopes }),
+        },
       });
       setCreatedRawKey(response.rawKey);
       setCreatedPrefix(response.key.prefix);
       showApiKeyCreatedToast(response.key.name || response.key.prefix);
       setShowCreateModal(false);
       setNewKeyName("");
+      setSelectedScopes([]);
       await loadKeys();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create key";
@@ -162,6 +179,21 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
               </span>
             </div>
 
+            {keyItem.scopes.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {keyItem.scopes.map((scope) => (
+                  <span
+                    key={scope}
+                    className="rounded px-2 py-0.5 text-xs bg-[rgba(255,255,255,0.06)] text-gray-400 border border-[rgba(255,255,255,0.06)]"
+                  >
+                    {scope}
+                  </span>
+                ))}
+              </div>
+            )}
+            {keyItem.scopes.length === 0 && (
+              <p className="mb-3 text-xs text-gray-500">Full access (all scopes)</p>
+            )}
             <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto] md:items-center">
               <div className="flex items-center justify-between rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607] px-3 py-2">
                 <code className="text-sm text-gray-300">{keyItem.prefix}************</code>
@@ -266,6 +298,35 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
             placeholder="Key name (optional)"
             className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 text-white"
           />
+          <div>
+            <p className="text-sm font-medium text-gray-200 mb-2">Scopes (optional)</p>
+            <p className="text-xs text-gray-500 mb-2">Leave empty for full access. Select specific scopes for least-privilege keys.</p>
+            <div className="flex flex-wrap gap-2">
+              {API_KEY_SCOPES.map((scope) => {
+                const checked = selectedScopes.includes(scope);
+                return (
+                  <label
+                    key={scope}
+                    className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] px-3 py-2 cursor-pointer hover:bg-[rgba(255,255,255,0.04)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedScopes((prev) => [...prev, scope]);
+                        } else {
+                          setSelectedScopes((prev) => prev.filter((s) => s !== scope));
+                        }
+                      }}
+                      className="rounded border-gray-500"
+                    />
+                    <span className="text-sm text-gray-300">{scope}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           <p className="text-xs text-gray-200 rounded-md border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-2">
             The raw API key will be displayed only once after creation.
           </p>

@@ -8,6 +8,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
+import { requireApiScope } from "./middleware/requireApiScope";
 import { ensureUsageIndexes } from "./usage";
 import { logger } from "./utils/logger";
 
@@ -285,7 +286,7 @@ async function getAnalyticsDaily(ownerUserId: ObjectId) {
     }));
 }
 
-router.get("/analytics/overview", requireAuthOrApiKey, async (req, res, next) => {
+router.get("/analytics/overview", requireAuthOrApiKey, requireApiScope("read:analytics"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     const key = cacheKey(req.user._id.toString(), "overview");
@@ -302,7 +303,7 @@ router.get("/analytics/overview", requireAuthOrApiKey, async (req, res, next) =>
   }
 });
 
-router.get("/analytics/projects", requireAuth, async (req, res, next) => {
+router.get("/analytics/projects", requireAuthOrApiKey, requireApiScope("read:analytics"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     const key = cacheKey(req.user._id.toString(), "projects");
@@ -319,7 +320,7 @@ router.get("/analytics/projects", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/analytics/actions", requireAuth, async (req, res, next) => {
+router.get("/analytics/actions", requireAuthOrApiKey, requireApiScope("read:analytics"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     const key = cacheKey(req.user._id.toString(), "actions");
@@ -336,7 +337,7 @@ router.get("/analytics/actions", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/analytics/daily", requireAuth, async (req, res, next) => {
+router.get("/analytics/daily", requireAuthOrApiKey, requireApiScope("read:analytics"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
     const key = cacheKey(req.user._id.toString(), "daily");

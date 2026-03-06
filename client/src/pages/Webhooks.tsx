@@ -4,7 +4,8 @@ import Modal from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { ApiError, apiRequest } from "@/lib/api";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import { Check, Copy, Plus, Trash2, Webhook } from "lucide-react";
+import { Check, Copy, ExternalLink, Plus, Trash2, Webhook } from "lucide-react";
+import { Link } from "wouter";
 import { useEffect, useState } from "react";
 
 const WEBHOOK_EVENTS = [
@@ -30,8 +31,10 @@ interface WebhookDelivery {
   event: string;
   status: string;
   attemptCount: number;
+  statusCode?: number;
   lastStatusCode?: number;
   lastError?: string;
+  latencyMs?: number;
   createdAt: string;
 }
 
@@ -54,10 +57,10 @@ export default function Webhooks() {
       setEndpoints(response.endpoints || []);
       for (const ep of response.endpoints || []) {
         try {
-          const delRes = await apiRequest<{ ok: true; deliveries: WebhookDelivery[] }>(
-            `/api/webhooks/${ep.id}/deliveries?limit=5`
+          const delRes = await apiRequest<{ ok: true; items: WebhookDelivery[] }>(
+            `/api/webhooks/${ep.id}/deliveries?pageSize=5`
           );
-          setDeliveriesByEndpoint((prev) => ({ ...prev, [ep.id]: delRes.deliveries || [] }));
+          setDeliveriesByEndpoint((prev) => ({ ...prev, [ep.id]: delRes.items || [] }));
         } catch {
           // ignore
         }
@@ -219,11 +222,18 @@ export default function Webhooks() {
                         {lastDelivery && (
                           <p className="mt-1 text-xs text-gray-500">
                             Last: {lastDelivery.event} → {lastDelivery.status}
-                            {lastDelivery.lastStatusCode != null && ` (${lastDelivery.lastStatusCode})`}
+                            {(lastDelivery.statusCode ?? lastDelivery.lastStatusCode) != null &&
+                              ` (${lastDelivery.statusCode ?? lastDelivery.lastStatusCode})`}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                        <Link href={`/app/webhooks/${ep.id}/deliveries`}>
+                          <Button variant="outline" size="sm" className="border-[rgba(255,255,255,0.08)]">
+                            <ExternalLink size={14} className="mr-1" />
+                            Deliveries
+                          </Button>
+                        </Link>
                         <button
                           onClick={() => handleToggleEnabled(ep)}
                           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${

@@ -256,6 +256,14 @@ export default defineConfig(({ mode }) => {
           target: apiBaseUrl,
           changeOrigin: true,
         },
+        "/v1": {
+          target: apiBaseUrl,
+          changeOrigin: true,
+        },
+        "/v2": {
+          target: apiBaseUrl,
+          changeOrigin: true,
+        },
       },
     },
   };

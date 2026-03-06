@@ -1,4 +1,4 @@
-import { Router, type Response } from "express";
+import express, { Router, type Response } from "express";
 import { randomUUID } from "crypto";
 import OpenAI from "openai";
 import {
@@ -10,7 +10,8 @@ import {
 } from "./wallet";
 import { MAX_CREDITS_PER_REQUEST, MAX_ESTIMATED_TOKENS, MAX_INPUT_CHARS } from "./config";
 import { requireApiKey } from "./middleware/requireApiKey";
-import { apiRateLimiter } from "./middleware/rate-limit";
+import { requireApiScope } from "./middleware/requireApiScope";
+import { rateLimitByPlan } from "./middleware/rate-limit-by-plan";
 import { logUsage } from "./usage";
 
 interface RunRequestBody {
@@ -46,8 +47,15 @@ function runError(res: Response, statusCode: number, code: string, message: stri
   });
 }
 
+/** Deprecation headers for legacy /v1/run - replacement is /v1/projects/:projectId/run/:actionName */
+const deprecationHeaders = (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.setHeader("X-Alexza-Deprecated", "true");
+  res.setHeader("X-Alexza-Replacement", "/v1/projects/:projectId/run/:actionName");
+  next();
+};
+
 // DEPRECATED: Use POST /v1/projects/:projectId/run/:actionName for spec-based execution.
-router.post("/v1/run", requireApiKey, apiRateLimiter, async (req, res) => {
+router.post("/run", deprecationHeaders, requireApiKey, requireApiScope("run:actions"), rateLimitByPlan, async (req, res) => {
   const startMs = Date.now();
   const provider = "openai";
   const model = getOpenAIModel();

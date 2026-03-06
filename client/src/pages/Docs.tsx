@@ -223,7 +223,13 @@ const response = await client.chat.completions.create({
               </div>
               <div id="rate-limits" className="space-y-2 scroll-mt-32">
                 <h3 className="text-lg font-semibold text-white">Rate Limits</h3>
-                <p className="text-gray-300 text-sm">API requests are rate-limited per API key. Check response headers for limits and remaining quota.</p>
+                <p className="text-gray-300 text-sm">Runtime endpoints are rate-limited per API key based on billing plan:</p>
+                <ul className="text-gray-300 text-sm list-disc list-inside space-y-1">
+                  <li>Free: 30 requests/minute</li>
+                  <li>Pro: 120 requests/minute</li>
+                  <li>Enterprise: 600 requests/minute</li>
+                </ul>
+                <p className="text-gray-300 text-sm">Responses include X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset. When exceeded: HTTP 429 with {"{ \"error\": \"rate_limit_exceeded\" }"}.</p>
               </div>
             </motion.section>
 

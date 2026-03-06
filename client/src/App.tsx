@@ -37,6 +37,7 @@ import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import Settings from "./pages/Settings";
 import Webhooks from "./pages/Webhooks";
+import WebhookDeliveries from "./pages/WebhookDeliveries";
 import Requests from "./pages/Requests";
 import Templates from "./pages/Templates";
 import AuditLogs from "./pages/AuditLogs";
@@ -176,6 +177,11 @@ function Router() {
       <Route path={"/app/settings/webhooks"}>
         <AppLayout>
           <Webhooks />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/webhooks/:id/deliveries"}>
+        <AppLayout>
+          <WebhookDeliveries />
         </AppLayout>
       </Route>
       <Route path={"/app/webhooks"}>
