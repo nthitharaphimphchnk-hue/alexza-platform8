@@ -146,6 +146,22 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
       },
       ownerUserId: userId,
     });
+
+    const db = await getDb();
+    const user = await db.collection<{ email: string }>("users").findOne({ _id: userId });
+    const { logAuditEvent } = await import("../../audit/logAuditEvent");
+    logAuditEvent({
+      ownerUserId: userId,
+      actorUserId: userId,
+      actorEmail: user?.email ?? "",
+      actionType: "wallet.topup.succeeded",
+      resourceType: "wallet",
+      resourceId: userIdRaw,
+      metadata: { amountUsd, creditsAdded: result.creditsAdded, source: "stripe" },
+      ip: "",
+      userAgent: "",
+      status: "success",
+    });
   } catch (err) {
     logger.error({ err }, "[Stripe] Webhook processing failed");
     const db = await getDb();

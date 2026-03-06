@@ -93,6 +93,18 @@ alexza logs --action summarize --status success
 alexza logs --page 2
 ```
 
+## API Reference
+
+The CLI calls these endpoints with `x-api-key`:
+
+| Command   | Endpoint                                      |
+|-----------|-----------------------------------------------|
+| projects  | `GET /api/projects`                           |
+| actions   | `GET /api/projects/:id/actions`               |
+| run       | `POST /v1/projects/:projectId/run/:actionName`|
+| logs      | `GET /api/requests`                           |
+| usage     | `GET /api/analytics/overview`                 |
+
 ## License
 
 MIT

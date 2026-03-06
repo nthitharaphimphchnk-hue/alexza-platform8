@@ -141,13 +141,16 @@ function errorRedirect(res: Response, code: string, message?: string): void {
   res.redirect(`${base}/login?${params.toString()}`);
 }
 
-async function findOrCreateOAuthUser(params: {
-  provider: string;
-  providerUserId: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-}): Promise<WithId<UserDoc>> {
+async function findOrCreateOAuthUser(
+  params: {
+    provider: string;
+    providerUserId: string;
+    email: string;
+    name: string;
+    emailVerified: boolean;
+  },
+  auditReq?: { headers: Record<string, string | undefined>; ip?: string; socket?: { remoteAddress?: string } }
+): Promise<WithId<UserDoc>> {
   const db = await getDb();
   const users = db.collection<UserDoc>("users");
 
@@ -210,6 +213,25 @@ async function findOrCreateOAuthUser(params: {
 
   const user = await users.findOne({ _id: insertResult.insertedId }) as WithId<UserDoc> | null;
   if (!user) throw new Error("Failed to load newly created user");
+
+  if (auditReq) {
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(auditReq as import("express").Request);
+    logAuditEvent({
+      ownerUserId: insertResult.insertedId,
+      actorUserId: insertResult.insertedId,
+      actorEmail: emailNorm,
+      actionType: "auth.user.created",
+      resourceType: "user",
+      resourceId: insertResult.insertedId.toString(),
+      metadata: { name: user.name, provider: params.provider },
+      ip,
+      userAgent,
+      status: "success",
+    });
+  }
+
   return user;
 }
 
@@ -487,13 +509,16 @@ router.get("/auth/google/callback", async (req, res) => {
       return;
     }
 
-    const user = await findOrCreateOAuthUser({
-      provider: "google",
-      providerUserId,
-      email,
-      name,
-      emailVerified,
-    });
+    const user = await findOrCreateOAuthUser(
+      {
+        provider: "google",
+        providerUserId,
+        email,
+        name,
+        emailVerified,
+      },
+      req
+    );
 
     await ensureAuthCollections();
     await createSessionAndSetCookie(user._id, res);
@@ -638,13 +663,16 @@ router.get("/auth/github/callback", async (req, res) => {
       return;
     }
 
-    const user = await findOrCreateOAuthUser({
-      provider: "github",
-      providerUserId,
-      email,
-      name,
-      emailVerified: true,
-    });
+    const user = await findOrCreateOAuthUser(
+      {
+        provider: "github",
+        providerUserId,
+        email,
+        name,
+        emailVerified: true,
+      },
+      req
+    );
 
     await ensureAuthCollections();
     await createSessionAndSetCookie(user._id, res);

@@ -80,10 +80,7 @@ export default function ModelOrchestrationSection() {
   };
 
   return (
-    <section
-      className="py-20 px-4 sm:px-6 lg:px-8 relative"
-      data-loc="ModelOrchestrationSection"
-    >
+    <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
       {/* Subtle grid background */}
       <div
         className="absolute inset-0 -z-10 opacity-[0.03]"

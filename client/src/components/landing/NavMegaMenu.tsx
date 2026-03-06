@@ -88,10 +88,10 @@ export default function NavMegaMenu() {
                   <a href="/careers" className="block py-2 text-sm text-gray-300 hover:text-[#22c55e] transition">Careers</a>
                   <a href="/customers" className="block py-2 text-sm text-gray-300 hover:text-[#06b6d4] transition">Customers</a>
                   <a href="/contact" className="block py-2 text-sm text-gray-300 hover:text-white transition">Contact</a>
-                  <Link href="/security"><a className="block py-2 text-sm text-gray-300 hover:text-[#06b6d4] transition">Security</a></Link>
-                  <Link href="/status"><a className="block py-2 text-sm text-gray-300 hover:text-[#22c55e] transition">Status</a></Link>
-                  <Link href="/roadmap"><a className="block py-2 text-sm text-gray-300 hover:text-[#d4a84b] transition">Roadmap</a></Link>
-                  <Link href="/enterprise"><a className="block py-2 text-sm text-gray-300 hover:text-white transition">Enterprise</a></Link>
+                  <Link href="/security" className="block py-2 text-sm text-gray-300 hover:text-[#06b6d4] transition">Security</Link>
+                  <Link href="/status" className="block py-2 text-sm text-gray-300 hover:text-[#22c55e] transition">Status</Link>
+                  <Link href="/roadmap" className="block py-2 text-sm text-gray-300 hover:text-[#d4a84b] transition">Roadmap</Link>
+                  <Link href="/enterprise" className="block py-2 text-sm text-gray-300 hover:text-white transition">Enterprise</Link>
                 </div>
                 <div className="space-y-3">
                   <Link href="/docs" className="group/item block rounded-xl p-4 border border-[rgba(139,92,246,0.25)] bg-[#0b0e12] hover:border-[rgba(139,92,246,0.45)] hover:bg-[#0b0e12]/90 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] transition-all">
@@ -123,19 +123,15 @@ export default function NavMegaMenu() {
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/docs">
-            <NavigationMenuLink className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
-              {t("navigation.docs")}
-            </NavigationMenuLink>
-          </Link>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
+            <Link href="/docs">{t("navigation.docs")}</Link>
+          </NavigationMenuLink>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/pricing">
-            <NavigationMenuLink className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
-              {t("navigation.pricing")}
-            </NavigationMenuLink>
-          </Link>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
+            <Link href="/pricing">{t("navigation.pricing")}</Link>
+          </NavigationMenuLink>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>

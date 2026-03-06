@@ -76,6 +76,13 @@ export default function Docs() {
         { label: "JavaScript", id: "sdk-js" },
       ],
     },
+    {
+      title: "System Status",
+      subsections: [
+        { label: "Status Page", id: "status", href: "/status" },
+        { label: "Health Endpoints", id: "health-endpoints" },
+      ],
+    },
   ];
 
   const codeExamples = [
@@ -589,6 +596,40 @@ function verifySignature(payload, signature, timestamp, secret) {
               <p className="text-gray-400"><code className="text-[#c0c0c0]">pip install alexza-ai</code></p>
               <h3 id="sdk-js" className="text-lg font-semibold text-white scroll-mt-32">JavaScript</h3>
               <p className="text-gray-400"><code className="text-[#c0c0c0]">npm install @alexza-ai/sdk</code></p>
+            </motion.section>
+
+            {/* System Status */}
+            <motion.section id="status" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">System Status</h2>
+              <p className="text-gray-300">
+                Check platform availability and system health at{" "}
+                <a href="/status" className="text-[#c0c0c0] hover:text-white underline">
+                  /status
+                </a>
+                . The status page shows API, Database, Stripe, Webhooks, and Workers with real-time indicators (operational, degraded, down) and 24h uptime.
+              </p>
+              <h3 id="health-endpoints" className="text-xl font-semibold text-white scroll-mt-32">Health Endpoints</h3>
+              <p className="text-gray-300">Public health endpoints return status, latency, and timestamp. No authentication required.</p>
+              <div className="overflow-x-auto rounded-xl border border-[rgba(255,255,255,0.12)]">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[rgba(255,255,255,0.12)]">
+                      <th className="text-left p-4 font-semibold text-white">Endpoint</th>
+                      <th className="text-left p-4 font-semibold text-white">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-300">
+                    <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="p-4 font-mono">GET /health</td><td className="p-4">Basic API health</td></tr>
+                    <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="p-4 font-mono">GET /health/db</td><td className="p-4">Database connectivity</td></tr>
+                    <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="p-4 font-mono">GET /health/stripe</td><td className="p-4">Stripe API connectivity</td></tr>
+                    <tr><td className="p-4 font-mono">GET /health/webhooks</td><td className="p-4">Webhook configuration</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-sm text-gray-500">Response shape: {"{ status: \"operational\" | \"degraded\" | \"down\", latency: number, timestamp: string }"}</p>
+              <p className="text-gray-300">
+                <strong>GET /api/status</strong> — Aggregated status for all components plus 24h uptime percentage. Used by the status page.
+              </p>
             </motion.section>
 
             {/* Support */}

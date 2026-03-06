@@ -316,6 +316,22 @@ router.post("/credits/topup", requireAuth, async (req, res, next) => {
       reason,
     });
 
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      actionType: "wallet.topup.succeeded",
+      resourceType: "wallet",
+      resourceId: req.user._id.toString(),
+      metadata: { amountCredits, reason },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     const db = await getDb();
     const txCol = db.collection("wallet_transactions");
     const latestTx = await txCol

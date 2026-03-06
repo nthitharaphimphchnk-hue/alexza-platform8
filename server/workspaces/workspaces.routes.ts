@@ -329,6 +329,23 @@ router.post("/workspaces/:id/invite", requireAuth, async (req, res, next) => {
       logger.info({ inviteLink, email, role: inviteRole }, "[Workspaces] invite link (dev)");
     }
 
+    const { getAuditContext } = await import("../audit/auditContext");
+    const { logAuditEvent } = await import("../audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: ws?.ownerUserId ?? req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId,
+      actionType: "team.member.invited",
+      resourceType: "team",
+      resourceId: workspaceId.toString(),
+      metadata: { inviteeEmail: email, role: inviteRole },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     return res.status(201).json({
       ok: true,
       invite: { email, role: inviteRole, expiresAt },
@@ -472,6 +489,24 @@ router.patch("/workspaces/:id/members/:userId/role", requireAuth, async (req, re
       { $set: { role: newRole as WorkspaceRole } }
     );
 
+    const ws = await getWorkspace(workspaceId);
+    const { getAuditContext } = await import("../audit/auditContext");
+    const { logAuditEvent } = await import("../audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: ws?.ownerUserId ?? req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId,
+      actionType: "team.member.role_changed",
+      resourceType: "team",
+      resourceId: workspaceId.toString(),
+      metadata: { targetUserId: targetUserId.toString(), previousRole: targetMember.role, newRole },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     return res.json({ ok: true, role: newRole });
   } catch (error) {
     return next(error);
@@ -507,6 +542,24 @@ router.delete("/workspaces/:id/members/:userId", requireAuth, async (req, res, n
     }
 
     await members.deleteOne({ workspaceId, userId: targetUserId });
+
+    const ws = await getWorkspace(workspaceId);
+    const { getAuditContext } = await import("../audit/auditContext");
+    const { logAuditEvent } = await import("../audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: ws?.ownerUserId ?? req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId,
+      actionType: "team.member.removed",
+      resourceType: "team",
+      resourceId: workspaceId.toString(),
+      metadata: { removedUserId: targetUserId.toString(), removedRole: targetMember.role },
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     return res.json({ ok: true });
   } catch (error) {

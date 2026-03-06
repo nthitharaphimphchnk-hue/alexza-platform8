@@ -115,11 +115,9 @@ export default function LandingSections() {
               <span>{t("landing.architecture.label4")}</span>
             </div>
             <div className="mt-8 text-center">
-              <Link href="/architecture">
-                <a className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition">
-                  {t("landing.architecture.cta")}
-                  <Layout className="w-4 h-4" />
-                </a>
+              <Link href="/architecture" className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition">
+                {t("landing.architecture.cta")}
+                <Layout className="w-4 h-4" />
               </Link>
             </div>
           </motion.div>
@@ -169,13 +167,9 @@ export default function LandingSections() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <Link href="/status">
-              <a className="text-sm text-gray-400 hover:text-white transition">{t("landing.trust.statusLink")}</a>
-            </Link>
+            <Link href="/status" className="text-sm text-gray-400 hover:text-white transition">{t("landing.trust.statusLink")}</Link>
             <span className="text-gray-600">|</span>
-            <Link href="/security">
-              <a className="text-sm text-gray-400 hover:text-white transition">{t("landing.trust.securityLink")}</a>
-            </Link>
+            <Link href="/security" className="text-sm text-gray-400 hover:text-white transition">{t("landing.trust.securityLink")}</Link>
           </motion.div>
         </div>
       </section>

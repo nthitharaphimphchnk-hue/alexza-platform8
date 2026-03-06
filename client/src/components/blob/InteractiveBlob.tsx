@@ -49,6 +49,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
   const timeRef = useRef(0);
   const isHoveringRef = useRef(false);
   const cleanedRef = useRef(false);
+  const animateRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     cleanedRef.current = false;
@@ -248,11 +249,17 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     containerRef.current.addEventListener('mouseenter', handleMouseEnter);
     containerRef.current.addEventListener('mouseleave', handleMouseLeave);
 
-    // Animation loop
+    // Animation loop - ไม่ใช้ document.hidden (browser throttle rAF เมื่อ tab ซ่อน)
+    let lastTime = performance.now();
+    let rafId = 0;
     const animate = () => {
-      requestAnimationFrame(animate);
-      if (document.hidden) return;
-      timeRef.current += 0.016; // ~60fps
+      if (cleanedRef.current) return;
+      rafId = requestAnimationFrame(animate);
+
+      const now = performance.now();
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      timeRef.current += delta;
 
       // Smooth mouse tracking
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.1;
@@ -263,7 +270,7 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
       const speedMult = 1 + chaosLevel * 2.5;
 
       // Hatching / incubating cycle - ช่วงฟักไข่ AI
-      const hatchCycle = timeRef.current * (0.25 * speedMult);
+      const hatchCycle = timeRef.current * (0.4 * speedMult);
       const hatchPulse = Math.sin(hatchCycle) * (0.12 * c) + Math.sin(hatchCycle * 2) * (0.06 * c);
 
       // Animate each sphere - AI hatching movement
@@ -286,9 +293,9 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
 
         // Floating animation - ลอย (chaos: ขยับแรงเหมือนเต้น)
         const floatMult = 1 + chaosLevel * 2.5;
-        const floatY = Math.sin(timeRef.current * (0.35 * speedMult) + index) * (0.12 * floatMult);
-        const floatX = Math.cos(timeRef.current * (0.3 * speedMult) + index * 0.7) * (0.09 * floatMult);
-        const floatZ = Math.sin(timeRef.current * (0.28 * speedMult) + index * 0.5) * (0.09 * floatMult);
+        const floatY = Math.sin(timeRef.current * (0.45 * speedMult) + index) * (0.12 * floatMult);
+        const floatX = Math.cos(timeRef.current * (0.38 * speedMult) + index * 0.7) * (0.09 * floatMult);
+        const floatZ = Math.sin(timeRef.current * (0.35 * speedMult) + index * 0.5) * (0.09 * floatMult);
 
         sphere.position.y = originalPos.y + floatY + radialY;
         sphere.position.x = originalPos.x + floatX + radialX;
@@ -299,29 +306,42 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
         sphere.position.x += (mouseRef.current.x * mouseInfluence - (sphere.position.x - originalPos.x - floatX - radialX) * 0.03);
         sphere.position.z += (mouseRef.current.y * mouseInfluence - (sphere.position.z - originalPos.z - floatZ - radialZ) * 0.03);
 
-        // Rotation - chaos: หมุนเร็วขึ้น
-        const rotMult = 1 + chaosLevel * 5;
-        const rotRamp = (0.0003 + Math.min(timeRef.current * 0.000015, 0.0008)) * rotMult;
-        sphere.rotation.x += rotRamp * (0.4 + Math.sin(timeRef.current * 0.2 + index) * 0.2);
-        sphere.rotation.y += rotRamp * (0.8 + Math.cos(timeRef.current * 0.15 + index) * 0.2);
+        // Rotation - เร็วขึ้นให้เห็นชัด
+        const rotMult = (1 + chaosLevel * 5) * 0.8;
+        const rotSpeed = (0.004 + Math.min(timeRef.current * 0.0001, 0.003)) * rotMult;
+        sphere.rotation.x += rotSpeed * delta * (0.4 + Math.sin(timeRef.current * 0.2 + index) * 0.2);
+        sphere.rotation.y += rotSpeed * delta * (0.8 + Math.cos(timeRef.current * 0.15 + index) * 0.2);
       });
 
       // Group rotation - spinSpeed: หมุนรอบตัวเองเห็น 360°
       if (blobGroup) {
-        const groupRotMult = (1 + chaosLevel * 5) * spinSpeed;
-        const groupRotRamp = (0.00015 + Math.min(timeRef.current * 0.000008, 0.0005)) * groupRotMult;
-        blobGroup.rotation.x += groupRotRamp;
-        blobGroup.rotation.y += groupRotRamp * 1.5;
+        const groupRotMult = (1 + chaosLevel * 5) * spinSpeed * 0.8;
+        const groupRotSpeed = (0.002 + Math.min(timeRef.current * 0.00008, 0.002)) * groupRotMult;
+        blobGroup.rotation.x += groupRotSpeed * delta;
+        blobGroup.rotation.y += groupRotSpeed * delta * 1.5;
 
         // Whole blob pulse - chaos: ขยายหดแรง
         const wholePulse = Math.sin(hatchCycle * 0.5) * (0.02 * c);
         blobGroup.scale.set(1 + wholePulse, 1 + wholePulse, 1 + wholePulse);
       }
 
-      renderer.render(scene, camera);
+      try {
+        renderer.render(scene, camera);
+      } catch {
+        /* ignore render errors */
+      }
     };
 
-    animate();
+    animateRef.current = animate;
+    rafId = requestAnimationFrame(animate);
+
+    // Resume animation เมื่อ tab กลับมาแสดง
+    const handleVisibilityChange = () => {
+      if (!document.hidden && animateRef.current && !cleanedRef.current) {
+        animateRef.current();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Handle window resize
     const handleResize = () => {
@@ -339,6 +359,9 @@ const InteractiveBlob: React.FC<InteractiveBlobProps> = ({
     return () => {
       if (cleanedRef.current) return;
       cleanedRef.current = true;
+      animateRef.current = null;
+      cancelAnimationFrame(rafId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       containerRef.current?.removeEventListener('mouseenter', handleMouseEnter);

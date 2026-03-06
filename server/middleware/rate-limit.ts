@@ -5,7 +5,7 @@
  */
 
 import type { Request, Response } from "express";
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import {
   RATE_LIMIT_FREE_PER_MIN,
   RATE_LIMIT_PRO_PER_MIN,
@@ -41,7 +41,9 @@ export const apiRateLimiter = rateLimit({
   },
   keyGenerator: (req: Request) => {
     const keyId = (req as Request & { apiKey?: { id: string } }).apiKey?.id;
-    return keyId ?? req.ip ?? "unknown";
+    if (keyId) return keyId;
+    const ip = req.ip;
+    return ip ? ipKeyGenerator(ip) : "unknown";
   },
   standardHeaders: false,
   legacyHeaders: true,

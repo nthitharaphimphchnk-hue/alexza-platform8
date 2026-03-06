@@ -88,6 +88,22 @@ router.post("/webhooks", requireAuth, async (req: Request, res: Response, next) 
     const id = result.insertedId.toString();
     logger.info({ endpointId: id, userId: req.user.id }, "[Webhooks] Endpoint created");
 
+    const { getAuditContext } = await import("../audit/auditContext");
+    const { logAuditEvent } = await import("../audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      actionType: "webhook.created",
+      resourceType: "webhook",
+      resourceId: id,
+      metadata: { url, events },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     return res.status(201).json({
       ok: true,
       endpoint: {
@@ -140,6 +156,22 @@ router.patch("/webhooks/:id", requireAuth, async (req: Request, res: Response, n
     );
 
     if (!result) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const { getAuditContext } = await import("../audit/auditContext");
+    const { logAuditEvent } = await import("../audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      actionType: "webhook.updated",
+      resourceType: "webhook",
+      resourceId: result._id.toString(),
+      metadata: { url: result.url, enabled: result.enabled, events: result.events },
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     return res.json({
       ok: true,
@@ -208,6 +240,22 @@ router.delete("/webhooks/:id", requireAuth, async (req: Request, res: Response, 
     const result = await col.deleteOne({ _id: new ObjectId(id), ownerUserId: req.user._id });
 
     if (result.deletedCount === 0) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const { getAuditContext } = await import("../audit/auditContext");
+    const { logAuditEvent } = await import("../audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      actionType: "webhook.deleted",
+      resourceType: "webhook",
+      resourceId: id,
+      metadata: {},
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     logger.info({ endpointId: id, userId: req.user.id }, "[Webhooks] Endpoint deleted");
     return res.json({ ok: true });

@@ -113,6 +113,25 @@ router.post("/projects/:id/keys", requireAuth, async (req, res, next) => {
       revokedAt: null,
     });
 
+    const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project?.workspaceId ?? null,
+      projectId,
+      actionType: "api_key.created",
+      resourceType: "api_key",
+      resourceId: insertResult.insertedId.toString(),
+      metadata: { keyPrefix, name: nameRaw || undefined },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
     return res.status(201).json({
       ok: true,
       key: {
@@ -205,6 +224,25 @@ router.post("/projects/:id/keys/:keyId/revoke", requireAuth, async (req, res, ne
     if (!updateResult) {
       return res.status(404).json({ ok: false, error: "NOT_FOUND" });
     }
+
+    const project = await db.collection<ProjectDoc>("projects").findOne({ _id: projectId });
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project?.workspaceId ?? null,
+      projectId,
+      actionType: "api_key.revoked",
+      resourceType: "api_key",
+      resourceId: updateResult._id.toString(),
+      metadata: { keyPrefix: updateResult.keyPrefix },
+      ip,
+      userAgent,
+      status: "success",
+    });
 
     return res.json({
       ok: true,

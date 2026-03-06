@@ -9,7 +9,11 @@ const INSTALL = `npm install -g alexza-cli`;
 
 const LOGIN = `alexza login`;
 
-const EXAMPLES = `# List projects
+const EXAMPLES = `# Login (store API key)
+alexza login
+alexza login --key YOUR_API_KEY --url https://alexza-platform8.onrender.com
+
+# List projects
 alexza projects
 
 # List actions in a project
@@ -23,6 +27,7 @@ alexza run summarize --project <projectId> --input ./input.json
 
 # Fetch request logs
 alexza logs --project <projectId>
+alexza logs --action summarize --status success --page 2
 
 # Show usage analytics
 alexza usage`;
@@ -128,6 +133,19 @@ export default function DocsCli() {
           </section>
 
           <section className="space-y-6" variants={itemVariants}>
+            <h2 className="text-2xl font-bold text-white">Configuration</h2>
+            <p className="text-gray-400">Config is stored at <code className="text-[#c0c0c0]">~/.alexza/config.json</code>:</p>
+            <div className="overflow-x-auto rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]">
+              <pre className="p-4 text-sm font-mono text-gray-300">{`{
+  "apiKey": "axza_live_...",
+  "baseUrl": "https://alexza-platform8.onrender.com",
+  "projectId": "optional-default-project-id"
+}`}</pre>
+            </div>
+            <p className="text-gray-400 text-sm"><strong>apiKey</strong> – Required. Set via <code className="text-[#c0c0c0]">alexza login</code>. <strong>baseUrl</strong> – API base URL (default: http://localhost:3005). <strong>projectId</strong> – Optional default for <code className="text-[#c0c0c0]">run</code> and <code className="text-[#c0c0c0]">actions</code>.</p>
+          </section>
+
+          <section className="space-y-6" variants={itemVariants}>
             <h2 className="text-2xl font-bold text-white">Examples</h2>
             <div className="relative rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607] overflow-hidden">
               <pre className="p-4 text-sm font-mono text-gray-300 overflow-x-auto whitespace-pre-wrap">{EXAMPLES}</pre>
@@ -139,6 +157,28 @@ export default function DocsCli() {
               >
                 {copied === "examples" ? <Check size={14} /> : <Copy size={14} />}
               </Button>
+            </div>
+          </section>
+
+          <section className="space-y-6" variants={itemVariants}>
+            <h2 className="text-2xl font-bold text-white">API Reference</h2>
+            <p className="text-gray-400">The CLI calls these endpoints with <code className="text-[#c0c0c0]">x-api-key</code> header:</p>
+            <div className="overflow-x-auto rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607]">
+              <table className="w-full text-sm text-gray-300">
+                <thead>
+                  <tr className="border-b border-[rgba(255,255,255,0.08)]">
+                    <th className="text-left py-2 px-4 text-gray-400 font-medium">Command</th>
+                    <th className="text-left py-2 px-4 text-gray-400 font-medium">Endpoint</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="py-2 px-4">projects</td><td className="py-2 px-4 font-mono text-[#c0c0c0]">GET /api/projects</td></tr>
+                  <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="py-2 px-4">actions</td><td className="py-2 px-4 font-mono text-[#c0c0c0]">GET /api/projects/:id/actions</td></tr>
+                  <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="py-2 px-4">run</td><td className="py-2 px-4 font-mono text-[#c0c0c0]">POST /v1/projects/:projectId/run/:actionName</td></tr>
+                  <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="py-2 px-4">logs</td><td className="py-2 px-4 font-mono text-[#c0c0c0]">GET /api/requests</td></tr>
+                  <tr className="border-b border-[rgba(255,255,255,0.06)]"><td className="py-2 px-4">usage</td><td className="py-2 px-4 font-mono text-[#c0c0c0]">GET /api/analytics/overview</td></tr>
+                </tbody>
+              </table>
             </div>
           </section>
 

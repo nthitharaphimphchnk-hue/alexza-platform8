@@ -1,0 +1,11 @@
+# Render.com Blueprint - ALEXZA AI Platform
+# https://docs.render.com/blueprint-spec
+services:
+  - type: web
+    runtime: node
+    name: alexza-platform
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && NODE_OPTIONS=--max-old-space-size=460 pnpm run build
+    startCommand: pnpm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
