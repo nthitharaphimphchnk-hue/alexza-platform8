@@ -11,6 +11,7 @@ import NavMegaMenu from "@/components/landing/NavMegaMenu";
 import FounderSpotlight from "@/components/landing/FounderSpotlight";
 import ModelOrchestrationSection from "@/components/landing/ModelOrchestrationSection";
 import LandingSections from "@/components/landing/LandingSections";
+import DeveloperFeaturesSection from "@/components/landing/DeveloperFeaturesSection";
 
 
 type CodeTab = 'node' | 'python' | 'curl';
@@ -56,6 +57,7 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#0b0e12] border-t-2 border-[rgba(255,255,255,0.15)] p-4 space-y-4">
             <a href="/" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.home")}</a>
+            <a href="/playground" className="block text-sm text-gray-300 hover:text-white">Playground</a>
             <a href="/use-cases" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.useCases")}</a>
             <a href="/architecture" className="block text-sm text-gray-300 hover:text-white">{t("marketing.nav.architecture")}</a>
             <a href="/docs" className="block text-sm text-gray-300 hover:text-white">{t("navigation.docs")}</a>
@@ -135,7 +137,7 @@ export default function Home() {
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" className="bg-transparent border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center rounded-lg" onClick={() => (window.location.href = "/docs")}>
+                <Button variant="outline" className="bg-transparent border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center rounded-lg" onClick={() => (window.location.href = "/playground")}>
                   {t("home.cta2")} <ArrowRight size={18} />
                 </Button>
               </motion.div>
@@ -143,6 +145,9 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* Developer Features: How it works, Templates, Examples, Automation, Agent, Marketplace */}
+      <DeveloperFeaturesSection />
 
       {/* Model Orchestration - One API, Many Models */}
       <ModelOrchestrationSection />
@@ -364,11 +369,11 @@ export default function Home() {
                 />
               </div>
             </div>
-            <h2 className="text-4xl font-bold text-white mb-4">Integrate</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">Developer API</h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-              A simple, elegant interface so you can start orchestrating AI in minutes. 
-              It fits right into your code with our REST API.
+              Run any AI action with a single REST call.
             </p>
+            <p className="text-cyan-400 font-mono text-sm mt-2">POST /v1/projects/:projectId/run/:actionName</p>
           </motion.div>
 
           <motion.div 
@@ -409,28 +414,30 @@ export default function Home() {
                     {codeTab === 'node' && (
                       <>
                         <code>
-                          <span className="text-blue-400">const</span> response = <span className="text-blue-400">await</span> fetch(<span className="text-cyan-400">'https://api.alexza.ai/v1/run'</span>, {'{'}{'\n'}
+                          <span className="text-gray-500">// POST /v1/projects/:projectId/run/:actionName</span>{'\n'}
+                          <span className="text-blue-400">const</span> response = <span className="text-blue-400">await</span> fetch(<span className="text-cyan-400">'https://api.alexza.ai/v1/projects/my-project/run/myAction'</span>, {'{'}{'\n'}
                           {'  '}method: <span className="text-amber-400">'POST'</span>,{'\n'}
                           {'  '}headers: {'{'}{'\n'}
                           {'    '}<span className="text-purple-400">'Content-Type'</span>: <span className="text-amber-400">'application/json'</span>,{'\n'}
                           {'    '}<span className="text-purple-400">'x-api-key'</span>: <span className="text-gray-400">'axza_xxxxxxxx'</span>,{'\n'}
                           {'  '}{'}'},{'\n'}
                           {'  '}body: <span className="text-violet-400">JSON.stringify</span>({'{'}{'\n'}
-                          {'    '}input: <span className="text-green-400">'Hello, run my AI flow'</span>{'\n'}
+                          {'    '}input: <span className="text-green-400">'Hello, run my AI action'</span>{'\n'}
                           {'  '}{'}'}){'\n'}
                           {'}'});{'\n\n'}
                           <span className="text-blue-400">const</span> data = <span className="text-blue-400">await</span> response.<span className="text-cyan-400">json</span>();{'\n'}
                           console.log(data.<span className="text-gray-400">output</span>)<span className="code-cursor-blink" />
                         </code>
                         <code className="block pt-8">
-                          <span className="text-blue-400">const</span> response = <span className="text-blue-400">await</span> fetch(<span className="text-cyan-400">'https://api.alexza.ai/v1/run'</span>, {'{'}{'\n'}
+                          <span className="text-gray-500">// POST /v1/projects/:projectId/run/:actionName</span>{'\n'}
+                          <span className="text-blue-400">const</span> response = <span className="text-blue-400">await</span> fetch(<span className="text-cyan-400">'https://api.alexza.ai/v1/projects/my-project/run/myAction'</span>, {'{'}{'\n'}
                           {'  '}method: <span className="text-amber-400">'POST'</span>,{'\n'}
                           {'  '}headers: {'{'}{'\n'}
                           {'    '}<span className="text-purple-400">'Content-Type'</span>: <span className="text-amber-400">'application/json'</span>,{'\n'}
                           {'    '}<span className="text-purple-400">'x-api-key'</span>: <span className="text-gray-400">'axza_xxxxxxxx'</span>,{'\n'}
                           {'  '}{'}'},{'\n'}
                           {'  '}body: <span className="text-violet-400">JSON.stringify</span>({'{'}{'\n'}
-                          {'    '}input: <span className="text-green-400">'Hello, run my AI flow'</span>{'\n'}
+                          {'    '}input: <span className="text-green-400">'Hello, run my AI action'</span>{'\n'}
                           {'  '}{'}'}){'\n'}
                           {'}'});{'\n\n'}
                           <span className="text-blue-400">const</span> data = <span className="text-blue-400">await</span> response.<span className="text-cyan-400">json</span>();{'\n'}
@@ -441,27 +448,29 @@ export default function Home() {
                     {codeTab === 'python' && (
                       <>
                         <code>
+                          <span className="text-gray-500"># POST /v1/projects/:projectId/run/:actionName</span>{'\n'}
                           <span className="text-purple-400">import</span> requests{'\n\n'}
                           response = requests.<span className="text-cyan-400">post</span>({'\n'}
-                          {'    '}<span className="text-cyan-400">'https://api.alexza.ai/v1/run'</span>,{'\n'}
+                          {'    '}<span className="text-cyan-400">'https://api.alexza.ai/v1/projects/my-project/run/myAction'</span>,{'\n'}
                           {'    '}headers={'{'}{'\n'}
                           {'        '}<span className="text-purple-400">'Content-Type'</span>: <span className="text-amber-400">'application/json'</span>,{'\n'}
                           {'        '}<span className="text-purple-400">'x-api-key'</span>: <span className="text-gray-400">'axza_xxxxxxxx'</span>{'\n'}
                           {'    '}{'}'},{'\n'}
-                          {'    '}json={'{'}<span className="text-amber-400">'input'</span>: <span className="text-green-400">'Hello, run my AI flow'</span>{'}'}{'\n'}
+                          {'    '}json={'{'}<span className="text-amber-400">'input'</span>: <span className="text-green-400">'Hello, run my AI action'</span>{'}'}{'\n'}
                           ){'\n\n'}
                           data = response.<span className="text-cyan-400">json</span>(){'\n'}
                           print(data[<span className="text-violet-400">'output'</span>])<span className="code-cursor-blink" />
                         </code>
                         <code className="block pt-8">
+                          <span className="text-gray-500"># POST /v1/projects/:projectId/run/:actionName</span>{'\n'}
                           <span className="text-purple-400">import</span> requests{'\n\n'}
                           response = requests.<span className="text-cyan-400">post</span>({'\n'}
-                          {'    '}<span className="text-cyan-400">'https://api.alexza.ai/v1/run'</span>,{'\n'}
+                          {'    '}<span className="text-cyan-400">'https://api.alexza.ai/v1/projects/my-project/run/myAction'</span>,{'\n'}
                           {'    '}headers={'{'}{'\n'}
                           {'        '}<span className="text-purple-400">'Content-Type'</span>: <span className="text-amber-400">'application/json'</span>,{'\n'}
                           {'        '}<span className="text-purple-400">'x-api-key'</span>: <span className="text-gray-400">'axza_xxxxxxxx'</span>{'\n'}
                           {'    '}{'}'},{'\n'}
-                          {'    '}json={'{'}<span className="text-amber-400">'input'</span>: <span className="text-green-400">'Hello, run my AI flow'</span>{'}'}{'\n'}
+                          {'    '}json={'{'}<span className="text-amber-400">'input'</span>: <span className="text-green-400">'Hello, run my AI action'</span>{'}'}{'\n'}
                           ){'\n\n'}
                           data = response.<span className="text-cyan-400">json</span>(){'\n'}
                           print(data[<span className="text-violet-400">'output'</span>])<span className="code-cursor-blink" />
@@ -471,16 +480,18 @@ export default function Home() {
                     {codeTab === 'curl' && (
                       <>
                         <code>
-                          curl -X POST <span className="text-cyan-400">'https://api.alexza.ai/v1/run'</span> \{'\n'}
+                          <span className="text-gray-500"># POST /v1/projects/:projectId/run/:actionName</span>{'\n'}
+                          curl -X POST <span className="text-cyan-400">'https://api.alexza.ai/v1/projects/my-project/run/myAction'</span> \{'\n'}
                           {'  '}-H <span className="text-purple-400">'Content-Type: application/json'</span> \{'\n'}
                           {'  '}-H <span className="text-purple-400">'x-api-key: axza_xxxxxxxx'</span> \{'\n'}
-                          {'  '}-d <span className="text-amber-400">{`'{"input": "Hello, run my AI flow"}'`}</span><span className="code-cursor-blink" />
+                          {'  '}-d <span className="text-amber-400">{`'{"input": "Hello, run my AI action"}'`}</span><span className="code-cursor-blink" />
                         </code>
                         <code className="block pt-8">
-                          curl -X POST <span className="text-cyan-400">'https://api.alexza.ai/v1/run'</span> \{'\n'}
+                          <span className="text-gray-500"># POST /v1/projects/:projectId/run/:actionName</span>{'\n'}
+                          curl -X POST <span className="text-cyan-400">'https://api.alexza.ai/v1/projects/my-project/run/myAction'</span> \{'\n'}
                           {'  '}-H <span className="text-purple-400">'Content-Type: application/json'</span> \{'\n'}
                           {'  '}-H <span className="text-purple-400">'x-api-key: axza_xxxxxxxx'</span> \{'\n'}
-                          {'  '}-d <span className="text-amber-400">{`'{"input": "Hello, run my AI flow"}'`}</span><span className="code-cursor-blink" />
+                          {'  '}-d <span className="text-amber-400">{`'{"input": "Hello, run my AI action"}'`}</span><span className="code-cursor-blink" />
                         </code>
                       </>
                     )}
@@ -579,8 +590,8 @@ export default function Home() {
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="btn-outline-silver h-12 px-8 text-base font-semibold rounded-lg" onClick={() => (window.location.href = "/docs")}>
-                {t("home.cta2")}
+              <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold rounded-lg flex items-center gap-2" onClick={() => (window.location.href = "/playground")}>
+                {t("home.cta2")} <ArrowRight size={18} />
               </Button>
             </motion.div>
           </div>

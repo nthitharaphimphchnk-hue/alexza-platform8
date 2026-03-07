@@ -19,6 +19,11 @@ const CATEGORIES: TemplateCategory[] = [
   "writing",
   "support",
   "other",
+  "content",
+  "marketing",
+  "data_extraction",
+  "productivity",
+  "agents",
 ];
 
 const VISIBILITIES: TemplateVisibility[] = ["public", "private"];

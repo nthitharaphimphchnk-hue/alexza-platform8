@@ -117,6 +117,14 @@ export default function AdminTools() {
         { label: "Tools" },
       ]}
     >
+      <div className="mb-6">
+        <a
+          href="/app/admin/analytics"
+          className="inline-flex items-center gap-2 text-sm text-[#c0c0c0] hover:text-white transition"
+        >
+          Platform Analytics →
+        </a>
+      </div>
       <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">
         <h2 className="text-lg font-semibold text-white">Low Credits Email Runner</h2>
         <p className="mt-1 text-sm text-gray-400">

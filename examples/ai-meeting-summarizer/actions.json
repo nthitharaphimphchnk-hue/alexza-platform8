@@ -1,0 +1,14 @@
+[
+  {
+    "actionName": "meeting_to_actions",
+    "description": "Extract action items and decisions from meeting notes.",
+    "promptTemplate": "From these meeting notes, extract:\n1. Key decisions (bullet list)\n2. Action items: who, what, deadline\n3. Open questions\n\nFormat clearly. Meeting notes:\n{{notes}}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "notes": { "type": "string", "description": "Meeting notes" }
+      },
+      "required": ["notes"]
+    }
+  }
+]

@@ -2,6 +2,7 @@
  * Audit Logs API - list with pagination and filters.
  */
 
+import type { Request } from "express";
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
@@ -10,8 +11,18 @@ import { ensureProjectAccess, getWorkspaceIdsForUser } from "./workspaces/projec
 import { getMemberRole } from "./workspaces/workspaces.routes";
 import { logger } from "./utils/logger";
 import type { AuditLogDoc } from "./models/auditLog";
+import { runAuditLogRetentionCleanup } from "./audit/retention";
 
 const router = Router();
+
+function canUseAdminEndpoint(req: Request): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  const configuredAdminKey = process.env.ADMIN_API_KEY;
+  if (!configuredAdminKey || configuredAdminKey.trim().length === 0) return false;
+  const rawHeader = req.headers["x-admin-key"];
+  const providedAdminKey = typeof rawHeader === "string" ? rawHeader.trim() : "";
+  return providedAdminKey.length > 0 && providedAdminKey === configuredAdminKey;
+}
 
 function parseObjectId(raw: string): ObjectId | null {
   if (!raw || !ObjectId.isValid(raw)) return null;
@@ -134,6 +145,29 @@ router.get("/audit-logs", requireAuth, async (req, res, next) => {
     });
   } catch (error) {
     logger.error({ err: error }, "[Audit] list error");
+    return next(error);
+  }
+});
+
+router.post("/admin/audit/cron/retention", async (req, res, next) => {
+  try {
+    if (!canUseAdminEndpoint(req)) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
+    }
+    const results = await runAuditLogRetentionCleanup();
+    const totalDeleted = results.reduce((sum, r) => sum + r.deletedCount, 0);
+    return res.json({
+      ok: true,
+      totalDeleted,
+      results: results.map((r) => ({
+        plan: r.plan,
+        deletedCount: r.deletedCount,
+        cutoffDate: r.cutoffDate.toISOString(),
+        userCount: r.userCount,
+      })),
+    });
+  } catch (error) {
+    logger.error({ err: error }, "[Audit Retention] Cron failed");
     return next(error);
   }
 });

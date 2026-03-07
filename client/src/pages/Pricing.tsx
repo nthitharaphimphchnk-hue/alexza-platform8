@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
@@ -78,6 +78,9 @@ export default function Pricing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Logo size="navbar" />
           <div className="flex items-center gap-4">
+            <a href="/pricing/simulator" className="text-sm text-gray-300 hover:text-white transition">
+              Cost Simulator
+            </a>
             <a href="/docs" className="text-sm text-gray-300 hover:text-white transition">
               Docs
             </a>
@@ -170,6 +173,32 @@ export default function Pricing() {
             </motion.div>
           ))}
         </motion.div>
+      </section>
+
+      {/* Cost Simulator CTA */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div
+            className="rounded-2xl border-2 border-[#c0c0c0]/20 bg-[#0b0e12] p-8 hover:border-[#c0c0c0]/40 transition-all"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <h2 className="text-2xl font-bold text-white mb-2">Estimate your costs</h2>
+            <p className="text-gray-400 mb-6">
+              Use our cost simulator to estimate credit usage and cost before running AI actions.
+            </p>
+            <Button
+              variant="outline"
+              className="border-[#c0c0c0]/40 text-white hover:bg-[#c0c0c0]/10"
+              onClick={() => (window.location.href = "/pricing/simulator")}
+            >
+              <Calculator size={18} className="mr-2" />
+              Open Cost Simulator
+            </Button>
+          </motion.div>
+        </div>
       </section>
 
       {/* Volume Discount Table */}

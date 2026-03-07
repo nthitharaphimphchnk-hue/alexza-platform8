@@ -140,6 +140,83 @@ router.get("/workspaces/:id", requireAuth, async (req, res, next) => {
         ownerUserId: ws.ownerUserId.toString(),
         role,
         createdAt: ws.createdAt,
+        samlEntryPoint: ws.samlEntryPoint,
+        samlIssuer: ws.samlIssuer,
+        samlCertificate: ws.samlCertificate ? "(configured)" : undefined,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/workspaces/:id/saml", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+    const workspaceId = parseWorkspaceId(req.params.id);
+    if (!workspaceId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const role = await getMemberRole(workspaceId, req.user._id);
+    if (!role || !hasPermission(role, "workspace:manage")) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+    }
+
+    const ws = await getWorkspace(workspaceId);
+    if (!ws) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    return res.json({
+      ok: true,
+      saml: {
+        samlEntryPoint: ws.samlEntryPoint ?? "",
+        samlIssuer: ws.samlIssuer ?? "",
+        samlCertificate: ws.samlCertificate ?? "",
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.patch("/workspaces/:id/saml", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+    const workspaceId = parseWorkspaceId(req.params.id);
+    if (!workspaceId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const role = await getMemberRole(workspaceId, req.user._id);
+    if (!role || !hasPermission(role, "workspace:manage")) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+    }
+
+    const samlEntryPoint = typeof req.body?.samlEntryPoint === "string" ? req.body.samlEntryPoint.trim() : null;
+    const samlIssuer = typeof req.body?.samlIssuer === "string" ? req.body.samlIssuer.trim() : null;
+    const samlCertificate = typeof req.body?.samlCertificate === "string" ? req.body.samlCertificate.trim() : null;
+
+    const db = await getDb();
+    const update: Record<string, string | null> = {
+      samlEntryPoint: samlEntryPoint || null,
+      samlIssuer: samlIssuer || null,
+      samlCertificate: samlCertificate || null,
+    };
+
+    const updated = await db
+      .collection<WorkspaceDoc>("workspaces")
+      .findOneAndUpdate(
+        { _id: workspaceId },
+        { $set: update },
+        { returnDocument: "after" }
+      );
+
+    if (!updated) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    return res.json({
+      ok: true,
+      saml: {
+        samlEntryPoint: updated.samlEntryPoint ?? "",
+        samlIssuer: updated.samlIssuer ?? "",
+        samlCertificate: updated.samlCertificate ? "(configured)" : "",
       },
     });
   } catch (error) {

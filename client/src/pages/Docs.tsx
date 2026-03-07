@@ -40,6 +40,72 @@ export default function Docs() {
       ],
     },
     {
+      title: "Public Playground",
+      subsections: [
+        { label: "Overview", id: "public-playground-overview" },
+        { label: "Demo Actions", id: "public-playground-actions" },
+        { label: "Rate Limits", id: "public-playground-limits" },
+      ],
+    },
+    {
+      title: "Template Library",
+      subsections: [
+        { label: "Overview", id: "template-library-overview" },
+        { label: "Categories", id: "template-library-categories" },
+        { label: "Install into Projects", id: "template-library-install" },
+      ],
+    },
+    {
+      title: "Examples",
+      subsections: [
+        { label: "Overview", id: "examples-overview" },
+        { label: "Example Projects", id: "examples-projects" },
+        { label: "Install into Projects", id: "examples-install" },
+      ],
+    },
+    {
+      title: "Agents",
+      subsections: [
+        { label: "Overview", id: "agents-overview" },
+        { label: "Tools", id: "agents-tools" },
+        { label: "Run API", id: "agents-run" },
+      ],
+    },
+    {
+      title: "Starter Packs",
+      subsections: [
+        { label: "Overview", id: "starter-packs-overview" },
+        { label: "Install", id: "starter-packs-install" },
+        { label: "Available Packs", id: "starter-packs-available" },
+      ],
+    },
+    {
+      title: "App Store",
+      subsections: [
+        { label: "Overview", id: "app-store-overview" },
+        { label: "Publish", id: "app-store-publish" },
+        { label: "Browse & Install", id: "app-store-install" },
+        { label: "Permissions", id: "app-store-permissions" },
+      ],
+    },
+    {
+      title: "Marketplace",
+      subsections: [
+        { label: "Overview", id: "marketplace-overview" },
+        { label: "Publish", id: "marketplace-publish" },
+        { label: "Browse & Install", id: "marketplace-install" },
+        { label: "Rating", id: "marketplace-rating" },
+      ],
+    },
+    {
+      title: "Project Export / Import",
+      subsections: [
+        { label: "Overview", id: "project-export-import" },
+        { label: "Export API", id: "project-export-api" },
+        { label: "Import API", id: "project-import-api" },
+      ],
+    },
+    {
       title: t("docs.apiReference"),
       subsections: [
         { label: "Interactive API (Swagger)", id: "interactive-api" },
@@ -60,11 +126,16 @@ export default function Docs() {
       ],
     },
     {
-      title: t("docs.guides"),
+      title: "Guides",
       subsections: [
-        { label: "Building Workflows", id: "building-workflows" },
-        { label: "Prompt Engineering", id: "prompt-engineering" },
-        { label: "Error Handling", id: "error-handling" },
+        { label: "Guides Hub", id: "guides-hub", href: "/docs/guides" },
+        { label: "Build Your First AI API", id: "guide-first-api", href: "/docs/guides/build-first-ai-api" },
+        { label: "Create Your First Agent", id: "guide-first-agent", href: "/docs/guides/create-first-agent" },
+        { label: "Build an Automation Workflow", id: "guide-workflow", href: "/docs/guides/build-automation-workflow" },
+        { label: "Templates & Starter Packs", id: "guide-templates", href: "/docs/guides/use-templates-starter-packs" },
+        { label: "JavaScript SDK", id: "guide-sdk", href: "/docs/guides/use-javascript-sdk" },
+        { label: "CLI", id: "guide-cli", href: "/docs/guides/use-cli" },
+        { label: "Export & Import Projects", id: "guide-export-import", href: "/docs/guides/export-import-projects" },
       ],
     },
     {
@@ -122,6 +193,7 @@ const response = await client.chat.completions.create({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Logo size="navbar" />
           <div className="flex items-center gap-4">
+            <a href="/docs/guides" className="text-sm text-gray-300 hover:text-white transition">Guides</a>
             <a href="/pricing" className="text-sm text-gray-300 hover:text-white transition">Pricing</a>
             <a href="/" className="text-sm text-gray-300 hover:text-white transition">Home</a>
             <Button variant="outline" className="border-[rgba(255,255,255,0.06)] text-white hover:bg-[#0b0e12]" onClick={() => (window.location.href = "/login")}>
@@ -297,6 +369,228 @@ const response = await client.chat.completions.create({
               </ol>
               <p className="text-sm text-gray-500">
                 All processing runs on ALEXZA Managed Runtime in Quality mode. No upstream provider or model names are exposed.
+              </p>
+            </motion.section>
+
+            {/* Public Playground */}
+            <motion.section id="public-playground-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Public Playground</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Public Playground lets visitors try ALEXZA AI without creating an account. Visit <a href="/playground" className="text-[#c0c0c0] hover:underline">/playground</a> to test AI capabilities in the browser.
+              </p>
+              <p className="text-gray-300">
+                No signup or API key required. Usage is rate limited per IP to prevent abuse.
+              </p>
+              <h3 id="public-playground-actions" className="text-xl font-semibold text-white scroll-mt-32">Demo Actions</h3>
+              <p className="text-gray-300">
+                The playground includes five demo actions: <strong className="text-white">Summarize Text</strong>, <strong className="text-white">Generate Blog</strong>, <strong className="text-white">Extract Contact Info</strong>, <strong className="text-white">Support Agent</strong>, and <strong className="text-white">Research Agent</strong>. Each action has a simple input form and displays the AI output.
+              </p>
+              <h3 id="public-playground-limits" className="text-xl font-semibold text-white scroll-mt-32">Rate Limits</h3>
+              <p className="text-gray-300">
+                The playground is limited to 5 requests per minute per IP by default. Configure via <code className="text-[#c0c0c0]">PLAYGROUND_RATE_LIMIT_IP_PER_MIN</code> in your environment. Responses include <code className="text-[#c0c0c0]">X-RateLimit-Remaining</code> and <code className="text-[#c0c0c0]">X-RateLimit-Limit</code> headers.
+              </p>
+              <p className="text-sm text-gray-500">
+                The playground uses the same AI providers (OpenAI or OpenRouter) as the main runtime. Ensure <code className="text-[#c0c0c0]">OPENAI_API_KEY</code> or <code className="text-[#c0c0c0]">OPENROUTER_API_KEY</code> is configured.
+              </p>
+            </motion.section>
+
+            {/* Template Library */}
+            <motion.section id="template-library-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Template Library</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Template Library provides 50–100 ready-to-use AI action templates across content, marketing, data extraction, productivity, and agents. Install any template into your project with one click.
+              </p>
+              <p className="text-gray-300">
+                Browse at <a href="/app/templates" className="text-[#c0c0c0] hover:underline">/app/templates</a> or <a href="/app/marketplace" className="text-[#c0c0c0] hover:underline">/app/marketplace</a>.
+              </p>
+              <h3 id="template-library-categories" className="text-xl font-semibold text-white scroll-mt-32">Categories</h3>
+              <p className="text-gray-300">
+                <strong className="text-white">Content</strong> – Blog Generator, SEO Article Writer, FAQ Generator. <strong className="text-white">Marketing</strong> – Product Description, Email Campaign, Lead Follow-up. <strong className="text-white">Data Extraction</strong> – Resume Parser, Contact Extractor. <strong className="text-white">Productivity</strong> – Meeting Notes Summarizer, Email Draft. <strong className="text-white">Agents</strong> – Research Agent, Customer Support, Sales Assistant.
+              </p>
+              <h3 id="template-library-install" className="text-xl font-semibold text-white scroll-mt-32">Install into Projects</h3>
+              <p className="text-gray-300">
+                1. Open Templates or Marketplace. 2. Search or filter by category/tags. 3. Click <strong className="text-white">Apply to Project</strong> or <strong className="text-white">Install</strong>. 4. Select your project. 5. The Action is created with the template&apos;s prompt and schemas. You can edit it in project settings.
+              </p>
+              <p className="text-sm text-gray-500">
+                Seed templates: <code>pnpm exec tsx scripts/seed-templates.ts</code>. See <code>docs/TEMPLATES.md</code> for full reference.
+              </p>
+            </motion.section>
+
+            {/* Examples */}
+            <motion.section id="examples-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Examples</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Example Projects Library provides 18 ready-to-use projects demonstrating how to build AI APIs, agents, and automations with ALEXZA. Each example includes <code className="text-[#c0c0c0]">README.md</code>, <code className="text-[#c0c0c0]">actions.json</code>, and optionally <code className="text-[#c0c0c0]">workflow.json</code> or <code className="text-[#c0c0c0]">agent.json</code>.
+              </p>
+              <p className="text-gray-300">
+                Browse examples in the <code className="text-[#c0c0c0]">/examples</code> folder of the repo. See <code>examples/README.md</code> for the full list.
+              </p>
+              <h3 id="examples-projects" className="text-xl font-semibold text-white scroll-mt-32">Example Projects</h3>
+              <p className="text-gray-300">
+                <strong className="text-white">Content &amp; Marketing:</strong> ai-blog-api, ai-seo-writer, ai-product-description, ai-email-generator, ai-headline-generator, ai-cold-email. <strong className="text-white">Data Extraction:</strong> ai-lead-extractor, ai-resume-parser, ai-contact-extractor. <strong className="text-white">Productivity:</strong> ai-document-summarizer, ai-meeting-summarizer, ai-transcript-summarizer. <strong className="text-white">Agents:</strong> ai-support-agent, ai-sales-agent, ai-customer-support-bot, ai-research-agent. <strong className="text-white">Other:</strong> ai-faq-generator, ai-proposal-writer.
+              </p>
+              <h3 id="examples-install" className="text-xl font-semibold text-white scroll-mt-32">Install into Projects</h3>
+              <p className="text-gray-300">
+                1. Create a project in the Dashboard. 2. For each action in the example&apos;s <code className="text-[#c0c0c0]">actions.json</code>, add an action with the same <code className="text-[#c0c0c0]">actionName</code>, <code className="text-[#c0c0c0]">promptTemplate</code>, and <code className="text-[#c0c0c0]">inputSchema</code>. 3. Create an API key with <code className="text-[#c0c0c0]">run:actions</code> scope. 4. Run via <code className="text-[#c0c0c0]">POST /v1/projects/:projectId/run/:actionName</code> with <code className="text-[#c0c0c0]">{`{ "input": { ... } }`}</code>.
+              </p>
+              <p className="text-sm text-gray-500">
+                See <code>docs/EXAMPLES.md</code> for detailed install steps and import options.
+              </p>
+            </motion.section>
+
+            {/* Agents */}
+            <motion.section id="agents-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Agents</h2>
+              <p className="text-gray-300 leading-relaxed">
+                AI Agents use actions, workflows, and webhooks as tools. The agent receives input, decides which tool to call (or responds directly), executes the tool, and returns a response.
+              </p>
+              <p className="text-gray-300">
+                Visit <a href="/app/agents" className="text-[#c0c0c0] hover:underline">/app/agents</a> to create and manage agents.
+              </p>
+              <h3 id="agents-tools" className="text-xl font-semibold text-white scroll-mt-32">Tools</h3>
+              <p className="text-gray-300">
+                Agents can use three tool types: <strong className="text-white">actions</strong> (run AI actions), <strong className="text-white">workflows</strong> (execute workflows), and <strong className="text-white">webhooks</strong> (call HTTP endpoints).
+              </p>
+              <h3 id="agents-run" className="text-xl font-semibold text-white scroll-mt-32">Run API</h3>
+              <p className="text-gray-300">
+                Use <code className="text-[#c0c0c0]">POST /api/agents/run</code> with <code className="text-[#c0c0c0]">agentId</code> and <code className="text-[#c0c0c0]">input</code>. Optional <code className="text-[#c0c0c0]">sessionId</code> for memory.
+              </p>
+              <p className="text-sm text-gray-500">
+                See <code>docs/AGENTS.md</code> for full API reference.
+              </p>
+            </motion.section>
+
+            {/* Starter Packs */}
+            <motion.section id="starter-packs-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Starter Packs</h2>
+              <p className="text-gray-300 leading-relaxed">
+                Starter Packs let you install a group of templates at once. Visit <a href="/app/packs" className="text-[#c0c0c0] hover:underline">/app/packs</a> to browse and install.
+              </p>
+              <h3 id="starter-packs-install" className="text-xl font-semibold text-white scroll-mt-32">Install</h3>
+              <p className="text-gray-300">
+                Use <code className="text-[#c0c0c0]">POST /api/packs/:id/install</code> with <code className="text-[#c0c0c0]">{`{ projectId }`}</code> to install a pack into a project. All templates in the pack are created as actions. Existing actions are skipped. Requires project actions manage permission.
+              </p>
+              <h3 id="starter-packs-available" className="text-xl font-semibold text-white scroll-mt-32">Available Packs</h3>
+              <p className="text-gray-300">
+                <strong className="text-white">SEO Pack</strong> – SEO Article Writer, Meta Description, Headline Generator, Blog Outline, Long-form Article. <strong className="text-white">Marketing Pack</strong> – Email Campaign, Product Description, Lead Follow-up, Ad Copy AIDA, Social Media, Landing Page. <strong className="text-white">Customer Support Pack</strong> – Ticket Triage, Support Response, FAQ Generator, Feedback Response, Apology Email. <strong className="text-white">Sales Automation Pack</strong> – Cold Email, Objection Handler, Lead Follow-up, Sales Agent, Thank You, Testimonial Request. <strong className="text-white">Research Pack</strong> – Research Agent, Document Summarizer, Meeting Notes, Executive Summary, Competitor Analysis.
+              </p>
+              <p className="text-sm text-gray-500">
+                Seed packs: <code className="text-[#c0c0c0]">pnpm exec tsx scripts/seed-packs.ts</code>. Run <code className="text-[#c0c0c0]">scripts/seed-templates.ts</code> first.
+              </p>
+            </motion.section>
+
+            {/* App Store */}
+            <motion.section id="app-store-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">App Store</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The App Store lets developers publish apps (plugins/extensions) and users install them into their workspace. Visit <a href="/app/store" className="text-[#c0c0c0] hover:underline">/app/store</a> to browse and install.
+              </p>
+              <h3 id="app-store-publish" className="text-xl font-semibold text-white scroll-mt-32">Publish</h3>
+              <p className="text-gray-300">
+                Use <code className="text-[#c0c0c0]">POST /api/apps/publish</code> to publish an app. Body: <code className="text-[#c0c0c0]">{`{ name, description, permissions[], category?, tags[] }`}</code>. Apps must declare permissions they need.
+              </p>
+              <h3 id="app-store-install" className="text-xl font-semibold text-white scroll-mt-32">Browse &amp; Install</h3>
+              <p className="text-gray-300">
+                <code className="text-[#c0c0c0]">GET /api/apps</code> – browse with <code className="text-[#c0c0c0]">q</code>, <code className="text-[#c0c0c0]">category</code>, <code className="text-[#c0c0c0]">section</code> (trending|popular|new). <code className="text-[#c0c0c0]">GET /api/apps/sections</code> – get Trending, Popular, New. <code className="text-[#c0c0c0]">POST /api/apps/:id/install</code> – install into workspace with <code className="text-[#c0c0c0]">{`{ workspaceId }`}</code>.
+              </p>
+              <h3 id="app-store-permissions" className="text-xl font-semibold text-white scroll-mt-32">Permissions</h3>
+              <p className="text-gray-300">
+                Apps declare permissions: <code className="text-[#c0c0c0]">run:actions</code>, <code className="text-[#c0c0c0]">read:projects</code>, <code className="text-[#c0c0c0]">manage:webhooks</code>, <code className="text-[#c0c0c0]">manage:workflows</code>. Users see requested permissions when installing. Install requires workspace manage permission.
+              </p>
+              <p className="text-sm text-gray-500">
+                See <code>server/models/app.ts</code> and <code>server/appStoreRoutes.ts</code> for schema and API details.
+              </p>
+            </motion.section>
+
+            {/* Marketplace */}
+            <motion.section id="marketplace-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Marketplace</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Action Marketplace lets you publish, browse, and install AI action templates shared by the community.
+                Visit <a href="/app/marketplace" className="text-[#c0c0c0] hover:underline">/app/marketplace</a> to explore.
+              </p>
+              <h3 id="marketplace-publish" className="text-xl font-semibold text-white scroll-mt-32">Publish</h3>
+              <p className="text-gray-300">
+                Publish an action from your project or an existing template you own. Use <code className="text-[#c0c0c0]">POST /api/marketplace/publish</code> with
+                either <code className="text-[#c0c0c0]">projectId</code> + <code className="text-[#c0c0c0]">actionName</code> or <code className="text-[#c0c0c0]">templateId</code>.
+              </p>
+              <h3 id="marketplace-install" className="text-xl font-semibold text-white scroll-mt-32">Browse &amp; Install</h3>
+              <p className="text-gray-300">
+                Browse Trending, Popular, and New sections. Search by name, description, or tags. Click Install to add a template as an action in your project.
+                Use <code className="text-[#c0c0c0]">POST /api/marketplace/:id/install</code> with <code className="text-[#c0c0c0]">projectId</code>.
+              </p>
+              <h3 id="marketplace-rating" className="text-xl font-semibold text-white scroll-mt-32">Rating</h3>
+              <p className="text-gray-300">
+                Rate templates with 1–5 stars via <code className="text-[#c0c0c0]">POST /api/marketplace/:id/rate</code>. Each user can submit one rating per template.
+              </p>
+              <p className="text-sm text-gray-500">
+                See <code>docs/MARKETPLACE.md</code> in the repo for full API reference and database schema.
+              </p>
+            </motion.section>
+
+            {/* Project Export / Import */}
+            <motion.section id="project-export-import" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Project Export / Import</h2>
+              <p className="text-gray-300">
+                Export projects as JSON (including actions, agents, and workflows) and import them into another workspace.
+              </p>
+              <h3 id="project-export-api" className="text-xl font-semibold text-white scroll-mt-32">Export API</h3>
+              <motion.div
+                className="showcase-card p-6 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.12)] hover:border-[rgba(255,255,255,0.18)] transition-all duration-300"
+                whileHover={{ scale: 1.01 }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-3 py-1 rounded text-xs font-semibold bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+                    GET
+                  </span>
+                  <code className="text-white font-mono text-sm">/api/projects/:id/export</code>
+                </div>
+                <p className="text-gray-300 mb-2 font-medium">Export project as JSON</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  Returns a JSON payload with <code className="text-[#c0c0c0]">project</code>, <code className="text-[#c0c0c0]">actions</code>, <code className="text-[#c0c0c0]">agents</code>, and <code className="text-[#c0c0c0]">workflows</code>. Requires authentication.
+                </p>
+                <div className="rounded-lg bg-[#050607] p-4 border border-[rgba(255,255,255,0.06)]">
+                  <pre className="text-sm font-mono text-gray-300 overflow-x-auto">
+{`{ "ok": true, "data": {
+  "version": "1",
+  "exportedAt": "2025-03-05T...",
+  "project": { "name", "description", "model", "status", "routingMode" },
+  "actions": [...],
+  "agents": [...],
+  "workflows": [...]
+}}`}
+                  </pre>
+                </div>
+              </motion.div>
+              <h3 id="project-import-api" className="text-xl font-semibold text-white scroll-mt-32">Import API</h3>
+              <motion.div
+                className="showcase-card p-6 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.12)] hover:border-[rgba(255,255,255,0.18)] transition-all duration-300"
+                whileHover={{ scale: 1.01 }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-3 py-1 rounded text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/40">
+                    POST
+                  </span>
+                  <code className="text-white font-mono text-sm">/api/projects/import</code>
+                </div>
+                <p className="text-gray-300 mb-2 font-medium">Import project from export file</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  Accepts <code className="text-[#c0c0c0">{`{ workspaceId, data }`}</code>. Creates a new project, actions, agents, and workflows. Requires <code className="text-[#c0c0c0">projects:manage</code> permission on the workspace.
+                </p>
+                <div className="rounded-lg bg-[#050607] p-4 border border-[rgba(255,255,255,0.06)]">
+                  <pre className="text-sm font-mono text-gray-300 overflow-x-auto">
+{`curl -X POST "/api/projects/import" \\
+  -H "Content-Type: application/json" \\
+  -H "Cookie: session=..." \\
+  -d '{"workspaceId": "WORKSPACE_ID", "data": { ... export JSON ... }}'`}
+                  </pre>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Response: <code className="text-[#c0c0c0">{`{ ok: true, projectId, actionCount, agentCount, workflowCount }`}</code>
+                </p>
+              </motion.div>
+              <p className="text-sm text-gray-500">
+                Use the Export Project and Import Project buttons in the project Overview tab to download or upload export files.
               </p>
             </motion.section>
 
@@ -583,10 +877,30 @@ function verifySignature(payload, signature, timestamp, secret) {
             {/* Guides */}
             <motion.section id="guides" className="space-y-6 scroll-mt-32" variants={itemVariants}>
               <h2 className="text-3xl font-bold text-white">{t("docs.guides")}</h2>
-              <p className="text-gray-300">Coming soon: Building Workflows, Prompt Engineering, Error Handling.</p>
-              <h3 id="building-workflows" className="text-lg font-semibold text-white scroll-mt-32">Building Workflows</h3>
-              <h3 id="prompt-engineering" className="text-lg font-semibold text-white scroll-mt-32">Prompt Engineering</h3>
-              <h3 id="error-handling" className="text-lg font-semibold text-white scroll-mt-32">Error Handling</h3>
+              <p className="text-gray-300">
+                Step-by-step tutorials to help you build with ALEXZA AI.{" "}
+                <a href="/docs/guides" className="text-[#c0c0c0] hover:text-white underline">
+                  Browse all guides →
+                </a>
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <a href="/docs/guides/build-first-ai-api" className="block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-4 hover:border-[rgba(255,255,255,0.18)] transition">
+                  <h3 className="font-semibold text-white">Build Your First AI API</h3>
+                  <p className="text-sm text-gray-500 mt-1">Create a production-ready AI API in under 10 minutes.</p>
+                </a>
+                <a href="/docs/guides/create-first-agent" className="block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-4 hover:border-[rgba(255,255,255,0.18)] transition">
+                  <h3 className="font-semibold text-white">Create Your First AI Agent</h3>
+                  <p className="text-sm text-gray-500 mt-1">Build an agent that uses actions and workflows as tools.</p>
+                </a>
+                <a href="/docs/guides/build-automation-workflow" className="block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-4 hover:border-[rgba(255,255,255,0.18)] transition">
+                  <h3 className="font-semibold text-white">Build an Automation Workflow</h3>
+                  <p className="text-sm text-gray-500 mt-1">Chain triggers, actions, and outputs for automation.</p>
+                </a>
+                <a href="/docs/guides/use-templates-starter-packs" className="block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-4 hover:border-[rgba(255,255,255,0.18)] transition">
+                  <h3 className="font-semibold text-white">Templates & Starter Packs</h3>
+                  <p className="text-sm text-gray-500 mt-1">Jumpstart development with pre-built templates.</p>
+                </a>
+              </div>
             </motion.section>
 
             {/* SDKs */}

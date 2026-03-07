@@ -9,14 +9,19 @@ import {
   Bell,
   Building2,
   ClipboardList,
+  Package,
+  Layers,
   ChevronDown,
   ChevronRight,
   CreditCard,
   FileText,
+  GitBranch,
   Home,
   LayoutTemplate,
   Search,
   Settings,
+  Store,
+  Bot,
   Zap,
   ListChecks,
   Play,
@@ -64,9 +69,15 @@ const navKeys = [
   { key: "navigation.projects", href: "/app/projects", icon: FileText },
   { key: "navigation.requests", href: "/app/requests", icon: ListChecks },
   { key: "navigation.templates", href: "/app/templates", icon: LayoutTemplate },
+  { key: "navigation.marketplace", href: "/app/marketplace", icon: Store },
+  { key: "navigation.store", href: "/app/store", icon: Package },
+  { key: "navigation.packs", href: "/app/packs", icon: Layers },
+  { key: "navigation.agents", href: "/app/agents", icon: Bot },
+  { key: "navigation.workflows", href: "/app/workflows", icon: GitBranch },
   { key: "navigation.auditLogs", href: "/app/audit-logs", icon: ClipboardList },
   { key: "navigation.playground", href: "/app/playground", icon: Play },
   { key: "navigation.analytics", href: "/app/analytics", icon: BarChart3 },
+  { key: "navigation.billingDashboard", href: "/app/billing", icon: CreditCard },
   { key: "navigation.credits", href: "/app/billing/credits", icon: Zap },
   { key: "navigation.billing", href: "/app/billing/plans", icon: CreditCard },
   { key: "navigation.settings", href: "/app/settings", icon: Settings },
@@ -361,6 +372,7 @@ export default function AppShell({
                     <DropdownMenuItem onClick={() => setLocation("/app/settings")}>{t("appShell.profileSettings")}</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLocation("/app/billing/plans")}>{t("navigation.billing")}</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLocation("/app/admin/tools")}>{t("appShell.adminTools")}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/app/admin/analytics")}>Platform Analytics</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => void handleSignOut()}>{t("appShell.signOut")}</DropdownMenuItem>
                   </DropdownMenuContent>

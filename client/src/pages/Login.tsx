@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { ArrowRight, ArrowLeft, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mail, Lock, AlertCircle, CheckCircle, Building2 } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import MorphingBlob from "@/components/blob";
 import { useLocation } from "wouter";
@@ -37,7 +37,10 @@ export default function Login() {
         params?.get("message") ||
         (error === "OAUTH_DENIED" ? "Sign-in was cancelled" : null) ||
         (error === "OAUTH_CONFIG" ? "OAuth is not configured. Please contact support." : null) ||
-        (error === "oauth_failed" || error.startsWith("OAUTH_") ? "Sign-in failed. Please try again." : null) ||
+        (error === "SAML_CONFIG" ? "SAML is not configured for this workspace." : null) ||
+        (error === "SAML_STATE_INVALID" ? "Session expired. Please try again." : null) ||
+        (error === "SAML_INCOMPLETE_PROFILE" ? "Your IdP did not provide required user information." : null) ||
+        (error === "oauth_failed" || error.startsWith("OAUTH_") || error.startsWith("SAML_") ? "Sign-in failed. Please try again." : null) ||
         "Something went wrong. Please try again.";
       if (msg) showFormSubmitErrorToast(msg);
       window.history.replaceState({}, "", "/login");
@@ -254,6 +257,18 @@ export default function Login() {
             Google
           </button>
         </div>
+        <button
+          type="button"
+          disabled={form.isSubmitting}
+          className="w-full border-2 border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-50 transition-all rounded-lg py-2.5 px-4 text-sm font-medium flex items-center justify-center gap-2"
+          onClick={() => {
+            const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") || new URLSearchParams(window.location.search).get("redirect") : null;
+            setLocation(`/login/sso${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+          }}
+        >
+          <Building2 size={16} />
+          Login with SSO
+        </button>
 
         {/* Sign Up Link */}
         <p className="text-center text-gray-400 mt-8">

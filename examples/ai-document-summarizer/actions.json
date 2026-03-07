@@ -1,0 +1,27 @@
+[
+  {
+    "actionName": "summarize_document",
+    "description": "Summarize a document concisely.",
+    "promptTemplate": "Summarize the following document. Target length: {{maxLength}}\n\nDocument:\n{{document}}\n\nPreserve key facts, decisions, and action items.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "document": { "type": "string", "description": "Document text" },
+        "maxLength": { "type": "string", "description": "Target length (e.g. 3 paragraphs)" }
+      },
+      "required": ["document"]
+    }
+  },
+  {
+    "actionName": "meeting_summary",
+    "description": "Extract action items and decisions from meeting notes.",
+    "promptTemplate": "From these meeting notes, extract:\n1. Key decisions\n2. Action items (who, what, when)\n3. Open questions\n\nMeeting notes:\n{{notes}}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "notes": { "type": "string", "description": "Meeting notes" }
+      },
+      "required": ["notes"]
+    }
+  }
+]

@@ -3,6 +3,9 @@ import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
 import { createCreditTransaction } from "./credits";
+import { getBalance } from "./wallet";
+import { ensureUsageIndexes } from "./usage";
+import { getWorkspaceIdsForUser } from "./workspaces/projectAccess";
 
 export type BillingPlan = "free" | "pro" | "enterprise";
 
@@ -218,6 +221,204 @@ async function runMonthlyResetJob(): Promise<{ resetCount: number; ranAt: string
 
   return { resetCount: resetUserIds.length, ranAt };
 }
+
+function parseDays(raw: unknown): 7 | 30 | 90 {
+  const n = Number.parseInt(String(raw ?? "30"), 10);
+  if (n === 7) return 7;
+  if (n === 90) return 90;
+  return 30;
+}
+
+function extractActionName(endpoint: string): string {
+  const match = endpoint.match(/\/run\/([^/]+)$/);
+  return match ? match[1] : endpoint || "unknown";
+}
+
+router.get("/billing/usage", requireAuth, async (req, res, next) => {
+  try {
+    await ensureUsageIndexes();
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+
+    const days = parseDays(req.query.days);
+    const db = await getDb();
+    const projects = db.collection<{ _id: ObjectId; ownerUserId: ObjectId; workspaceId?: ObjectId }>("projects");
+    const workspaceIds = await getWorkspaceIdsForUser(req.user._id);
+    const projectFilter =
+      workspaceIds.length > 0
+        ? { $or: [{ ownerUserId: req.user._id }, { workspaceId: { $in: workspaceIds } }] }
+        : { ownerUserId: req.user._id };
+    const projectIds = await projects
+      .find(projectFilter)
+      .project({ _id: 1 })
+      .toArray()
+      .then((rows) => rows.map((r) => r._id));
+
+    if (projectIds.length === 0) {
+      const { balanceCredits } = await getBalance(req.user._id);
+      return res.json({
+        ok: true,
+        totalCreditsUsed: 0,
+        creditsRemaining: balanceCredits,
+        dailyUsage: [],
+        usageByProject: [],
+        usageByApiKey: [],
+        usageByAction: [],
+        range: { days, from: "", to: "" },
+      });
+    }
+
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - days);
+    from.setHours(0, 0, 0, 0);
+
+    const logs = db.collection<{
+      projectId: ObjectId;
+      apiKeyId: ObjectId;
+      endpoint: string;
+      totalTokens: number | null;
+      createdAt: Date;
+    }>("usage_logs");
+
+    const [dailyRaw, byProjectRaw, byApiKeyRaw, totalsRaw] = await Promise.all([
+      logs
+        .aggregate<{ date: string; credits: number }>([
+          { $match: { projectId: { $in: projectIds }, createdAt: { $gte: from, $lte: to } } },
+          {
+            $addFields: {
+              credits: {
+                $max: [1, { $ceil: { $divide: [{ $ifNull: ["$totalTokens", 0] }, 1000] } }],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+              credits: { $sum: "$credits" },
+            },
+          },
+          { $sort: { _id: 1 } },
+          { $project: { date: "$_id", credits: 1, _id: 0 } },
+        ])
+        .toArray(),
+      logs
+        .aggregate<{ projectId: ObjectId; credits: number }>([
+          { $match: { projectId: { $in: projectIds }, createdAt: { $gte: from, $lte: to } } },
+          {
+            $addFields: {
+              credits: {
+                $max: [1, { $ceil: { $divide: [{ $ifNull: ["$totalTokens", 0] }, 1000] } }],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$projectId",
+              credits: { $sum: "$credits" },
+            },
+          },
+          { $sort: { credits: -1 } },
+          { $project: { projectId: "$_id", credits: 1, _id: 0 } },
+        ])
+        .toArray(),
+      logs
+        .aggregate<{ apiKeyId: ObjectId; credits: number }>([
+          { $match: { projectId: { $in: projectIds }, createdAt: { $gte: from, $lte: to } } },
+          {
+            $addFields: {
+              credits: {
+                $max: [1, { $ceil: { $divide: [{ $ifNull: ["$totalTokens", 0] }, 1000] } }],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$apiKeyId",
+              credits: { $sum: "$credits" },
+            },
+          },
+          { $sort: { credits: -1 } },
+          { $limit: 20 },
+          { $project: { apiKeyId: "$_id", credits: 1, _id: 0 } },
+        ])
+        .toArray(),
+      logs
+        .aggregate<{ totalCredits: number }>([
+          { $match: { projectId: { $in: projectIds }, createdAt: { $gte: from, $lte: to } } },
+          {
+            $addFields: {
+              credits: {
+                $max: [1, { $ceil: { $divide: [{ $ifNull: ["$totalTokens", 0] }, 1000] } }],
+              },
+            },
+          },
+          { $group: { _id: null, totalCredits: { $sum: "$credits" } } },
+          { $project: { _id: 0 } },
+        ])
+        .toArray(),
+    ]);
+
+    const totalCreditsUsed = totalsRaw[0]?.totalCredits ?? 0;
+    const { balanceCredits } = await getBalance(req.user._id);
+
+    const projectIdsForNames = byProjectRaw.map((r) => r.projectId);
+    const projectDocs = await db
+      .collection<{ _id: ObjectId; name: string }>("projects")
+      .find({ _id: { $in: projectIdsForNames } })
+      .toArray();
+    const projectMap = new Map(projectDocs.map((p) => [p._id.toString(), p.name]));
+
+    const apiKeyIds = byApiKeyRaw.map((r) => r.apiKeyId);
+    const keyDocs = await db
+      .collection<{ _id: ObjectId; keyPrefix: string }>("api_keys")
+      .find({ _id: { $in: apiKeyIds } })
+      .toArray();
+    const keyMap = new Map(keyDocs.map((k) => [k._id.toString(), k.keyPrefix]));
+
+    const usageByProject = byProjectRaw.map((r) => ({
+      projectId: r.projectId.toString(),
+      projectName: projectMap.get(r.projectId.toString()) ?? "Unknown",
+      credits: r.credits,
+    }));
+
+    const usageByApiKey = byApiKeyRaw.map((r) => ({
+      apiKeyId: r.apiKeyId.toString(),
+      keyPrefix: keyMap.get(r.apiKeyId.toString()) ?? r.apiKeyId.toString().slice(0, 8),
+      credits: r.credits,
+    }));
+
+    const byActionFromLogs = await logs
+      .find({ projectId: { $in: projectIds }, createdAt: { $gte: from, $lte: to } })
+      .project({ endpoint: 1, totalTokens: 1 })
+      .toArray();
+
+    const actionCreditsMap = new Map<string, number>();
+    for (const row of byActionFromLogs) {
+      const actionName = extractActionName(row.endpoint ?? "");
+      const credits = Math.max(1, Math.ceil((row.totalTokens ?? 0) / 1000));
+      actionCreditsMap.set(actionName, (actionCreditsMap.get(actionName) ?? 0) + credits);
+    }
+    const usageByAction = Array.from(actionCreditsMap.entries())
+      .map(([actionName, credits]) => ({ actionName, credits }))
+      .sort((a, b) => b.credits - a.credits)
+      .slice(0, 20);
+
+    return res.json({
+      ok: true,
+      totalCreditsUsed,
+      creditsRemaining: balanceCredits,
+      dailyUsage: dailyRaw.map((r) => ({ date: r.date, credits: r.credits })),
+      usageByProject,
+      usageByApiKey,
+      usageByAction,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 router.get("/billing/plan", requireAuth, async (req, res, next) => {
   try {

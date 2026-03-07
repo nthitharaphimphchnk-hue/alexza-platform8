@@ -108,8 +108,15 @@ export default function Settings() {
                 );
               })}
               <button
-                onClick={() => setLocation("/app/settings/webhooks")}
+                onClick={() => setLocation("/app/settings/sso")}
                 className="ripple-btn mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Shield size={16} />
+                Enterprise SSO
+              </button>
+              <button
+                onClick={() => setLocation("/app/settings/webhooks")}
+                className="ripple-btn flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <Webhook size={16} />
                 Webhooks

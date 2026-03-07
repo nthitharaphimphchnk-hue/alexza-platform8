@@ -21,6 +21,15 @@ export function getOAuthUrl(provider: "google" | "github", next?: string): strin
   }
   return `${url}?next=${encodeURIComponent(nextPath)}`;
 }
+
+/** Full SAML SSO login URL for a workspace. Share this link with your organization. */
+export function getSamlLoginUrl(workspaceId: string, next?: string): string {
+  const base = getOAuthBaseUrl();
+  const url = `${base}/auth/saml/login`;
+  const params = new URLSearchParams({ workspaceId });
+  if (next) params.set("next", next);
+  return `${url}?${params.toString()}`;
+}
 let hasLoggedApiBase = false;
 
 export function logApiBaseUrlOnce() {

@@ -2,15 +2,20 @@
  * API Request Logs - user-facing request history.
  * GET /api/requests (paginated, filters)
  * GET /api/requests/:id (detail)
+ * POST /api/requests/:id/replay (replay request)
  */
 
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
+import { requireAuth } from "./middleware/requireAuth";
 import { requireAuthOrApiKey } from "./middleware/requireAuthOrApiKey";
 import { requireApiScope } from "./middleware/requireApiScope";
 import { getWorkspaceIdsForUser } from "./workspaces/projectAccess";
 import { logger } from "./utils/logger";
+import { createTemporaryKeyForReplay, revokeKeyById } from "./keys";
+import { logAuditEvent } from "./audit/logAuditEvent";
+import { getAuditContext } from "./audit/auditContext";
 import type { ApiRequestDoc } from "./apiRequests";
 
 const PAGE_SIZE = 50;
@@ -155,6 +160,7 @@ router.get("/requests/:id", requireAuthOrApiKey, requireApiScope("read:requests"
         latencyMs: doc.latencyMs,
         error: doc.error,
         createdAt: doc.createdAt,
+        canReplay: Boolean(doc.input && typeof doc.input === "object" && Object.keys(doc.input).length > 0),
       },
     });
   } catch (error) {
@@ -162,5 +168,127 @@ router.get("/requests/:id", requireAuthOrApiKey, requireApiScope("read:requests"
     return next(error);
   }
 });
+
+router.post(
+  "/requests/:id/replay",
+  requireAuth,
+  requireApiScope("run:actions"),
+  async (req, res, next) => {
+    try {
+      if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+      const id = (req.params.id ?? "").trim();
+      if (!id) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+      const db = await getDb();
+      const col = db.collection<ApiRequestDoc>("api_requests");
+      const projects = db.collection<{ _id: ObjectId; name: string; ownerUserId?: ObjectId; workspaceId?: ObjectId }>("projects");
+
+      const doc = await col.findOne({ id });
+      if (!doc) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+      const workspaceIds = await getWorkspaceIdsForUser(req.user._id);
+      const project = await projects.findOne({ _id: doc.projectId });
+      if (!project) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+      const hasAccess =
+        project.ownerUserId?.equals(req.user._id) ||
+        (project.workspaceId && workspaceIds.some((wid) => wid.equals(project.workspaceId!)));
+      if (!hasAccess) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+      const input = doc.input;
+      if (!input || typeof input !== "object" || Object.keys(input).length === 0) {
+        return res.status(400).json({
+          ok: false,
+          error: "REPLAY_NOT_AVAILABLE",
+          message: "Request cannot be replayed: no stored input",
+        });
+      }
+
+      const projectIdStr = doc.projectId.toString();
+      const actionName = doc.actionName;
+      const payload = input as Record<string, unknown>;
+
+      let rawKey: string | null = null;
+      let keyId: ObjectId | null = null;
+      try {
+        const keyResult = await createTemporaryKeyForReplay(doc.projectId, doc.ownerUserId);
+        rawKey = keyResult.rawKey;
+        keyId = keyResult.keyId;
+      } catch (keyErr) {
+        logger.error({ err: keyErr, requestId: id }, "[Requests] replay: failed to create temp key");
+        return res.status(500).json({
+          ok: false,
+          error: "REPLAY_FAILED",
+          message: "Failed to create replay key",
+        });
+      }
+
+      const baseUrl =
+        process.env.API_BASE_URL ||
+        (req.protocol && req.get("host") ? `${req.protocol}://${req.get("host")}` : `http://127.0.0.1:${process.env.PORT ?? 3002}`);
+      const runUrl = `${baseUrl}/v1/projects/${projectIdStr}/run/${encodeURIComponent(actionName)}`;
+
+      logger.info(
+        { requestId: id, projectId: projectIdStr, actionName, actorUserId: req.user._id.toString() },
+        "[Requests] replay: starting"
+      );
+
+      let fetchRes: Response;
+      try {
+        fetchRes = await fetch(runUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${rawKey}`,
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (fetchErr) {
+        logger.error({ err: fetchErr, requestId: id }, "[Requests] replay: fetch failed");
+        await revokeKeyById(keyId!);
+        return res.status(502).json({
+          ok: false,
+          error: "REPLAY_FAILED",
+          message: "Failed to execute replay",
+        });
+      } finally {
+        await revokeKeyById(keyId!);
+      }
+
+      const resultJson = await fetchRes.json().catch(() => ({}));
+
+      const { ip, userAgent } = getAuditContext(req);
+      logAuditEvent({
+        ownerUserId: doc.ownerUserId,
+        actorUserId: req.user._id,
+        actorEmail: (req.user as { email?: string }).email ?? "",
+        workspaceId: project.workspaceId ?? null,
+        projectId: doc.projectId,
+        actionType: "request.replayed",
+        resourceType: "api_request",
+        resourceId: id,
+        metadata: { actionName, statusCode: fetchRes.status },
+        ip,
+        userAgent,
+        status: fetchRes.ok ? "success" : "error",
+      });
+
+      logger.info(
+        {
+          requestId: id,
+          statusCode: fetchRes.status,
+          actorUserId: req.user._id.toString(),
+        },
+        "[Requests] replay: completed"
+      );
+
+      return res.status(fetchRes.status).json(resultJson);
+    } catch (error) {
+      logger.error({ err: error }, "[Requests] replay error");
+      return next(error);
+    }
+  }
+);
 
 export { router as requestsRouter };

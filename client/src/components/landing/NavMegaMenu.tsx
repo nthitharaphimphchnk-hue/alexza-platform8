@@ -130,6 +130,18 @@ export default function NavMegaMenu() {
 
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
+            <Link href="/docs/guides">Guides</Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
+            <Link href="/playground">Playground</Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle() + " bg-transparent text-gray-300 hover:text-white hover:bg-transparent border-0 h-auto py-1 px-3 text-sm font-normal"}>
             <Link href="/pricing">{t("navigation.pricing")}</Link>
           </NavigationMenuLink>
         </NavigationMenuItem>

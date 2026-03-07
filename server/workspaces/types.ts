@@ -11,6 +11,12 @@ export interface WorkspaceDoc {
   name: string;
   ownerUserId: ObjectId;
   createdAt: Date;
+  /** SAML SSO - IdP entry point URL */
+  samlEntryPoint?: string;
+  /** SAML SSO - IdP issuer/entity ID */
+  samlIssuer?: string;
+  /** SAML SSO - IdP certificate (X.509 PEM) for response signature validation */
+  samlCertificate?: string;
 }
 
 export interface WorkspaceMemberDoc {

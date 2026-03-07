@@ -1,5 +1,6 @@
 import AppShell from "@/components/app/AppShell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ApiError, apiRequest } from "@/lib/api";
 import { showErrorToast } from "@/lib/toast";
 import { useCallback, useEffect, useState } from "react";
@@ -15,6 +16,7 @@ interface RequestDetailData {
   latencyMs?: number;
   error?: string;
   createdAt: string;
+  canReplay?: boolean;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -44,6 +46,8 @@ export default function RequestDetail() {
   const [data, setData] = useState<RequestDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [replayResult, setReplayResult] = useState<Record<string, unknown> | null>(null);
 
   const loadDetail = useCallback(async () => {
     if (!id) return;
@@ -84,6 +88,25 @@ export default function RequestDetail() {
   useEffect(() => {
     if (!id) setLocation("/app/requests");
   }, [id, setLocation]);
+
+  const handleReplay = useCallback(async () => {
+    if (!id) return;
+    setIsReplaying(true);
+    setReplayResult(null);
+    try {
+      const res = await apiRequest<Record<string, unknown>>(
+        `/api/requests/${encodeURIComponent(id)}/replay`,
+        { method: "POST" }
+      );
+      setReplayResult(res);
+    } catch (error) {
+      const msg = error instanceof ApiError ? error.message : error instanceof Error ? error.message : "Unknown error";
+      showErrorToast("Replay failed", msg);
+      setReplayResult({ ok: false, error: msg });
+    } finally {
+      setIsReplaying(false);
+    }
+  }, [id]);
 
   if (!id) return null;
 
@@ -154,6 +177,23 @@ export default function RequestDetail() {
                 <pre className="mt-1 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] p-4 text-sm text-red-400 overflow-x-auto whitespace-pre-wrap">
                   {data.error}
                 </pre>
+              </div>
+            ) : null}
+            {data.canReplay ? (
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  onClick={handleReplay}
+                  disabled={isReplaying}
+                  className="gap-2"
+                >
+                  {isReplaying ? "Replaying…" : "Replay Request"}
+                </Button>
+                {replayResult ? (
+                  <pre className="mt-4 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#050607] p-4 text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">
+                    {JSON.stringify(replayResult, null, 2)}
+                  </pre>
+                ) : null}
               </div>
             ) : null}
           </div>

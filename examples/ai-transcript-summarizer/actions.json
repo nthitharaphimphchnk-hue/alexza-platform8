@@ -1,0 +1,14 @@
+[
+  {
+    "actionName": "summarize_transcript",
+    "description": "Summarize call or meeting transcript.",
+    "promptTemplate": "Summarize this transcript. Include:\n1. Main topics discussed\n2. Key decisions or conclusions\n3. Action items (if any)\n4. Notable quotes\n\nTranscript:\n{{transcript}}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "transcript": { "type": "string", "description": "Transcript text" }
+      },
+      "required": ["transcript"]
+    }
+  }
+]

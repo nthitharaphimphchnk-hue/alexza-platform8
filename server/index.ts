@@ -12,6 +12,7 @@ import { ObjectId } from "mongodb";
 import { sanitizeForLog, maskEmail } from "./utils/sanitize";
 import { authRouter } from "./auth";
 import { oauthRouter } from "./oauth";
+import { samlRouter } from "./saml";
 import { getDb, pingDb } from "./db";
 import { keysRouter } from "./keys";
 import { getSessionCookieName, hashSessionToken } from "./utils/crypto";
@@ -19,6 +20,7 @@ import { projectsRouter } from "./projects";
 import { v1Router } from "./routes/v1";
 import { v2Router } from "./routes/v2";
 import { adminRunLogsRouter } from "./adminRunLogs";
+import { adminAnalyticsRouter } from "./adminAnalytics";
 import { builderRouter } from "./builder";
 import { actionsRouter } from "./actions";
 import { usageRouter } from "./usageRoutes";
@@ -36,12 +38,20 @@ import { webhooksRouter } from "./webhooks/webhooks.routes";
 import { estimateRouter } from "./estimate";
 import { analyticsRouter } from "./analytics";
 import { requestsRouter } from "./requestsRoutes";
+import { workflowsRouter } from "./workflows/workflows.routes";
+import { refreshScheduleTriggers } from "./workflows/triggers";
 import { templatesRouter } from "./templatesRoutes";
 import { adminTemplatesRouter } from "./adminTemplatesRoutes";
+import { marketplaceRouter } from "./marketplaceRoutes";
+import { agentsRouter } from "./agents/agentRoutes";
 import { auditRoutes } from "./auditRoutes";
+import appStoreRouter from "./appStoreRoutes";
+import packsRouter from "./packsRoutes";
 import { healthRouter } from "./healthRoutes";
 import { statusRouter } from "./statusRoutes";
+import playgroundRouter from "./playgroundRoutes";
 import { startStatusMonitor } from "./statusService";
+import { startAuditRetentionScheduler } from "./audit/retention";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { sentryScopeMiddleware } from "./middleware/sentryScope";
 import { requestLogger } from "./middleware/requestLogger";
@@ -171,10 +181,12 @@ async function startServer() {
   // Stripe webhook MUST use raw body - mount before express.json()
   app.post("/api/billing/stripe/webhook", ...createWebhookRoute());
 
+  app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(cookieParser());
 
   app.use(oauthRouter);
+  app.use(samlRouter);
 
   // Health endpoints (GET /health, /health/db, /health/stripe, /health/webhooks)
   app.use("/", healthRouter);
@@ -226,6 +238,7 @@ async function startServer() {
     });
   });
 
+  app.use("/api", playgroundRouter);
   app.use("/api", authRouter);
   app.use("/api", workspacesRouter);
   app.use("/api", projectsRouter);
@@ -238,8 +251,13 @@ async function startServer() {
   app.use("/api", estimateRouter);
   app.use("/api", analyticsRouter);
   app.use("/api", requestsRouter);
+  app.use("/api", workflowsRouter);
   app.use("/api", templatesRouter);
   app.use("/api", adminTemplatesRouter);
+  app.use("/api", marketplaceRouter);
+  app.use("/api", agentsRouter);
+  app.use("/api", appStoreRouter);
+  app.use("/api", packsRouter);
   app.use("/api", auditRoutes);
   app.use("/api", onboardingRouter);
   app.use("/api", billingRouter);
@@ -248,6 +266,7 @@ async function startServer() {
   app.use("/api", webhooksRouter);
   app.use("/api", statusRouter);
   app.use("/api", adminRunLogsRouter);
+  app.use("/api", adminAnalyticsRouter);
 
   // Versioned API: /v1 (stable), /v2 (scaffold)
   app.use("/v1", v1Router);
@@ -306,6 +325,7 @@ async function startServer() {
       "POST /api/admin/notifications/test-low-credits",
       "POST /api/admin/notifications/cron/low-credits-scan",
       "GET /api/admin/notifications/status",
+      "POST /api/admin/audit/cron/retention",
     ];
     const requiredRoutesPresent = requiredRoutes.reduce<Record<string, boolean>>((acc, route) => {
       acc[route] = routes.includes(route);
@@ -574,6 +594,8 @@ async function startServer() {
     logger.info(logPayload);
 
     startStatusMonitor();
+    startAuditRetentionScheduler();
+    refreshScheduleTriggers().catch((err) => logger.warn({ err }, "[Workflows] Schedule refresh failed"));
   });
 }
 

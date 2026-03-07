@@ -1,0 +1,15 @@
+[
+  {
+    "actionName": "generate_faq",
+    "description": "Generate FAQ Q&A from product info.",
+    "promptTemplate": "Generate {{count}} FAQ questions and answers based on this product/service info:\n\n{{productInfo}}\n\nFormat: Q: ... A: ... for each. Cover common customer questions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "productInfo": { "type": "string", "description": "Product or service description" },
+        "count": { "type": "string", "description": "Number of FAQs (default 5)" }
+      },
+      "required": ["productInfo"]
+    }
+  }
+]

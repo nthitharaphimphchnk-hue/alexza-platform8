@@ -1,0 +1,15 @@
+[
+  {
+    "actionName": "generate_headlines",
+    "description": "Generate 5 compelling headlines for content.",
+    "promptTemplate": "Generate 5 compelling headlines for: {{topic}}\n\nTarget audience: {{audience}}\n\nMix styles: curiosity, benefit-driven, how-to, list, question. Each under 60 characters.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string", "description": "Content topic" },
+        "audience": { "type": "string", "description": "Target audience" }
+      },
+      "required": ["topic"]
+    }
+  }
+]

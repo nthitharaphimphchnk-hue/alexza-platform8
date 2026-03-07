@@ -1,0 +1,16 @@
+[
+  {
+    "actionName": "cold_email",
+    "description": "Generate personalized cold outreach email.",
+    "promptTemplate": "Write a cold outreach email.\n\nRecipient: {{recipient}}\nProduct: {{product}}\nPersonalization hook: {{hook}}\n\nKeep under 100 words. Include: personalized opener, value prop, single CTA. No spammy language.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "recipient": { "type": "string", "description": "Recipient profile" },
+        "product": { "type": "string", "description": "Product or service" },
+        "hook": { "type": "string", "description": "Personalization hook" }
+      },
+      "required": ["recipient", "product"]
+    }
+  }
+]

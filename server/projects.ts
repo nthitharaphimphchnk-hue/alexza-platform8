@@ -7,6 +7,8 @@ import { requireApiScope } from "./middleware/requireApiScope";
 import { ensureProjectAccess, getWorkspaceIdsForUser } from "./workspaces/projectAccess";
 import { getMemberRole } from "./workspaces/workspaces.routes";
 import { hasPermission } from "./workspaces/permissions";
+import { exportProject } from "./projectExportService";
+import { importProject } from "./projectExportService";
 
 export type RoutingMode = "cheap" | "balanced" | "quality";
 
@@ -300,6 +302,97 @@ router.get("/projects/:id", requireAuth, async (req, res, next) => {
 
     return res.json({ ok: true, project: toProjectResponse(project) });
   } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/projects/:id/export", requireAuth, async (req, res, next) => {
+  try {
+    await ensureProjectsIndexes();
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+    const projectId = parseProjectId(req.params.id);
+    if (!projectId) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const hasAccess = await ensureProjectAccess(projectId, req.user._id);
+    if (!hasAccess) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    const payload = await exportProject(projectId);
+    if (!payload) return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+
+    return res.json({ ok: true, data: payload });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/projects/import", requireAuth, async (req, res, next) => {
+  try {
+    await ensureProjectsIndexes();
+    if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+
+    const workspaceIdRaw = typeof req.body?.workspaceId === "string" ? req.body.workspaceId.trim() : "";
+    const data = req.body?.data;
+
+    if (!data || typeof data !== "object") {
+      return res.status(400).json(validationError("data is required and must be a valid export object"));
+    }
+
+    const workspaceId = ObjectId.isValid(workspaceIdRaw) ? new ObjectId(workspaceIdRaw) : null;
+    if (!workspaceId) {
+      return res.status(400).json(validationError("workspaceId is required and must be a valid ID"));
+    }
+
+    const workspaceIds = await getWorkspaceIdsForUser(req.user._id);
+    if (!workspaceIds.some((id) => id.equals(workspaceId))) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+    }
+
+    const role = await getMemberRole(workspaceId, req.user._id);
+    if (!role || !hasPermission(role, "projects:manage")) {
+      return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+    }
+
+    const result = await importProject({
+      workspaceId,
+      userId: req.user._id,
+      data: data as Parameters<typeof importProject>[0]["data"],
+    });
+
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId,
+      projectId: new ObjectId(result.projectId),
+      actionType: "project.imported",
+      resourceType: "project",
+      resourceId: result.projectId,
+      metadata: {
+        name: (data as { project?: { name?: string } }).project?.name,
+        actionCount: result.actionCount,
+        agentCount: result.agentCount,
+        workflowCount: result.workflowCount,
+      },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
+    return res.status(201).json({
+      ok: true,
+      projectId: result.projectId,
+      actionCount: result.actionCount,
+      agentCount: result.agentCount,
+      workflowCount: result.workflowCount,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Invalid export payload")) {
+      return res.status(400).json(validationError(error.message));
+    }
     return next(error);
   }
 });

@@ -1,0 +1,14 @@
+[
+  {
+    "actionName": "parse_resume",
+    "description": "Extract structured data from resume text.",
+    "promptTemplate": "Extract structured data from this resume. Respond with JSON:\n{\"name\": string, \"email\": string, \"phone\": string, \"experience\": [{title, company, years}], \"education\": [string], \"skills\": [string]}\n\nResume:\n{{resume}}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "resume": { "type": "string", "description": "Resume or CV text" }
+      },
+      "required": ["resume"]
+    }
+  }
+]

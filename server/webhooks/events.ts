@@ -19,4 +19,14 @@ export function emitWebhookEvent(params: {
   dispatchWebhookEvent(params).catch((err) => {
     logger.warn({ err: String(err), event: params.event }, "[Webhooks] Dispatch failed");
   });
+  import("../workflows/triggers").then(({ triggerWorkflowsByApiEvent }) =>
+    triggerWorkflowsByApiEvent({
+      event: params.event,
+      payload: params.payload,
+      ownerUserId: params.ownerUserId,
+      projectId: params.projectId,
+    })
+  ).catch((err) => {
+    logger.warn({ err: String(err), event: params.event }, "[Workflows] api_event trigger failed");
+  });
 }

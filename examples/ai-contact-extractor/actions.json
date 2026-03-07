@@ -1,0 +1,14 @@
+[
+  {
+    "actionName": "extract_contacts",
+    "description": "Extract name, email, phone from text.",
+    "promptTemplate": "Extract contact information from this text. Respond with JSON:\n{\"name\": string, \"email\": string, \"phone\": string}\n\nUse empty string for missing. Text:\n{{text}}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Text containing contact info" }
+      },
+      "required": ["text"]
+    }
+  }
+]

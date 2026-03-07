@@ -9,8 +9,9 @@ import {
   showCopyToClipboardToast,
   showErrorToast,
 } from "@/lib/toast";
-import { Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
+import { BarChart3, Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 
 interface ApiKeyItem {
   id: string;
@@ -37,6 +38,7 @@ interface ApiKeysProps {
 }
 
 export default function ApiKeys({ projectId: projectIdProp, embedded = false }: ApiKeysProps) {
+  const [, setLocation] = useLocation();
   const [keys, setKeys] = useState<ApiKeyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -194,7 +196,7 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
             {keyItem.scopes.length === 0 && (
               <p className="mb-3 text-xs text-gray-500">Full access (all scopes)</p>
             )}
-            <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto] md:items-center">
+            <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto_auto] md:items-center">
               <div className="flex items-center justify-between rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#050607] px-3 py-2">
                 <code className="text-sm text-gray-300">{keyItem.prefix}************</code>
                 <button onClick={() => copyToClipboard(keyItem.prefix, keyItem.id)} className="rounded p-1.5 hover:bg-[rgba(255,255,255,0.08)]">
@@ -209,6 +211,16 @@ export default function ApiKeys({ projectId: projectIdProp, embedded = false }: 
                 <p className="text-gray-500">Total Usage</p>
                 <p className="mt-1">{((idx + 1) * 12040).toLocaleString()}</p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={Boolean(keyItem.revokedAt)}
+                onClick={() => setLocation(`/app/api-keys/${keyItem.id}/usage`)}
+                className="border-[rgba(255,255,255,0.08)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)] hover:text-gray-200"
+              >
+                <BarChart3 size={14} className="mr-2" />
+                Usage
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

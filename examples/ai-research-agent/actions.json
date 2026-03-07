@@ -1,0 +1,27 @@
+[
+  {
+    "actionName": "synthesize_research",
+    "description": "Synthesize research from multiple sources.",
+    "promptTemplate": "Synthesize the following research into a coherent summary.\n\nTopic: {{topic}}\n\nSources:\n{{sources}}\n\nInclude: key findings, contradictions (if any), conclusions, and recommendations. Use clear structure.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string", "description": "Research topic" },
+        "sources": { "type": "string", "description": "Research sources or notes" }
+      },
+      "required": ["topic", "sources"]
+    }
+  },
+  {
+    "actionName": "research_outline",
+    "description": "Create a research outline from a topic.",
+    "promptTemplate": "Create a detailed research outline for: {{topic}}\n\nInclude: research questions, key areas to explore, methodology suggestions, expected outputs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string", "description": "Research topic" }
+      },
+      "required": ["topic"]
+    }
+  }
+]

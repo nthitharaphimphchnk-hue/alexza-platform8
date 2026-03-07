@@ -10,7 +10,12 @@ export type TemplateCategory =
   | "extraction"
   | "writing"
   | "support"
-  | "other";
+  | "other"
+  | "content"
+  | "marketing"
+  | "data_extraction"
+  | "productivity"
+  | "agents";
 
 export type TemplateVisibility = "public" | "private";
 

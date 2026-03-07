@@ -29,8 +29,14 @@
     "playground": "Playground",
     "usage": "Usage",
     "analytics": "Analytics",
+    "billingDashboard": "Billing Dashboard",
     "requests": "Requests",
     "templates": "Templates",
+    "marketplace": "Marketplace",
+    "store": "App Store",
+    "packs": "Starter Packs",
+    "agents": "Agents",
+    "workflows": "Workflows",
     "auditLogs": "Audit Logs",
     "workspaces": "Workspaces",
     "credits": "Credits",
@@ -54,11 +60,57 @@
     "low": "Low",
     "topUp": "Top up"
   },
+  "marketplace": {
+    "title": "Action Marketplace",
+    "subtitle": "Browse, install, and rate AI action templates from the community",
+    "searchPlaceholder": "Search templates by name, description, or tags...",
+    "clearSearch": "Clear",
+    "searchResults": "Search results",
+    "noResults": "No templates found",
+    "trending": "Trending",
+    "popular": "Popular",
+    "new": "New",
+    "empty": "No marketplace templates yet",
+    "emptyHint": "Publish your first action template from a project.",
+    "install": "Install",
+    "installing": "Installing...",
+    "template": "Template",
+    "project": "Project",
+    "selectProject": "Select project",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "action": "Action",
+    "selectAction": "Select action",
+    "tags": "Tags"
+  },
+  "agents": {
+    "title": "AI Agent Builder",
+    "subtitle": "Create agents that use actions, workflows, and webhooks as tools",
+    "agents": "Agents",
+    "create": "Create Agent",
+    "created": "Agent created",
+    "deleted": "Agent deleted",
+    "confirmDelete": "Delete this agent?",
+    "selectOrCreate": "Select an agent or create one to get started.",
+    "name": "Name",
+    "nameRequired": "Name is required",
+    "description": "Description",
+    "workspace": "Workspace",
+    "selectWorkspace": "Select workspace",
+    "memory": "Enable memory",
+    "tools": "Tools",
+    "noTools": "No tools configured",
+    "run": "Run",
+    "running": "Running...",
+    "inputPlaceholder": "Enter your message...",
+    "output": "Output",
+    "ranWithTool": "Ran with tool: {{tool}}"
+  },
   "home": {
-    "title": "ALEXZA AI — Solution Orchestration Platform",
-    "subtitle": "Build, Orchestrate, and Optimize AI Systems Automatically",
-    "cta1": "Get Started",
-    "cta2": "View Docs",
+    "title": "Build AI APIs, Agents, and Automations in minutes.",
+    "subtitle": "Create production-ready AI APIs, conversational agents, and automation workflows. One platform. Zero complexity.",
+    "cta1": "Start building",
+    "cta2": "Try playground",
     "ctaFree": "Get Started Free",
     "features": {
       "title": "Powerful Features",
@@ -174,6 +226,35 @@
       "label3": "Credit & cost control",
       "label4": "Unified logging",
       "cta": "View architecture"
+    },
+    "developerFeatures": {
+      "title": "Everything you need to build",
+      "subtitle": "From templates to production APIs — ship faster with ALEXZA.",
+      "howItWorks": {
+        "title": "How it works",
+        "desc": "Design flows visually, deploy with one click, run via REST API. No infrastructure to manage."
+      },
+      "templates": {
+        "title": "Templates",
+        "desc": "Pre-built AI actions for support, RAG, summarization, and more. Start in seconds."
+      },
+      "exampleProjects": {
+        "title": "Example projects",
+        "desc": "Clone and customize sample projects. Learn by example, then build your own."
+      },
+      "automationBuilder": {
+        "title": "Automation builder",
+        "desc": "Visual workflow editor. Chain steps, add conditions, trigger on events or schedules."
+      },
+      "agentBuilder": {
+        "title": "Agent builder",
+        "desc": "Create conversational AI agents with custom instructions, tools, and memory."
+      },
+      "marketplace": {
+        "title": "Marketplace",
+        "desc": "Discover and install community templates. Publish your own and earn."
+      },
+      "explore": "Explore"
     },
     "trust": {
       "title": "Reliability built in",
@@ -350,7 +431,23 @@
     "requestId": "Request ID",
     "credits": "Credits",
     "latency": "Latency",
-    "updatedLabel": "Updated"
+    "updatedLabel": "Updated",
+    "exportImport": "Export / Import",
+    "exportImportDesc": "Export this project as JSON or import a project from an export file.",
+    "exportProject": "Export Project",
+    "importProject": "Import Project",
+    "exporting": "Exporting...",
+    "importing": "Importing...",
+    "exportSuccess": "Project exported successfully",
+    "exportFailed": "Failed to export project",
+    "importSuccess": "Project imported successfully",
+    "importFailed": "Failed to import project",
+    "importSelectFile": "Please select an export file",
+    "importSelectWorkspace": "Please select a workspace for the imported project",
+    "importProjectDesc": "Select a workspace and choose an export file to create a new project.",
+    "importWorkspace": "Target workspace",
+    "importWorkspacePlaceholder": "Select workspace",
+    "importFile": "Export file"
   },
   "apiKeys": {
     "title": "API Keys",

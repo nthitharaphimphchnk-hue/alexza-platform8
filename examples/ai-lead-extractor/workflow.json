@@ -1,0 +1,35 @@
+{
+  "name": "Lead Extraction Workflow",
+  "description": "Webhook-triggered workflow that extracts lead info from incoming text.",
+  "steps": [
+    {
+      "type": "trigger",
+      "order": 0,
+      "config": {
+        "kind": "webhook",
+        "path": "/leads"
+      }
+    },
+    {
+      "type": "action",
+      "order": 1,
+      "config": {
+        "kind": "run_ai_action",
+        "projectId": "YOUR_PROJECT_ID",
+        "actionName": "extract_lead",
+        "input": {
+          "text": "{{trigger.body.text}}"
+        }
+      }
+    },
+    {
+      "type": "output",
+      "order": 2,
+      "config": {
+        "kind": "send_webhook",
+        "url": "YOUR_CRM_WEBHOOK_URL",
+        "method": "POST"
+      }
+    }
+  ]
+}

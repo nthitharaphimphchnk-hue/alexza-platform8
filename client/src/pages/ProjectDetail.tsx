@@ -5,14 +5,15 @@ import ApiKeys from "@/pages/ApiKeys";
 import UsageSummaryPanel from "@/components/usage/UsageSummaryPanel";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Modal from "@/components/Modal";
-import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle, MessageSquare, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle, MessageSquare, RefreshCw, Download, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ApiError, apiRequest, API_BASE_URL } from "@/lib/api";
 import { listActions, deleteAction, runAction } from "@/lib/alexzaApi";
 import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
 import type { PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showProjectDeletedToast, showSuccessToast, showCopyToClipboardToast } from "@/lib/toast";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type RoutingMode = "cheap" | "balanced" | "quality";
 
@@ -23,6 +24,7 @@ interface ProjectDetailData {
   model: string;
   status: "active" | "paused";
   routingMode: RoutingMode;
+  workspaceId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -61,6 +63,12 @@ export default function ProjectDetail() {
   const [deleteActionName, setDeleteActionName] = useState<string | null>(null);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
   const [routingModeSaving, setRoutingModeSaving] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importWorkspaceId, setImportWorkspaceId] = useState("");
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const { currentWorkspace, workspaces } = useWorkspace() ?? { currentWorkspace: null, workspaces: [] };
 
   const projectId = useMemo(() => {
     const match = location.match(/^\/app\/projects\/([^/]+)$/);
@@ -90,6 +98,7 @@ export default function ProjectDetail() {
         model: typeof raw.model === "string" ? raw.model : "",
         status: raw.status === "paused" ? "paused" : "active",
         routingMode,
+        workspaceId: typeof raw.workspaceId === "string" ? raw.workspaceId : undefined,
         createdAt: String(raw.createdAt ?? ""),
         updatedAt: String(raw.updatedAt ?? ""),
       });
@@ -161,6 +170,60 @@ export default function ProjectDetail() {
     project && deleteConfirmName.trim() === (project.name || "").trim()
   );
   const canSaveEdit = editName.trim().length >= 2 && !isSavingEdit;
+
+  const handleExportProject = async () => {
+    if (!projectId || !project) return;
+    setExportLoading(true);
+    try {
+      const res = await apiRequest<{ ok: true; data: unknown }>(`/api/projects/${projectId}/export`);
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `alexza-export-${project.name.replace(/[^a-z0-9_-]/gi, "_")}-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showSuccessToast(t("projectDetail.exportSuccess"));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) setLocation("/login");
+      else showErrorToast(t("projectDetail.exportFailed"));
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleImportProject = async () => {
+    const fileInput = importFileInputRef.current;
+    const file = fileInput?.files?.[0];
+    if (!file) {
+      showErrorToast(t("projectDetail.importSelectFile"));
+      return;
+    }
+    const wsId = importWorkspaceId || currentWorkspace?.id;
+    if (!wsId) {
+      showErrorToast(t("projectDetail.importSelectWorkspace"));
+      return;
+    }
+    setImportLoading(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as unknown;
+      const res = await apiRequest<{ ok: true; projectId: string }>(`/api/projects/import`, {
+        method: "POST",
+        body: { workspaceId: wsId, data },
+      });
+      showSuccessToast(t("projectDetail.importSuccess"));
+      setShowImportModal(false);
+      setImportWorkspaceId("");
+      fileInput.value = "";
+      setLocation(`/app/projects/${res.projectId}`);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) setLocation("/login");
+      else showErrorToast(t("projectDetail.importFailed"));
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
   const handleDeleteProject = async () => {
     if (!project) return;
@@ -477,6 +540,35 @@ export default function ProjectDetail() {
                     <div>
                       <p className="text-xs text-gray-500">{t("projectDetail.projectId")}</p>
                       <p className="text-white mt-1 font-mono text-sm break-all">{project.id}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0b0e12] p-6 space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-400">{t("projectDetail.exportImport")}</h3>
+                    <p className="text-xs text-gray-500">{t("projectDetail.exportImportDesc")}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleExportProject()}
+                        disabled={exportLoading}
+                        className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+                      >
+                        <Download size={14} className="mr-1" />
+                        {exportLoading ? t("projectDetail.exporting") : t("projectDetail.exportProject")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setImportWorkspaceId(project?.workspaceId || currentWorkspace?.id || "");
+                          setShowImportModal(true);
+                        }}
+                        className="border-[rgba(255,255,255,0.12)] text-gray-400 hover:bg-[rgba(255,255,255,0.06)]"
+                      >
+                        <Upload size={14} className="mr-1" />
+                        {t("projectDetail.importProject")}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -880,6 +972,65 @@ const data = await res.json();`;
               <option value="active">active</option>
               <option value="paused">paused</option>
             </select>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showImportModal}
+        onOpenChange={(open) => {
+          setShowImportModal(open);
+          if (!open) importFileInputRef.current && (importFileInputRef.current.value = "");
+        }}
+        title={t("projectDetail.importProject")}
+        description={t("projectDetail.importProjectDesc")}
+        size="md"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={importLoading}
+              onClick={() => setShowImportModal(false)}
+              className="border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.08)]"
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleImportProject()}
+              disabled={importLoading}
+              className="bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black disabled:opacity-50"
+            >
+              {importLoading ? t("projectDetail.importing") : t("projectDetail.importProject")}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-300">{t("projectDetail.importWorkspace")}</label>
+            <select
+              value={importWorkspaceId || currentWorkspace?.id || ""}
+              onChange={(e) => setImportWorkspaceId(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white focus:outline-none focus:border-[rgba(255,255,255,0.28)]"
+            >
+              <option value="">{t("projectDetail.importWorkspacePlaceholder")}</option>
+              {workspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-300">{t("projectDetail.importFile")}</label>
+            <input
+              ref={importFileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="w-full px-4 py-3 rounded-lg bg-[#050607] border border-[rgba(255,255,255,0.12)] text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[rgba(255,255,255,0.08)] file:text-white file:text-sm"
+            />
           </div>
         </div>
       </Modal>

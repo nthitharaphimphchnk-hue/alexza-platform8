@@ -53,6 +53,7 @@ Click **Export CSV** to download the current page as a CSV file.
 | `team.member.invited` | Workspace member invited |
 | `team.member.role_changed` | Member role changed |
 | `team.member.removed` | Member removed from workspace |
+| `request.replayed` | API request replayed from request logs (debug mode) |
 
 ## API Reference
 
@@ -92,6 +93,21 @@ List audit logs with pagination and filters. Auth required.
 - **Owner/Admin** – Can view audit logs for workspaces they own or administer
 - **Developer/Viewer** – No access to audit logs
 - **Personal projects** – Users can view logs for their own resources (ownerUserId scope)
+
+## Audit Log Retention Policy
+
+Audit logs are automatically deleted based on billing plan retention limits.
+
+| Plan       | Default Retention | Env Variable                    |
+|------------|-------------------|---------------------------------|
+| Free       | 30 days           | `AUDIT_LOG_RETENTION_FREE`      |
+| Pro        | 90 days           | `AUDIT_LOG_RETENTION_PRO`       |
+| Enterprise | 365 days          | `AUDIT_LOG_RETENTION_ENTERPRISE`|
+
+- **Daily cleanup** – Runs automatically every 24 hours via in-process scheduler
+- **Plan-based** – Each user's logs use their billing plan retention window
+- **Safety** – Only logs older than the cutoff date are deleted; newer logs always remain
+- **Admin cron** – `POST /api/admin/audit/cron/retention` with `X-Admin-Key` header (production) for external cron triggers
 
 ## Security
 

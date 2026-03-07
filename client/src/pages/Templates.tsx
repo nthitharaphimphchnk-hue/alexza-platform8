@@ -27,6 +27,11 @@ const CATEGORIES = [
   { value: "extraction", label: "Extraction" },
   { value: "writing", label: "Writing" },
   { value: "support", label: "Support" },
+  { value: "content", label: "Content" },
+  { value: "marketing", label: "Marketing" },
+  { value: "data_extraction", label: "Data Extraction" },
+  { value: "productivity", label: "Productivity" },
+  { value: "agents", label: "Agents" },
   { value: "other", label: "Other" },
 ];
 

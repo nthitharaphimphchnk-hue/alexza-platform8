@@ -1,0 +1,30 @@
+[
+  {
+    "actionName": "email_campaign",
+    "description": "Generate email campaign copy.",
+    "promptTemplate": "Write an email campaign for: {{purpose}}\n\nAudience: {{audience}}\nKey message: {{message}}\n\nInclude: subject line, preheader, body (2-3 short paragraphs), CTA. Keep body under 150 words.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "purpose": { "type": "string", "description": "Campaign purpose" },
+        "audience": { "type": "string", "description": "Target audience" },
+        "message": { "type": "string", "description": "Key message" }
+      },
+      "required": ["purpose", "audience"]
+    }
+  },
+  {
+    "actionName": "follow_up_email",
+    "description": "Generate personalized lead follow-up email.",
+    "promptTemplate": "Write a personalized follow-up email for a lead.\n\nLead: {{leadName}}\nCompany: {{company}}\nPrevious interaction: {{previousInteraction}}\n\nKeep it concise, value-focused, with a clear CTA. Under 100 words.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "leadName": { "type": "string", "description": "Lead name" },
+        "company": { "type": "string", "description": "Company name" },
+        "previousInteraction": { "type": "string", "description": "Previous interaction summary" }
+      },
+      "required": ["leadName", "company"]
+    }
+  }
+]

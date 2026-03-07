@@ -1,0 +1,19 @@
+{
+  "name": "Research Agent",
+  "description": "Synthesizes research and creates outlines. Uses synthesize_research and research_outline actions as tools.",
+  "memoryEnabled": true,
+  "tools": [
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "synthesize_research",
+      "label": "Synthesize research"
+    },
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "research_outline",
+      "label": "Create research outline"
+    }
+  ]
+}

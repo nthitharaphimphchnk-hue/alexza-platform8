@@ -31,6 +31,11 @@ const CATEGORIES: TemplateCategory[] = [
   "writing",
   "support",
   "other",
+  "content",
+  "marketing",
+  "data_extraction",
+  "productivity",
+  "agents",
 ];
 
 let indexesReady: Promise<void> | null = null;

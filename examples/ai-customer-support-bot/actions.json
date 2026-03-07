@@ -1,0 +1,27 @@
+[
+  {
+    "actionName": "triage_ticket",
+    "description": "Classify support ticket by urgency and category.",
+    "promptTemplate": "Classify this support ticket. Respond with JSON:\n{\"urgency\": \"low|medium|high|critical\", \"category\": \"billing|technical|shipping|account|other\", \"summary\": \"brief summary\"}\n\nTicket: {{ticket}}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ticket": { "type": "string", "description": "Support ticket content" }
+      },
+      "required": ["ticket"]
+    }
+  },
+  {
+    "actionName": "draft_response",
+    "description": "Draft support response from ticket and knowledge.",
+    "promptTemplate": "Draft a support response.\n\nTicket: {{ticket}}\n\nKnowledge base:\n{{knowledge}}\n\nKeep response empathetic, clear, and under 150 words. Include next steps if needed.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ticket": { "type": "string", "description": "Support ticket" },
+        "knowledge": { "type": "string", "description": "Relevant KB articles or context" }
+      },
+      "required": ["ticket"]
+    }
+  }
+]

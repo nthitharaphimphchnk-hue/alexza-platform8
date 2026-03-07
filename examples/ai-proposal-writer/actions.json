@@ -1,0 +1,16 @@
+[
+  {
+    "actionName": "write_proposal",
+    "description": "Generate a business proposal.",
+    "promptTemplate": "Write a professional business proposal.\n\nClient: {{client}}\nProject: {{project}}\nScope: {{scope}}\n\nInclude: executive summary, approach, deliverables, timeline, next steps. Use clear headers.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "client": { "type": "string", "description": "Client name" },
+        "project": { "type": "string", "description": "Project description" },
+        "scope": { "type": "string", "description": "Scope and requirements" }
+      },
+      "required": ["client", "project"]
+    }
+  }
+]

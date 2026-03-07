@@ -1,0 +1,27 @@
+[
+  {
+    "actionName": "support_response",
+    "description": "Draft an empathetic support response.",
+    "promptTemplate": "You are a customer support agent. Draft a helpful, empathetic response to this customer message.\n\nCustomer message: {{customerMessage}}\n\nContext: {{context}}\n\nKeep the response professional, solution-focused, and under 150 words.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "customerMessage": { "type": "string", "description": "Customer message" },
+        "context": { "type": "string", "description": "Additional context" }
+      },
+      "required": ["customerMessage"]
+    }
+  },
+  {
+    "actionName": "triage_ticket",
+    "description": "Classify support ticket by urgency and category.",
+    "promptTemplate": "Classify this support ticket.\n\nTicket: {{ticket}}\n\nRespond with JSON: {\"urgency\": \"low|medium|high|critical\", \"category\": \"billing|technical|shipping|account|other\", \"summary\": \"brief summary\"}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ticket": { "type": "string", "description": "Support ticket content" }
+      },
+      "required": ["ticket"]
+    }
+  }
+]

@@ -79,6 +79,10 @@ The public API is versioned. Use `/v1` for all runtime calls:
 
 See [docs/API_VERSIONING.md](docs/API_VERSIONING.md) for details.
 
+## Example Projects
+
+The [examples/](examples/) folder contains 18 ready-to-use example projects (ai-blog-api, ai-support-agent, ai-lead-extractor, ai-email-generator, ai-research-agent, ai-seo-writer, and more). Each includes `README.md`, `actions.json`, and optionally `workflow.json` or `agent.json`. See [examples/README.md](examples/README.md) and [docs/EXAMPLES.md](docs/EXAMPLES.md) for how to import into your project.
+
 ## Rate Limits (by Plan)
 
 Runtime endpoints (`POST /v1/projects/:id/run/:action`, `POST /v1/run`) are rate-limited per API key based on billing plan:
@@ -104,6 +108,18 @@ Smoke test (requires a URL that accepts POST):
 ```bash
 WEBHOOK_TEST_URL=https://webhook.site/your-id pnpm exec tsx scripts/smoke-webhooks.ts
 ```
+
+## Automation Builder
+
+Create workflows connecting triggers (webhook, API event, schedule), AI actions, and outputs. See [docs/AUTOMATION_BUILDER.md](docs/AUTOMATION_BUILDER.md).
+
+## Enterprise SSO (SAML)
+
+Configure SAML 2.0 for Okta, Azure AD, Google Workspace. See [docs/ENTERPRISE_SSO.md](docs/ENTERPRISE_SSO.md) for setup, IdP configuration, and API reference.
+
+## Request Replay (Debug Mode)
+
+Replay previous API requests from the request logs. See [docs/REQUEST_REPLAY.md](docs/REQUEST_REPLAY.md) for usage, API reference, and security notes.
 
 ## Dev Smoke Test (Connection Refused Guard)
 

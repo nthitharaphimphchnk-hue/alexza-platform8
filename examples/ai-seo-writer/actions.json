@@ -1,0 +1,16 @@
+[
+  {
+    "actionName": "seo_article",
+    "description": "Write an SEO-optimized article with target keywords.",
+    "promptTemplate": "Write an SEO-optimized article (1000-1500 words) on: {{topic}}\n\nPrimary keyword: {{keyword}}\nSecondary keywords: {{secondaryKeywords}}\n\nInclude: meta description, H1, H2/H3 structure, natural keyword placement. Write for humans first, optimize for search second.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string", "description": "Article topic" },
+        "keyword": { "type": "string", "description": "Primary keyword" },
+        "secondaryKeywords": { "type": "string", "description": "Secondary keywords (comma-separated)" }
+      },
+      "required": ["topic", "keyword"]
+    }
+  }
+]

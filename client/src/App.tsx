@@ -12,9 +12,11 @@ import { Toaster } from "sonner";
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from "lucide-react";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
+import PricingSimulator from "./pages/PricingSimulator";
 import Docs from "./pages/Docs";
 import DocsSdk from "./pages/DocsSdk";
 import DocsCli from "./pages/DocsCli";
+import DocsGuides from "./pages/DocsGuides";
 import UseCases from "./pages/UseCases";
 import Architecture from "./pages/Architecture";
 import Security from "./pages/Security";
@@ -28,24 +30,36 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import ChatBuilder from "./pages/ChatBuilder";
 import ApiKeys from "./pages/ApiKeys";
+import ApiKeyUsage from "./pages/ApiKeyUsage";
 import Playground from "./pages/Playground";
+import PublicPlayground from "./pages/PublicPlayground";
 import Usage from "./pages/Usage";
 import Analytics from "./pages/Analytics";
 import Credits from "./pages/Credits";
 import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
+import BillingDashboard from "./pages/BillingDashboard";
 import Settings from "./pages/Settings";
+import SettingsSso from "./pages/SettingsSso";
+import LoginSso from "./pages/LoginSso";
 import Webhooks from "./pages/Webhooks";
 import WebhookDeliveries from "./pages/WebhookDeliveries";
 import Requests from "./pages/Requests";
 import Templates from "./pages/Templates";
+import Marketplace from "./pages/Marketplace";
+import AppStore from "./pages/AppStore";
+import Packs from "./pages/Packs";
+import Agents from "./pages/Agents";
 import AuditLogs from "./pages/AuditLogs";
 import RequestDetail from "./pages/RequestDetail";
 import AdminTools from "./pages/AdminTools";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import Workspaces from "./pages/Workspaces";
 import WorkspaceMembers from "./pages/WorkspaceMembers";
 import WorkspaceInviteAccept from "./pages/WorkspaceInviteAccept";
+import Workflows from "./pages/Workflows";
+import WorkflowEdit from "./pages/WorkflowEdit";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { logApiBaseUrlOnce } from "./lib/api";
@@ -71,11 +85,15 @@ function Router() {
       <Route path={"/enterprise"} component={Enterprise} />
       <Route path={"/status"} component={Status} />
       <Route path={"/roadmap"} component={Roadmap} />
+      <Route path={"/pricing/simulator"} component={PricingSimulator} />
       <Route path={"/pricing"} component={Pricing} />
+      <Route path={"/docs/guides/:slug?"} component={DocsGuides} />
       <Route path={"/docs/sdk"} component={DocsSdk} />
       <Route path={"/docs/cli"} component={DocsCli} />
       <Route path={"/docs"} component={Docs} />
+      <Route path={"/playground"} component={PublicPlayground} />
       <Route path={"/login"} component={Login} />
+      <Route path={"/login/sso"} component={LoginSso} />
       <Route path={"/signup"} component={Signup} />
 
       {/* Protected App Routes - explicit full paths */}
@@ -92,6 +110,11 @@ function Router() {
       <Route path={"/app/projects/:id/keys"}>
         <AppLayout>
           <ApiKeysRoute />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/api-keys/:id/usage"}>
+        <AppLayout>
+          <ApiKeyUsage />
         </AppLayout>
       </Route>
       <Route path={"/app/projects/:id/playground"}>
@@ -124,6 +147,21 @@ function Router() {
           <WorkspaceMembers />
         </AppLayout>
       </Route>
+      <Route path={"/app/workflows/:id/edit"}>
+        <AppLayout>
+          <WorkflowEdit />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/workflows/:id"}>
+        <AppLayout>
+          <Workflows />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/workflows"}>
+        <AppLayout>
+          <Workflows />
+        </AppLayout>
+      </Route>
       <Route path={"/app/playground"}>
         <AppLayout>
           <Playground />
@@ -149,6 +187,26 @@ function Router() {
           <Templates />
         </AppLayout>
       </Route>
+      <Route path={"/app/marketplace"}>
+        <AppLayout>
+          <Marketplace />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/store"}>
+        <AppLayout>
+          <AppStore />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/packs"}>
+        <AppLayout>
+          <Packs />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/agents/:id?"}>
+        <AppLayout>
+          <Agents />
+        </AppLayout>
+      </Route>
       <Route path={"/app/audit-logs"}>
         <AppLayout>
           <AuditLogs />
@@ -157,6 +215,11 @@ function Router() {
       <Route path={"/app/analytics"}>
         <AppLayout>
           <Analytics />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/billing"}>
+        <AppLayout>
+          <BillingDashboard />
         </AppLayout>
       </Route>
       <Route path={"/app/billing/credits"}>
@@ -174,6 +237,11 @@ function Router() {
           <Settings />
         </AppLayout>
       </Route>
+      <Route path={"/app/settings/sso"}>
+        <AppLayout>
+          <SettingsSso />
+        </AppLayout>
+      </Route>
       <Route path={"/app/settings/webhooks"}>
         <AppLayout>
           <Webhooks />
@@ -187,6 +255,11 @@ function Router() {
       <Route path={"/app/webhooks"}>
         <AppLayout>
           <Redirect to={"/app/settings/webhooks"} />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/admin/analytics"}>
+        <AppLayout>
+          <AdminAnalytics />
         </AppLayout>
       </Route>
       <Route path={"/app/admin/tools"}>

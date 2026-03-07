@@ -19,6 +19,7 @@ export interface ApiRequestDoc {
   latencyMs: number;
   error?: string;
   source?: "api" | "playground";
+  input?: Record<string, unknown>;
   createdAt: Date;
 }
 
@@ -48,6 +49,7 @@ export interface LogApiRequestParams {
   latencyMs: number;
   error?: string;
   source?: "api" | "playground";
+  input?: Record<string, unknown>;
 }
 
 export async function logApiRequest(params: LogApiRequestParams): Promise<void> {
@@ -63,6 +65,7 @@ export async function logApiRequest(params: LogApiRequestParams): Promise<void> 
     latencyMs: params.latencyMs,
     error: params.error,
     source: params.source,
+    ...(params.input && typeof params.input === "object" && Object.keys(params.input).length > 0 && { input: params.input }),
     createdAt: new Date(),
   };
   try {

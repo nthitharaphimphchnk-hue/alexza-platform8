@@ -1,0 +1,37 @@
+{
+  "name": "Email Campaign Workflow",
+  "description": "Triggered by api_event. Runs email_campaign action and can send result via webhook.",
+  "steps": [
+    {
+      "type": "trigger",
+      "order": 0,
+      "config": {
+        "kind": "api_event",
+        "event": "email.campaign.request",
+        "projectId": "YOUR_PROJECT_ID"
+      }
+    },
+    {
+      "type": "action",
+      "order": 1,
+      "config": {
+        "kind": "run_ai_action",
+        "projectId": "YOUR_PROJECT_ID",
+        "actionName": "email_campaign",
+        "input": {
+          "purpose": "{{trigger.purpose}}",
+          "audience": "{{trigger.audience}}",
+          "message": "{{trigger.message}}"
+        }
+      }
+    },
+    {
+      "type": "output",
+      "order": 2,
+      "config": {
+        "kind": "log_result",
+        "level": "info"
+      }
+    }
+  ]
+}

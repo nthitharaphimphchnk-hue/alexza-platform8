@@ -1,0 +1,19 @@
+{
+  "name": "Sales Assistant Agent",
+  "description": "AI agent for sales outreach, pitch generation, and objection handling. Uses sales_pitch and objection_handler actions as tools.",
+  "memoryEnabled": true,
+  "tools": [
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "sales_pitch",
+      "label": "Generate sales pitch"
+    },
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "objection_handler",
+      "label": "Handle objection"
+    }
+  ]
+}

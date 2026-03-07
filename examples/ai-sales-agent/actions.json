@@ -1,0 +1,29 @@
+[
+  {
+    "actionName": "sales_pitch",
+    "description": "Generate a sales pitch for a product and prospect.",
+    "promptTemplate": "Write a concise sales pitch (30-60 seconds when spoken) for:\n\nProduct: {{product}}\nProspect: {{prospect}}\nPain points: {{painPoints}}\n\nInclude: hook, value proposition, proof point, CTA.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "product": { "type": "string", "description": "Product or service" },
+        "prospect": { "type": "string", "description": "Prospect profile" },
+        "painPoints": { "type": "string", "description": "Prospect pain points" }
+      },
+      "required": ["product", "prospect"]
+    }
+  },
+  {
+    "actionName": "objection_handler",
+    "description": "Draft response to a sales objection.",
+    "promptTemplate": "A prospect said: \"{{objection}}\"\n\nProduct: {{product}}\n\nDraft a brief, empathetic response that acknowledges the concern and reframes with value. Under 80 words.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "objection": { "type": "string", "description": "Prospect objection" },
+        "product": { "type": "string", "description": "Product or service" }
+      },
+      "required": ["objection", "product"]
+    }
+  }
+]

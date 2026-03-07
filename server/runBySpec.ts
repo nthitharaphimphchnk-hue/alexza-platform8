@@ -218,6 +218,7 @@ router.post(
       }
     };
 
+    const body = (req.body as Record<string, unknown>) ?? {};
     try {
       const db = await getDb();
       const [project, action] = await Promise.all([
@@ -258,11 +259,11 @@ router.post(
           latencyMs,
           error: "Action not found",
           source,
+          input: body && typeof body === "object" ? (body as Record<string, unknown>) : undefined,
         });
         return runError(res, 404, "NOT_FOUND", "Action not found", requestId);
       }
 
-      const body = (req.body as Record<string, unknown>) ?? {};
       const schema = action.inputSchema as Record<string, unknown> | null;
 
       const normResult = normalizeRequestBody(body, schema && typeof schema === "object" ? schema : null);
@@ -288,6 +289,7 @@ router.post(
           latencyMs,
           error: normResult.error,
           source,
+          input: body && typeof body === "object" ? (body as Record<string, unknown>) : undefined,
         });
         return runError(res, 400, "VALIDATION_ERROR", normResult.error, requestId);
       }
@@ -321,6 +323,7 @@ router.post(
             latencyMs,
             error: "Invalid action schema",
             source,
+            input: body && typeof body === "object" ? (body as Record<string, unknown>) : undefined,
           });
           return runError(res, 500, "RUNTIME_ERROR", "Invalid action schema", requestId);
         }
@@ -352,6 +355,7 @@ router.post(
             latencyMs,
             error: msg,
             source,
+            input: normalized && typeof normalized === "object" ? (normalized as Record<string, unknown>) : undefined,
           });
           return runError(res, 400, "VALIDATION_ERROR", msg, requestId);
         }
@@ -380,6 +384,7 @@ router.post(
           latencyMs,
           error: "Input too long",
           source,
+          input: normalized && typeof normalized === "object" ? (normalized as Record<string, unknown>) : undefined,
         });
         return runError(res, 400, "REQUEST_TOO_LARGE", "Input too long", requestId);
       }
@@ -424,6 +429,7 @@ router.post(
             latencyMs,
             error: "Insufficient balance",
             source,
+            input: normalized && typeof normalized === "object" ? (normalized as Record<string, unknown>) : undefined,
           });
           return res.status(402).json({
             ok: false,
@@ -512,6 +518,7 @@ router.post(
               latencyMs,
               error: "Insufficient balance for actual usage",
               source,
+              input: normalized && typeof normalized === "object" ? (normalized as Record<string, unknown>) : undefined,
             });
             return res.status(402).json({
               ok: false,
@@ -560,6 +567,7 @@ router.post(
         tokensUsed: totalTokens ?? 0,
         latencyMs,
         source,
+        input: normalized && typeof normalized === "object" ? (normalized as Record<string, unknown>) : undefined,
       });
 
       const { emitWebhookEvent } = await import("./webhooks/events");
@@ -612,6 +620,7 @@ router.post(
         latencyMs,
         error: errMsg,
         source,
+        input: typeof body === "object" && body ? (body as Record<string, unknown>) : undefined,
       });
       if (req.apiKey) {
         const { emitWebhookEvent } = await import("./webhooks/events");

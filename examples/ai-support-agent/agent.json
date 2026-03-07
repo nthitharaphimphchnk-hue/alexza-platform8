@@ -1,0 +1,19 @@
+{
+  "name": "Customer Support Agent",
+  "description": "AI agent that drafts support responses and triages tickets. Uses support_response and triage_ticket actions as tools.",
+  "memoryEnabled": true,
+  "tools": [
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "support_response",
+      "label": "Draft support response"
+    },
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "triage_ticket",
+      "label": "Triage ticket"
+    }
+  ]
+}

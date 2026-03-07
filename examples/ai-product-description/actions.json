@@ -1,0 +1,16 @@
+[
+  {
+    "actionName": "product_description",
+    "description": "Generate compelling product description for e-commerce.",
+    "promptTemplate": "Write a compelling product description (150-250 words) for:\n\nProduct: {{name}}\nKey features: {{features}}\nTarget customer: {{customer}}\n\nUse benefit-focused language, clear value proposition, and end with a soft CTA. Optimize for conversion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Product name" },
+        "features": { "type": "string", "description": "Key features" },
+        "customer": { "type": "string", "description": "Target customer" }
+      },
+      "required": ["name", "features"]
+    }
+  }
+]

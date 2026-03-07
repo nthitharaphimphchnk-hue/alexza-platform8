@@ -8,6 +8,7 @@ import { ensureProjectAccess } from "./workspaces/projectAccess";
 import { getMemberRole } from "./workspaces/workspaces.routes";
 import { hasPermission } from "./workspaces/permissions";
 import { API_KEY_SCOPES, isValidScope, type ApiKeyScope } from "./config/scopes";
+import { ensureUsageIndexes } from "./usage";
 
 interface ProjectDoc {
   ownerUserId: ObjectId;
@@ -74,6 +75,40 @@ async function canManageKeys(projectId: ObjectId, userId: ObjectId): Promise<boo
 
 function generateRawApiKey() {
   return `axza_${crypto.randomBytes(24).toString("hex")}`;
+}
+
+/**
+ * Create a temporary API key for replay. Caller must revoke it after use.
+ * Used internally by request replay - not exposed via HTTP.
+ */
+export async function createTemporaryKeyForReplay(
+  projectId: ObjectId,
+  ownerUserId: ObjectId
+): Promise<{ rawKey: string; keyId: ObjectId }> {
+  await ensureKeyIndexes();
+  const rawKey = generateRawApiKey();
+  const keyPrefix = rawKey.slice(0, 8);
+  const keyHash = hashApiKey(rawKey);
+  const db = await getDb();
+  const keys = db.collection<ApiKeyDoc>("api_keys");
+  const insertResult = await keys.insertOne({
+    projectId,
+    ownerUserId,
+    keyPrefix,
+    keyHash,
+    createdAt: new Date(),
+    revokedAt: null,
+  });
+  return { rawKey, keyId: insertResult.insertedId };
+}
+
+/**
+ * Revoke a key by ID. Used internally after replay.
+ */
+export async function revokeKeyById(keyId: ObjectId): Promise<void> {
+  const db = await getDb();
+  const keys = db.collection<ApiKeyDoc>("api_keys");
+  await keys.updateOne({ _id: keyId }, { $set: { revokedAt: new Date() } });
 }
 
 router.post("/projects/:id/keys", requireAuth, async (req, res, next) => {
@@ -271,6 +306,140 @@ router.post("/projects/:id/keys/:keyId/revoke", requireAuth, async (req, res, ne
       key: {
         id: updateResult._id.toString(),
         revokedAt: updateResult.revokedAt,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+function parseDays(raw: unknown): 7 | 30 | 90 {
+  const n = Number.parseInt(String(raw ?? "30"), 10);
+  if (n === 7) return 7;
+  if (n === 90) return 90;
+  return 30;
+}
+
+router.get("/api-keys/:id/usage", requireAuth, async (req, res, next) => {
+  try {
+    await ensureKeyIndexes();
+    await ensureUsageIndexes();
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
+    }
+
+    const keyIdRaw = req.params.id;
+    if (!ObjectId.isValid(keyIdRaw)) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+    const keyId = new ObjectId(keyIdRaw);
+    const days = parseDays(req.query.days);
+
+    const db = await getDb();
+    const keys = db.collection<ApiKeyDoc>("api_keys");
+    const keyDoc = await keys.findOne({ _id: keyId });
+    if (!keyDoc) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    const hasAccess = await verifyProjectAccess(keyDoc.projectId, req.user._id);
+    if (!hasAccess) {
+      return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    }
+
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - days);
+    from.setHours(0, 0, 0, 0);
+
+    const logs = db.collection<{
+      apiKeyId: ObjectId;
+      status: string;
+      totalTokens: number | null;
+      createdAt: Date;
+    }>("usage_logs");
+
+    const [totals, dailyRaw] = await Promise.all([
+      logs
+        .aggregate<{
+          totalRequests: number;
+          success: number;
+          failed: number;
+          creditsUsed: number;
+        }>([
+          { $match: { apiKeyId: keyId, createdAt: { $gte: from, $lte: to } } },
+          {
+            $addFields: {
+              credits: {
+                $max: [
+                  1,
+                  { $ceil: { $divide: [{ $ifNull: ["$totalTokens", 0] }, 1000] } },
+                ],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalRequests: { $sum: 1 },
+              success: { $sum: { $cond: [{ $eq: ["$status", "success"] }, 1, 0] } },
+              failed: { $sum: { $cond: [{ $eq: ["$status", "error"] }, 1, 0] } },
+              creditsUsed: { $sum: "$credits" },
+            },
+          },
+          { $project: { _id: 0 } },
+        ])
+        .toArray(),
+      logs
+        .aggregate<{ date: string; requests: number; totalTokens: number }>([
+          { $match: { apiKeyId: keyId, createdAt: { $gte: from, $lte: to } } },
+          {
+            $addFields: {
+              credits: {
+                $max: [
+                  1,
+                  { $ceil: { $divide: [{ $ifNull: ["$totalTokens", 0] }, 1000] } },
+                ],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+              requests: { $sum: 1 },
+              credits: { $sum: "$credits" },
+            },
+          },
+          { $sort: { _id: 1 } },
+          { $project: { date: "$_id", requests: 1, credits: 1, _id: 0 } },
+        ])
+        .toArray(),
+    ]);
+
+    const t = totals[0];
+    const totalRequests = t?.totalRequests ?? 0;
+    const success = t?.success ?? 0;
+    const failed = t?.failed ?? 0;
+    const creditsUsed = t?.creditsUsed ?? 0;
+
+    const dailyUsage = dailyRaw.map((row) => ({
+      date: row.date,
+      requests: row.requests,
+      credits: row.credits ?? 0,
+    }));
+
+    return res.json({
+      ok: true,
+      totalRequests,
+      creditsUsed,
+      success,
+      failed,
+      dailyUsage,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      key: {
+        name: keyDoc.name ?? "",
+        prefix: keyDoc.keyPrefix,
+        projectId: keyDoc.projectId.toString(),
       },
     });
   } catch (error) {

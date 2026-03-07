@@ -1,0 +1,14 @@
+[
+  {
+    "actionName": "extract_lead",
+    "description": "Extract lead info (name, email, company, interest) from text.",
+    "promptTemplate": "Extract lead information from this text. Respond with JSON only:\n{\"name\": string, \"email\": string, \"company\": string, \"interest\": string}\n\nText: {{text}}\n\nUse empty string for missing fields.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Unstructured text" }
+      },
+      "required": ["text"]
+    }
+  }
+]

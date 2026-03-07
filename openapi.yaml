@@ -316,6 +316,48 @@ paths:
       security:
         - SessionAuth: []
 
+  /api/projects/{projectId}/export:
+    get:
+      tags: [Projects]
+      summary: Export project
+      description: Returns JSON with project, actions, agents, and workflows for backup or migration.
+      operationId: exportProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Success, returns { ok, data } }
+        "401": { description: Unauthorized }
+        "404": { description: Not found }
+      security:
+        - SessionAuth: []
+
+  /api/projects/import:
+    post:
+      tags: [Projects]
+      summary: Import project
+      description: Creates a new project from an export file. Requires workspaceId and data (export JSON).
+      operationId: importProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, data]
+              properties:
+                workspaceId: { type: string }
+                data: { type: object }
+      responses:
+        "201": { description: Created, returns { ok, projectId, actionCount, agentCount, workflowCount } }
+        "400": { description: Invalid export data }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+      security:
+        - SessionAuth: []
+
   /api/projects/{projectId}/actions:
     get:
       tags: [Actions]
@@ -628,6 +670,66 @@ paths:
       security:
         - SessionAuth: []
 
+  /api/requests/{id}/replay:
+    post:
+      tags: [Requests]
+      summary: Replay request
+      description: |
+        Replay a previous API request using the stored input. Requires session auth.
+        Only requests with stored input can be replayed. Logs `request.replayed` in audit.
+      operationId: replayRequest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Request ID from api_requests
+      responses:
+        "200":
+          description: Replay succeeded - returns the run result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  requestId:
+                    type: string
+                  output:
+                    type: string
+                  creditsCharged:
+                    type: integer
+                  usage:
+                    type: object
+                  latencyMs:
+                    type: integer
+        "400":
+          description: Replay not available (no stored input)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: REPLAY_NOT_AVAILABLE
+                  message:
+                    type: string
+        "401":
+        "404":
+          description: Not found or access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - SessionAuth: []
+
   /api/webhooks:
     get:
       tags: [Webhooks]
@@ -915,6 +1017,9 @@ components:
         createdAt:
           type: string
           format: date-time
+        canReplay:
+          type: boolean
+          description: Whether this request can be replayed (has stored input)
 
     WebhookEndpoint:
       type: object

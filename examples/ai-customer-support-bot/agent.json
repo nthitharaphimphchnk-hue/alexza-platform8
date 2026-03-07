@@ -1,0 +1,19 @@
+{
+  "name": "Support Bot Agent",
+  "description": "Support ticket triage and response drafting. Uses triage_ticket and draft_response actions as tools.",
+  "memoryEnabled": true,
+  "tools": [
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "triage_ticket",
+      "label": "Triage ticket"
+    },
+    {
+      "type": "action",
+      "projectId": "YOUR_PROJECT_ID",
+      "actionName": "draft_response",
+      "label": "Draft response"
+    }
+  ]
+}
