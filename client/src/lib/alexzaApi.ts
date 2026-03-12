@@ -208,6 +208,28 @@ export async function deleteAction(
   });
 }
 
+export interface PromptVersion {
+  version: number;
+  prompt: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export async function listPromptVersions(actionId: string): Promise<PromptVersion[]> {
+  const res = await apiRequest<{ ok: true; versions: PromptVersion[] }>(
+    `/api/actions/${encodeURIComponent(actionId)}/prompt-versions`
+  );
+  return res.versions || [];
+}
+
+export async function rollbackPromptVersion(actionId: string, version: number): Promise<PublicAction> {
+  const res = await apiRequest<{ ok: true; action: PublicAction }>(
+    `/api/actions/${encodeURIComponent(actionId)}/prompt-versions/${version}/rollback`,
+    { method: "POST" }
+  );
+  return res.action;
+}
+
 export interface RunActionOptions {
   source?: "playground";
 }

@@ -5,6 +5,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "../db";
 import { logger } from "../utils/logger";
+import { WEBHOOK_TIMEOUT_MS, WORKFLOW_STEP_TIMEOUT_MS } from "../config";
 import type { WorkflowDoc, WorkflowStepDoc } from "./types";
 
 export interface ExecutionContext {
@@ -109,13 +110,17 @@ async function executeAction(config: Record<string, unknown>, ctx: ExecutionCont
       const method = (config.method as string) || "POST";
       const headers = (config.headers as Record<string, string>) ?? {};
       if (!url) return { success: false, error: "call_webhook requires url" };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), WORKFLOW_STEP_TIMEOUT_MS);
       try {
         const body = ctx.data.trigger ?? {};
         const res = await fetch(url, {
           method,
           headers: { "Content-Type": "application/json", ...headers },
           body: ["POST", "PUT", "PATCH"].includes(method) ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         const text = await res.text();
         let json: unknown;
         try {
@@ -125,6 +130,10 @@ async function executeAction(config: Record<string, unknown>, ctx: ExecutionCont
         }
         return { success: res.ok, output: { status: res.status, data: json } };
       } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === "AbortError") {
+          return { success: false, error: "Workflow step timed out" };
+        }
         return { success: false, error: err instanceof Error ? err.message : String(err) };
       }
     }
@@ -141,15 +150,23 @@ async function executeOutput(config: Record<string, unknown>, ctx: ExecutionCont
       const method = (config.method as string) || "POST";
       const headers = (config.headers as Record<string, string>) ?? {};
       if (!url) return { success: false, error: "send_webhook requires url" };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
       try {
         const body = ctx.data;
         await fetch(url, {
           method,
           headers: { "Content-Type": "application/json", ...headers },
           body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         return { success: true };
       } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === "AbortError") {
+          return { success: false, error: "Workflow step timed out" };
+        }
         return { success: false, error: err instanceof Error ? err.message : String(err) };
       }
     }

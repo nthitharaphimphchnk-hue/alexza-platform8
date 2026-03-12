@@ -63,7 +63,50 @@ export interface AlexzaOptions {
   baseUrl?: string;
 }
 
+export interface RegionInfo {
+  id: string;
+  name: string;
+  apiBaseUrl: string;
+  location?: string;
+}
+
 const DEFAULT_BASE_URL = "https://api.alexza.ai";
+
+/**
+ * Discover the lowest-latency region by probing each region's /health.
+ * Use with Alexza options: new Alexza(key, { baseUrl: (await discoverBestRegion()).apiBaseUrl })
+ * @param discoveryBaseUrl - Base URL to fetch regions list (default: https://api.alexza.ai)
+ */
+export async function discoverBestRegion(
+  discoveryBaseUrl: string = DEFAULT_BASE_URL
+): Promise<RegionInfo> {
+  const base = String(discoveryBaseUrl).replace(/\/+$/, "");
+  const res = await fetch(`${base}/api/public/regions`);
+  if (!res.ok) {
+    return { id: "us", name: "US East", apiBaseUrl: DEFAULT_BASE_URL };
+  }
+  const data = (await res.json()) as { ok?: boolean; regions?: RegionInfo[] };
+  const regions = data?.regions ?? [];
+  if (regions.length === 0) {
+    return { id: "us", name: "US East", apiBaseUrl: DEFAULT_BASE_URL };
+  }
+
+  const results = await Promise.all(
+    regions.map(async (r) => {
+      const start = performance.now();
+      try {
+        const h = await fetch(`${r.apiBaseUrl.replace(/\/+$/, "")}/health`);
+        const latency = performance.now() - start;
+        return { region: r, latency: h.ok ? latency : Infinity };
+      } catch {
+        return { region: r, latency: Infinity };
+      }
+    })
+  );
+
+  const best = results.reduce((a, b) => (a.latency <= b.latency ? a : b));
+  return best.region;
+}
 
 /**
  * ALEXZA AI client for running actions.

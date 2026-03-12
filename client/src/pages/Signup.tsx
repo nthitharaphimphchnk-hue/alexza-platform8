@@ -32,14 +32,25 @@ export default function Signup() {
   const { refetch } = useAuth();
   const [, setLocation] = useLocation();
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
-    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const error = params?.get("error");
-    if (error) {
-      const msg = params?.get("message") || (error === "OAUTH_DENIED" ? "Sign-up was cancelled" : "Sign-up failed. Please try again.");
-      showFormSubmitErrorToast(msg);
-      window.history.replaceState({}, "", "/signup");
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get("error");
+      if (error) {
+        const msg =
+          params.get("message") ||
+          (error === "OAUTH_DENIED"
+            ? "Sign-up was cancelled"
+            : "Sign-up failed. Please try again.");
+        showFormSubmitErrorToast(msg);
+        window.history.replaceState({}, "", "/signup");
+      }
+      const ref = params.get("ref") || window.localStorage.getItem("alexza_referral_code");
+      if (ref) {
+        setReferralCode(ref);
+      }
     }
   }, []);
 
@@ -70,6 +81,7 @@ export default function Signup() {
               email: values.email,
               password: values.password,
               name: signupName,
+              referralCode: referralCode ?? undefined,
             },
           }
         );

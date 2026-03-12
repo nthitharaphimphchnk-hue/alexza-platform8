@@ -5,6 +5,7 @@
 import type { ObjectId } from "mongodb";
 
 export type MarketplaceVisibility = "public" | "private";
+export type MarketplaceBillingType = "one-time" | "monthly";
 
 export interface MarketplaceTemplateDoc {
   _id: ObjectId;
@@ -15,6 +16,9 @@ export interface MarketplaceTemplateDoc {
   templateId: ObjectId; // references action_templates._id
   category?: string; // content, marketing, data_extraction, etc.
   tags: string[];
+  price: number; // in major units (e.g. 9.99)
+  billingType: MarketplaceBillingType;
+  currency: string; // e.g. "usd"
   downloads: number;
   rating: number; // 0-5 average
   ratingCount: number;

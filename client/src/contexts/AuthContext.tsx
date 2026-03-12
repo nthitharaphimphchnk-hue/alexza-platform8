@@ -5,6 +5,9 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  referralCode?: string;
 }
 
 export interface AuthContextType {

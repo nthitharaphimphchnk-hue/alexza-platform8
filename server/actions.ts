@@ -41,6 +41,34 @@ async function ensureIndexes() {
   return indexesReady;
 }
 
+interface PromptVersionDoc {
+  actionId: ObjectId;
+  version: number;
+  prompt: string;
+  createdBy: ObjectId;
+  createdAt: Date;
+}
+
+async function createPromptVersionSnapshot(params: {
+  actionId: ObjectId;
+  prompt: string;
+  userId: ObjectId;
+}): Promise<number> {
+  const db = await getDb();
+  const col = db.collection<PromptVersionDoc>("prompt_versions");
+  const latest = await col.find({ actionId: params.actionId }).sort({ version: -1 }).limit(1).toArray();
+  const nextVersion = (latest[0]?.version ?? 0) + 1;
+  const now = new Date();
+  await col.insertOne({
+    actionId: params.actionId,
+    version: nextVersion,
+    prompt: params.prompt,
+    createdBy: params.userId,
+    createdAt: now,
+  });
+  return nextVersion;
+}
+
 async function canManageActions(projectId: ObjectId, userId: ObjectId): Promise<boolean> {
   const hasAccess = await ensureProjectAccess(projectId, userId);
   if (!hasAccess) return false;
@@ -168,6 +196,15 @@ router.post("/projects/:id/actions", requireAuth, async (req, res, next) => {
     let result;
 
     if (existing) {
+      // If prompt changed, snapshot previous prompt as a new version
+      if (existing.promptTemplate !== promptTemplate) {
+        await createPromptVersionSnapshot({
+          actionId: (existing as ProjectActionDoc & { _id: ObjectId })._id,
+          prompt: existing.promptTemplate,
+          userId: req.user._id,
+        });
+      }
+
       result = await col.findOneAndUpdate(
         { projectId, actionName },
         {
@@ -283,6 +320,119 @@ router.get("/projects/:id/actions/:actionName", requireAuthOrApiKey, requireApiS
     return res.json({
       ok: true,
       action: toPublicAction(action as ProjectActionDoc & { _id: ObjectId }),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// GET /api/actions/:id/prompt-versions - list prompt version history for an action
+router.get("/actions/:id/prompt-versions", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) return err(res, 401, "UNAUTHORIZED", "Unauthorized");
+
+    const actionIdRaw = req.params.id;
+    if (!ObjectId.isValid(actionIdRaw)) {
+      return err(res, 400, "VALIDATION_ERROR", "Invalid action id");
+    }
+    const actionId = new ObjectId(actionIdRaw);
+
+    const db = await getDb();
+    const actionsCol = db.collection<ProjectActionDoc>("project_actions");
+    const action = await actionsCol.findOne({ _id: actionId });
+    if (!action) return err(res, 404, "NOT_FOUND", "Action not found");
+
+    const hasAccess = await ensureProjectAccess(action.projectId, req.user._id);
+    if (!hasAccess) return err(res, 404, "NOT_FOUND", "Action not found");
+
+    const versionsCol = db.collection<PromptVersionDoc>("prompt_versions");
+    const versions = await versionsCol
+      .find({ actionId })
+      .sort({ version: -1, createdAt: -1 })
+      .toArray();
+
+    return res.json({
+      ok: true,
+      versions: versions.map((v) => ({
+        version: v.version,
+        prompt: v.prompt,
+        createdBy: v.createdBy.toString(),
+        createdAt: v.createdAt,
+      })),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// POST /api/actions/:id/prompt-versions/:version/rollback - restore previous prompt
+router.post("/actions/:id/prompt-versions/:version/rollback", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) return err(res, 401, "UNAUTHORIZED", "Unauthorized");
+
+    const actionIdRaw = req.params.id;
+    if (!ObjectId.isValid(actionIdRaw)) {
+      return err(res, 400, "VALIDATION_ERROR", "Invalid action id");
+    }
+    const actionId = new ObjectId(actionIdRaw);
+
+    const versionNum = Number.parseInt(req.params.version, 10);
+    if (!Number.isFinite(versionNum) || versionNum <= 0) {
+      return err(res, 400, "VALIDATION_ERROR", "Invalid version");
+    }
+
+    const db = await getDb();
+    const actionsCol = db.collection<ProjectActionDoc>("project_actions");
+    const action = await actionsCol.findOne({ _id: actionId });
+    if (!action) return err(res, 404, "NOT_FOUND", "Action not found");
+
+    const canManage = await canManageActions(action.projectId, req.user._id);
+    if (!canManage) return err(res, 404, "NOT_FOUND", "Action not found");
+
+    const versionsCol = db.collection<PromptVersionDoc>("prompt_versions");
+    const targetVersion = await versionsCol.findOne({ actionId, version: versionNum });
+    if (!targetVersion) return err(res, 404, "NOT_FOUND", "Prompt version not found");
+
+    // Snapshot current prompt before rollback so we can roll forward later if needed
+    await createPromptVersionSnapshot({
+      actionId,
+      prompt: action.promptTemplate,
+      userId: req.user._id,
+    });
+
+    const now = new Date();
+    const updateResult = await actionsCol.findOneAndUpdate(
+      { _id: actionId },
+      { $set: { promptTemplate: targetVersion.prompt, updatedAt: now } },
+      { returnDocument: "after" }
+    );
+
+    if (!updateResult) return err(res, 500, "RUNTIME_ERROR", "Failed to update action");
+
+    const project = await db
+      .collection<{ workspaceId?: ObjectId }>("projects")
+      .findOne({ _id: action.projectId });
+    const { getAuditContext } = await import("./audit/auditContext");
+    const { logAuditEvent } = await import("./audit/logAuditEvent");
+    const { ip, userAgent } = getAuditContext(req);
+    logAuditEvent({
+      ownerUserId: req.user._id,
+      actorUserId: req.user._id,
+      actorEmail: (req.user as { email?: string }).email ?? "",
+      workspaceId: project?.workspaceId ?? null,
+      projectId: action.projectId,
+      actionType: "action.prompt_rollback",
+      resourceType: "action",
+      resourceId: action.actionName,
+      metadata: { rolledBackToVersion: versionNum },
+      ip,
+      userAgent,
+      status: "success",
+    });
+
+    return res.json({
+      ok: true,
+      action: toPublicAction(updateResult as ProjectActionDoc & { _id: ObjectId }),
     });
   } catch (e) {
     next(e);

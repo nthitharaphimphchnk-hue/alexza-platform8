@@ -268,6 +268,12 @@ export default function Playground() {
         showErrorToast("Insufficient credits", "Top up your wallet");
         return;
       }
+      if (error instanceof ApiError && (error.code === "request_timeout" || error.code === "upstream_timeout" || error.status === 504)) {
+        const msg = "The request took too long. Please try again or simplify the input.";
+        setRunError({ code: "REQUEST_TIMEOUT", message: msg, hint: "Check model choice and input size." });
+        showErrorToast("Request timed out", msg);
+        return;
+      }
       setRunError({ code: "RUN_ERROR", message: error instanceof Error ? error.message : "Run failed" });
       showErrorToast("Run failed", error instanceof Error ? error.message : "Unknown error");
     } finally {

@@ -21,6 +21,10 @@ import { v1Router } from "./routes/v1";
 import { v2Router } from "./routes/v2";
 import { adminRunLogsRouter } from "./adminRunLogs";
 import { adminAnalyticsRouter } from "./adminAnalytics";
+import { adminAlertsRouter } from "./adminAlerts";
+import { feedbackRouter } from "./feedbackRoutes";
+import { adminMonitoringRouter } from "./adminMonitoring";
+import { billingAnalyticsRouter } from "./billing/billingAnalytics";
 import { builderRouter } from "./builder";
 import { actionsRouter } from "./actions";
 import { usageRouter } from "./usageRoutes";
@@ -34,20 +38,31 @@ import { runWorkspaceMigration } from "./workspaces/migration";
 import { workspacesRouter } from "./workspaces/workspaces.routes";
 import { onboardingRouter } from "./onboarding";
 import { notificationsRouter, runLowCreditsEmailMigration } from "./notifications";
+import { costGuardRouter } from "./costGuardRoutes";
 import { webhooksRouter } from "./webhooks/webhooks.routes";
 import { estimateRouter } from "./estimate";
 import { analyticsRouter } from "./analytics";
+import { aiEvaluationsRouter } from "./aiEvaluationsRoutes";
 import { requestsRouter } from "./requestsRoutes";
 import { workflowsRouter } from "./workflows/workflows.routes";
 import { refreshScheduleTriggers } from "./workflows/triggers";
 import { templatesRouter } from "./templatesRoutes";
 import { adminTemplatesRouter } from "./adminTemplatesRoutes";
 import { marketplaceRouter } from "./marketplaceRoutes";
+import { agentMarketplaceRouter } from "./agentMarketplaceRoutes";
+import { workflowMarketplaceRouter } from "./workflowMarketplaceRoutes";
+import { creatorsRouter } from "./creatorsRoutes";
+import { monetizationRouter } from "./monetizationRoutes";
+import { communityRouter } from "./communityRoutes";
 import { agentsRouter } from "./agents/agentRoutes";
 import { auditRoutes } from "./auditRoutes";
 import appStoreRouter from "./appStoreRoutes";
 import packsRouter from "./packsRoutes";
 import { healthRouter } from "./healthRoutes";
+import { adminLaunchRouter } from "./adminLaunch";
+import { onboardingRouter } from "./onboardingRoutes";
+import { referralRouter } from "./referralRoutes";
+import { leaderboardRouter } from "./leaderboardRoutes";
 import { statusRouter } from "./statusRoutes";
 import playgroundRouter from "./playgroundRoutes";
 import { startStatusMonitor } from "./statusService";
@@ -56,14 +71,24 @@ import { requestIdMiddleware } from "./middleware/requestId";
 import { sentryScopeMiddleware } from "./middleware/sentryScope";
 import { requestLogger } from "./middleware/requestLogger";
 import { slowRequestMiddleware } from "./middleware/slowRequest";
+import { requestTimeout } from "./middleware/request-timeout";
 import * as Sentry from "@sentry/node";
 import { sentryRelease } from "./sentry";
 import { logger } from "./utils/logger";
 import { normalizeEnvUrl } from "./utils/envUrls";
 import { getCreditPrice } from "./config";
+import { listRegions, getCurrentRegionId } from "./config/regions";
 import { CREDIT_PRICE_TIERS } from "./config/pricing";
 import { API_KEY_SCOPES } from "./config/scopes";
 import { TOKENS_PER_CREDIT } from "./wallet";
+import {
+  PUBLIC_PLAYGROUND_ENABLED,
+  MARKETPLACE_ENABLED,
+  COMMUNITY_ENABLED,
+  APP_STORE_ENABLED,
+  AGENT_MARKETPLACE_ENABLED,
+  WORKFLOW_MARKETPLACE_ENABLED,
+} from "./config/flags";
 import swaggerUi from "swagger-ui-express";
 import { parse as parseYaml } from "yaml";
 
@@ -128,6 +153,8 @@ function extractRegisteredRoutes(app: express.Express): string[] {
 async function startServer() {
   await runBillingUserMigration();
   await runWalletMigration();
+  const { ensureLedgerIndexes } = await import("./billing/ledger");
+  await ensureLedgerIndexes();
   await runLowCreditsEmailMigration();
   await runRoutingModeMigration();
   await runWorkspaceMigration();
@@ -170,6 +197,7 @@ async function startServer() {
   app.use(sentryScopeMiddleware);
   app.use(requestLogger);
   app.use(slowRequestMiddleware);
+  app.use(requestTimeout("default"));
 
   app.use(
     cors({
@@ -215,10 +243,20 @@ async function startServer() {
 
   /** Public config - safe for unauthenticated clients (pricing display, etc.) */
   app.get("/api/public/config", (_req, res) => {
+    const regionId = getCurrentRegionId();
     res.json({
       ok: true,
       creditPrice: getCreditPrice(),
       creditsPerThousandTokens: TOKENS_PER_CREDIT,
+      ...(regionId && { region: regionId }),
+      flags: {
+        publicPlaygroundEnabled: PUBLIC_PLAYGROUND_ENABLED,
+        marketplaceEnabled: MARKETPLACE_ENABLED,
+        communityEnabled: COMMUNITY_ENABLED,
+        appStoreEnabled: APP_STORE_ENABLED,
+        agentMarketplaceEnabled: AGENT_MARKETPLACE_ENABLED,
+        workflowMarketplaceEnabled: WORKFLOW_MARKETPLACE_ENABLED,
+      },
     });
   });
 
@@ -238,6 +276,17 @@ async function startServer() {
     });
   });
 
+  /** Public regions - for latency-aware routing. Clients probe each region's /health and pick lowest latency. */
+  app.get("/api/public/regions", (_req, res) => {
+    const regions = listRegions().map((r) => ({
+      id: r.id,
+      name: r.name,
+      apiBaseUrl: r.apiBaseUrl,
+      location: r.location,
+    }));
+    res.json({ ok: true, regions });
+  });
+
   app.use("/api", playgroundRouter);
   app.use("/api", authRouter);
   app.use("/api", workspacesRouter);
@@ -250,23 +299,37 @@ async function startServer() {
   app.use("/api", walletRouter);
   app.use("/api", estimateRouter);
   app.use("/api", analyticsRouter);
+  app.use("/api", costGuardRouter);
+  app.use("/api", aiEvaluationsRouter);
   app.use("/api", requestsRouter);
   app.use("/api", workflowsRouter);
   app.use("/api", templatesRouter);
   app.use("/api", adminTemplatesRouter);
   app.use("/api", marketplaceRouter);
+  app.use("/api", agentMarketplaceRouter);
+  app.use("/api", workflowMarketplaceRouter);
+  app.use("/api", creatorsRouter);
+  app.use("/api", monetizationRouter);
+  app.use("/api", communityRouter);
   app.use("/api", agentsRouter);
   app.use("/api", appStoreRouter);
   app.use("/api", packsRouter);
   app.use("/api", auditRoutes);
   app.use("/api", onboardingRouter);
+  app.use("/api", referralRouter);
+  app.use("/api", leaderboardRouter);
   app.use("/api", billingRouter);
   app.use("/api/billing/stripe", stripeRouter);
   app.use("/api", notificationsRouter);
   app.use("/api", webhooksRouter);
   app.use("/api", statusRouter);
   app.use("/api", adminRunLogsRouter);
+  app.use("/api", adminMonitoringRouter);
+  app.use("/api", adminLaunchRouter);
   app.use("/api", adminAnalyticsRouter);
+  app.use("/api", adminAlertsRouter);
+  app.use("/api", feedbackRouter);
+  app.use("/api", billingAnalyticsRouter);
 
   // Versioned API: /v1 (stable), /v2 (scaffold)
   app.use("/v1", v1Router);

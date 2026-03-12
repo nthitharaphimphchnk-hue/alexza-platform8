@@ -56,6 +56,14 @@ export default function Docs() {
       ],
     },
     {
+      title: "Templates Gallery",
+      subsections: [
+        { label: "Overview", id: "templates-gallery-overview" },
+        { label: "Public Access", id: "templates-gallery-public" },
+        { label: "Install Flow", id: "templates-gallery-install" },
+      ],
+    },
+    {
       title: "Examples",
       subsections: [
         { label: "Overview", id: "examples-overview" },
@@ -95,6 +103,110 @@ export default function Docs() {
         { label: "Publish", id: "marketplace-publish" },
         { label: "Browse & Install", id: "marketplace-install" },
         { label: "Rating", id: "marketplace-rating" },
+      ],
+    },
+    {
+      title: "AI Agent Marketplace",
+      subsections: [
+        { label: "Overview", id: "agent-marketplace-overview" },
+        { label: "Publish", id: "agent-marketplace-publish" },
+        { label: "Browse & Install", id: "agent-marketplace-install" },
+        { label: "Ratings & Reviews", id: "agent-marketplace-ratings" },
+        { label: "Permissions", id: "agent-marketplace-permissions" },
+      ],
+    },
+    {
+      title: "Workflow Marketplace",
+      subsections: [
+        { label: "Overview", id: "workflow-marketplace-overview" },
+        { label: "Publish", id: "workflow-marketplace-publish" },
+        { label: "Browse & Install", id: "workflow-marketplace-install" },
+        { label: "Ratings & Reviews", id: "workflow-marketplace-ratings" },
+        { label: "Permissions", id: "workflow-marketplace-permissions" },
+      ],
+    },
+    {
+      title: "Creator Profiles",
+      subsections: [
+        { label: "Overview", id: "creator-profiles-overview" },
+        { label: "Profile & Stats", id: "creator-profiles-stats" },
+        { label: "Follow System", id: "creator-profiles-follow" },
+        { label: "Marketplace Integration", id: "creator-profiles-marketplace" },
+      ],
+    },
+    {
+      title: "Creator Monetization",
+      subsections: [
+        { label: "Overview", id: "creator-monetization-overview" },
+        { label: "Pricing Model", id: "creator-monetization-pricing" },
+        { label: "Purchase API", id: "creator-monetization-purchase" },
+        { label: "Revenue Split", id: "creator-monetization-split" },
+        { label: "Stripe Connect", id: "creator-monetization-connect" },
+        { label: "Earnings Dashboard", id: "creator-monetization-dashboard" },
+      ],
+    },
+    {
+      title: "Community Hub",
+      subsections: [
+        { label: "Overview", id: "community-hub-overview" },
+        { label: "Discovery APIs", id: "community-hub-apis" },
+        { label: "UI", id: "community-hub-ui" },
+      ],
+    },
+    {
+      title: "Request Timeouts & Fallbacks",
+      subsections: [
+        { label: "Overview", id: "request-timeouts-overview" },
+        { label: "Configuration", id: "request-timeouts-config" },
+        { label: "Error Responses", id: "request-timeouts-errors" },
+      ],
+    },
+    {
+      title: "Production Monitoring",
+      subsections: [
+        { label: "Overview", id: "production-monitoring-overview" },
+        { label: "Admin Dashboards", id: "production-monitoring-admin" },
+        { label: "Alerting", id: "production-monitoring-alerts" },
+      ],
+    },
+    {
+      title: "Production Alerts",
+      subsections: [
+        { label: "Overview", id: "production-alerts-overview" },
+        { label: "Alert Rules", id: "production-alerts-rules" },
+        { label: "Integrations", id: "production-alerts-integrations" },
+      ],
+    },
+    {
+      title: "Feedback Collection",
+      subsections: [
+        { label: "Overview", id: "feedback-collection-overview" },
+        { label: "In-App Widget", id: "feedback-collection-widget" },
+        { label: "Admin Inbox", id: "feedback-collection-admin" },
+      ],
+    },
+    {
+      title: "Usage Limits",
+      subsections: [
+        { label: "Overview", id: "usage-limits-overview" },
+        { label: "Warning Thresholds", id: "usage-limits-warnings" },
+        { label: "Hard Limits", id: "usage-limits-hard-limits" },
+      ],
+    },
+    {
+      title: "Developer Leaderboard",
+      subsections: [
+        { label: "Overview", id: "developer-leaderboard-overview" },
+        { label: "Ranking Logic", id: "developer-leaderboard-ranking" },
+        { label: "Leaderboard Page", id: "developer-leaderboard-page" },
+      ],
+    },
+    {
+      title: "Referral Program",
+      subsections: [
+        { label: "Overview", id: "referral-program-overview" },
+        { label: "Invite Links", id: "referral-program-links" },
+        { label: "Rewards", id: "referral-program-rewards" },
       ],
     },
     {
@@ -220,6 +332,25 @@ const response = await client.chat.completions.create({
           <motion.p className="text-xl text-gray-300" variants={itemVariants}>
             {t("docs.subtitle")}
           </motion.p>
+          <motion.div className="flex flex-wrap items-center gap-3" variants={itemVariants}>
+            <a
+              href="https://github.com/nthitharaphimphchnk-hue/alexza-platform"
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-gray-300 hover:text-white underline-offset-4 hover:underline"
+            >
+              View the documentation source on GitHub
+            </a>
+            <Button
+              variant="outline"
+              className="border-[rgba(255,255,255,0.16)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+              onClick={() =>
+                window.open("https://github.com/nthitharaphimphchnk-hue/alexza-platform", "_blank", "noopener,noreferrer")
+              }
+            >
+              View Source on GitHub
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
 
@@ -293,6 +424,23 @@ const response = await client.chat.completions.create({
                   </li>
                 </ul>
               </div>
+              <div className="space-y-3 scroll-mt-32">
+                <h3 className="text-xl font-semibold text-white">First-time Onboarding</h3>
+                <p className="text-gray-300">
+                  When a new user signs in for the first time, ALEXZA AI guides them through an in-app
+                  onboarding wizard at <code className="text-[#c0c0c0]">/app/onboarding</code>:
+                </p>
+                <ul className="space-y-1 text-gray-300 list-disc list-inside">
+                  <li>Create their first project.</li>
+                  <li>Pick a starter template (e.g. summarizer, translator, lead extractor, email generator).</li>
+                  <li>Generate an API key for the project.</li>
+                  <li>Run their first AI request end to end.</li>
+                </ul>
+                <p className="text-gray-300">
+                  After completing the wizard, the user is redirected to the dashboard and the onboarding
+                  state is marked as complete so they won&apos;t see it again.
+                </p>
+              </div>
               <div id="rate-limits" className="space-y-2 scroll-mt-32">
                 <h3 className="text-lg font-semibold text-white">Rate Limits</h3>
                 <p className="text-gray-300 text-sm">Runtime endpoints are rate-limited per API key based on billing plan:</p>
@@ -303,6 +451,143 @@ const response = await client.chat.completions.create({
                 </ul>
                 <p className="text-gray-300 text-sm">Responses include X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset. When exceeded: HTTP 429 with {"{ \"error\": \"rate_limit_exceeded\" }"}.</p>
               </div>
+            </motion.section>
+
+            {/* Feedback Collection */}
+            <motion.section
+              id="feedback-collection-overview"
+              className="space-y-6 scroll-mt-32"
+              variants={itemVariants}
+            >
+              <h2 className="text-3xl font-bold text-white">Feedback Collection</h2>
+              <p className="text-gray-300 leading-relaxed">
+                During soft launch, ALEXZA AI collects feedback directly inside the product via an
+                in-app widget. This makes it easy for builders to report bugs, suggest features, and
+                flag UX issues without leaving the app.
+              </p>
+              <h3
+                id="feedback-collection-widget"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                In-App Feedback Widget
+              </h3>
+              <p className="text-gray-300">
+                A persistent <strong className="text-white">Send Feedback</strong> button appears in
+                the bottom-right corner of the authenticated app shell. Clicking it opens a modal
+                where users can choose a type (
+                <code className="text-[#c0c0c0]">bug</code>,{" "}
+                <code className="text-[#c0c0c0]">feature request</code>,{" "}
+                <code className="text-[#c0c0c0]">UX issue</code>,{" "}
+                <code className="text-[#c0c0c0]">general feedback</code>), enter a message, and
+                optionally provide an email (prefilled when logged in). The widget automatically
+                attaches the current route, workspace, and browser info.
+              </p>
+              <h3
+                id="feedback-collection-admin"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Admin Feedback Inbox
+              </h3>
+              <p className="text-gray-300">
+                Feedback is stored in a <code className="text-[#c0c0c0]">feedback</code> collection
+                and surfaced via the admin page at{" "}
+                <code className="text-[#c0c0c0]">/app/admin/feedback</code>, which calls{" "}
+                <code className="text-[#c0c0c0]">GET /api/admin/feedback</code> (protected by{" "}
+                <code className="text-[#c0c0c0]">ADMIN_API_KEY</code>). Operators can filter by type,
+                status, and date to triage issues and requests coming from real users.
+              </p>
+            </motion.section>
+
+            {/* Usage Limits */}
+            <motion.section
+              id="usage-limits-overview"
+              className="space-y-6 scroll-mt-32"
+              variants={itemVariants}
+            >
+              <h2 className="text-3xl font-bold text-white">Usage Limits</h2>
+              <p className="text-gray-300 leading-relaxed">
+                Billing guardrails prevent runaway API usage by enforcing per-user monthly usage limits
+                on AI runs. Limits are defined in credits and evaluated before any upstream provider is
+                called, so customers are protected from unexpected costs.
+              </p>
+              <h3
+                id="usage-limits-warnings"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Warning Thresholds
+              </h3>
+              <p className="text-gray-300">
+                Each user can have a <code className="text-[#c0c0c0]">monthlyUsageLimit</code> and a{" "}
+                <code className="text-[#c0c0c0]">usageWarningThreshold</code>. If no explicit limit is set, the
+                system uses <code className="text-[#c0c0c0]">monthlyCreditsAllowance</code>; if no warning threshold
+                is set, it defaults to 80% of the limit. When projected usage crosses the warning threshold, the
+                system logs a structured event and records an entry in{" "}
+                <code className="text-[#c0c0c0]">usage_limit_events</code> so admins can follow up.
+              </p>
+              <h3
+                id="usage-limits-hard-limits"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Hard Limits
+              </h3>
+              <p className="text-gray-300">
+                For <code className="text-[#c0c0c0]">POST /v1/projects/:projectId/run/:actionName</code>, the runtime
+                sums this month&apos;s credits from <code className="text-[#c0c0c0]">billing_ledger</code> and adds the
+                estimated credits for the requested run. If this projected usage exceeds{" "}
+                <code className="text-[#c0c0c0]">monthlyUsageLimit</code>, the request is blocked with a{" "}
+                <code className="text-[#c0c0c0]">USAGE_LIMIT_REACHED</code> error code and no upstream AI call is made.
+              </p>
+            </motion.section>
+
+            {/* Developer Leaderboard */}
+            <motion.section
+              id="developer-leaderboard-overview"
+              className="space-y-6 scroll-mt-32"
+              variants={itemVariants}
+            >
+              <h2 className="text-3xl font-bold text-white">
+                Developer Leaderboard
+              </h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Developer Leaderboard highlights the top creators and the
+                most popular AI resources (agents, workflows, and templates) on
+                ALEXZA AI. It gives you a quick sense of who is building the
+                most impactful automation and which resources are most used by
+                the community.
+              </p>
+              <h3
+                id="developer-leaderboard-ranking"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Ranking Logic
+              </h3>
+              <p className="text-gray-300">
+                Rankings use a weighted score combining{" "}
+                <strong className="text-white">downloads</strong>,{" "}
+                <strong className="text-white">ratings</strong>, and{" "}
+                <strong className="text-white">recent activity</strong>. Items
+                with more installs and higher ratings are ranked higher, with a
+                small bonus for recent listings so that new high-quality
+                resources can surface quickly.
+              </p>
+              <h3
+                id="developer-leaderboard-page"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Leaderboard Page
+              </h3>
+              <p className="text-gray-300">
+                Visit{" "}
+                <a
+                  href="/leaderboard"
+                  className="text-[#c0c0c0] hover:underline"
+                >
+                  /leaderboard
+                </a>{" "}
+                to see ranked tables for Top Creators, Top Agents, Top
+                Workflows, and Top Templates. Each table shows the rank,
+                resource name, downloads, and rating where available.
+              </p>
             </motion.section>
 
             {/* Code Examples - carbon style like Home */}
@@ -413,6 +698,32 @@ const response = await client.chat.completions.create({
               </p>
               <p className="text-sm text-gray-500">
                 Seed templates: <code>pnpm exec tsx scripts/seed-templates.ts</code>. See <code>docs/TEMPLATES.md</code> for full reference.
+              </p>
+            </motion.section>
+
+            {/* Templates Gallery */}
+            <motion.section id="templates-gallery-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Templates Gallery</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The public Templates Gallery lets anyone browse AI templates without logging in, and then
+                sign up to install them into their own projects.
+              </p>
+              <h3 id="templates-gallery-public" className="text-xl font-semibold text-white scroll-mt-32">
+                Public Access
+              </h3>
+              <p className="text-gray-300">
+                Visit <a href="/templates" className="text-[#c0c0c0] hover:underline">/templates</a> to see
+                curated templates for text, automation, sales, marketing, and support. Cards show the
+                template&apos;s name, description, category, downloads, and rating.
+              </p>
+              <h3 id="templates-gallery-install" className="text-xl font-semibold text-white scroll-mt-32">
+                Install Flow
+              </h3>
+              <p className="text-gray-300">
+                When a visitor clicks <strong className="text-white">Use Template</strong>, they are prompted
+                to log in or sign up. After authentication, they can install the chosen template into a
+                project via <code className="text-[#c0c0c0]">POST /api/templates/:id/install</code>, which
+                creates an Action from the underlying template and increments its download count.
               </p>
             </motion.section>
 
@@ -528,6 +839,303 @@ const response = await client.chat.completions.create({
               </p>
             </motion.section>
 
+            {/* AI Agent Marketplace */}
+            <motion.section id="agent-marketplace-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">AI Agent Marketplace</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Agent Marketplace lets you publish, browse, and install AI agents shared by the community. Agents can use actions, workflows, and webhooks as tools. Visit <a href="/app/agent-marketplace" className="text-[#c0c0c0] hover:underline">/app/agent-marketplace</a> to explore.
+              </p>
+              <h3 id="agent-marketplace-publish" className="text-xl font-semibold text-white scroll-mt-32">Publish</h3>
+              <p className="text-gray-300">
+                Only the agent owner can publish. Use <code className="text-[#c0c0c0]">POST /api/agent-marketplace/publish</code> with <code className="text-[#c0c0c0]">agentId</code> (required). Optional: <code className="text-[#c0c0c0]">name</code>, <code className="text-[#c0c0c0]">description</code>, <code className="text-[#c0c0c0]">category</code>, <code className="text-[#c0c0c0]">tags</code> (array), <code className="text-[#c0c0c0]">visibility</code> (public/private).
+              </p>
+              <h3 id="agent-marketplace-install" className="text-xl font-semibold text-white scroll-mt-32">Browse &amp; Install</h3>
+              <p className="text-gray-300">
+                Browse Trending, Popular, and New sections. Filter by category or search by name, description, tags. Sort with <code className="text-[#c0c0c0]">?sort=trending</code>, <code className="text-[#c0c0c0]">popular</code>, or <code className="text-[#c0c0c0]">new</code>. Install copies the agent into your workspace: <code className="text-[#c0c0c0]">POST /api/agent-marketplace/:id/install</code> with <code className="text-[#c0c0c0]">workspaceId</code>.
+              </p>
+              <h3 id="agent-marketplace-ratings" className="text-xl font-semibold text-white scroll-mt-32">Ratings &amp; Reviews</h3>
+              <p className="text-gray-300">
+                Users can leave a 1–5 star rating and optional review text via <code className="text-[#c0c0c0]">POST /api/agent-marketplace/:id/rate</code> with <code className="text-[#c0c0c0]">rating</code> (1–5) and optional <code className="text-[#c0c0c0]">reviewText</code>. One rating per user per listing.
+              </p>
+              <h3 id="agent-marketplace-permissions" className="text-xl font-semibold text-white scroll-mt-32">Permissions</h3>
+              <p className="text-gray-300">
+                Only the agent owner can publish or unpublish their agents. Only <strong>public</strong> agents are visible to everyone; private listings are visible only to the publisher. Update or delete with <code className="text-[#c0c0c0]">PATCH /api/agent-marketplace/:id</code> and <code className="text-[#c0c0c0]">DELETE /api/agent-marketplace/:id</code> (owner only).
+              </p>
+            </motion.section>
+
+            {/* Workflow Marketplace */}
+            <motion.section id="workflow-marketplace-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Workflow Marketplace</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Workflow Marketplace lets you publish, browse, and install automation workflows shared by the community. Visit <a href="/app/workflow-marketplace" className="text-[#c0c0c0] hover:underline">/app/workflow-marketplace</a> to explore.
+              </p>
+              <h3 id="workflow-marketplace-publish" className="text-xl font-semibold text-white scroll-mt-32">Publish</h3>
+              <p className="text-gray-300">
+                Only the workflow owner can publish. Use <code className="text-[#c0c0c0]">POST /api/workflow-marketplace/publish</code> with <code className="text-[#c0c0c0]">workflowId</code> (required). Optional: <code className="text-[#c0c0c0]">name</code>, <code className="text-[#c0c0c0]">description</code>, <code className="text-[#c0c0c0]">category</code>, <code className="text-[#c0c0c0]">tags</code> (array), <code className="text-[#c0c0c0]">visibility</code> (public/private).
+              </p>
+              <h3 id="workflow-marketplace-install" className="text-xl font-semibold text-white scroll-mt-32">Browse &amp; Install</h3>
+              <p className="text-gray-300">
+                Browse Trending, Popular, and New sections. Filter by category or search. Sort with <code className="text-[#c0c0c0]">?sort=trending</code>, <code className="text-[#c0c0c0]">popular</code>, or <code className="text-[#c0c0c0]">new</code>. Install clones the workflow and its steps into your workspace: <code className="text-[#c0c0c0]">POST /api/workflow-marketplace/:id/install</code> with <code className="text-[#c0c0c0]">workspaceId</code>.
+              </p>
+              <h3 id="workflow-marketplace-ratings" className="text-xl font-semibold text-white scroll-mt-32">Ratings &amp; Reviews</h3>
+              <p className="text-gray-300">
+                Users can leave a 1–5 star rating and optional review text via <code className="text-[#c0c0c0]">POST /api/workflow-marketplace/:id/rate</code> with <code className="text-[#c0c0c0]">rating</code> (1–5) and optional <code className="text-[#c0c0c0]">reviewText</code>.
+              </p>
+              <h3 id="workflow-marketplace-permissions" className="text-xl font-semibold text-white scroll-mt-32">Permissions</h3>
+              <p className="text-gray-300">
+                Only the workflow owner can publish or unpublish. Only <strong>public</strong> workflows are visible to everyone. Update or delete with <code className="text-[#c0c0c0]">PATCH /api/workflow-marketplace/:id</code> and <code className="text-[#c0c0c0]">DELETE /api/workflow-marketplace/:id</code> (owner only).
+              </p>
+            </motion.section>
+
+            {/* Creator Profiles */}
+            <motion.section id="creator-profiles-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Creator Profiles</h2>
+              <p className="text-gray-300 leading-relaxed">
+                Creator profiles let developers and AI builders showcase their published agents, workflows, templates, and apps. Visit <a href="/app/creators" className="text-[#c0c0c0] hover:underline">/app/creators</a> to browse creators, or <a href="/app/creators/:username" className="text-[#c0c0c0] hover:underline">/app/creators/:username</a> for a specific profile.
+              </p>
+              <h3 id="creator-profiles-stats" className="text-xl font-semibold text-white scroll-mt-32">Profile &amp; Stats</h3>
+              <p className="text-gray-300">
+                Each creator has a <strong>username</strong> (unique, URL-safe), <strong>displayName</strong>, <strong>bio</strong>, and optional <strong>avatar</strong>. Stats are computed from public marketplace items: <code className="text-[#c0c0c0]">totalAgents</code>, <code className="text-[#c0c0c0]">totalWorkflows</code>, <code className="text-[#c0c0c0]">totalTemplates</code>, <code className="text-[#c0c0c0]">totalApps</code>, <code className="text-[#c0c0c0]">downloads</code>, <code className="text-[#c0c0c0]">rating</code>, and <code className="text-[#c0c0c0]">ratingCount</code>. Create or update your profile with <code className="text-[#c0c0c0]">PUT /api/creators/me</code> (body: username, displayName, bio, avatar). List creators with <code className="text-[#c0c0c0]">GET /api/creators</code> (optional <code className="text-[#c0c0c0]">?search=</code>). Get a profile and their content with <code className="text-[#c0c0c0]">GET /api/creators/:username</code>.
+              </p>
+              <h3 id="creator-profiles-follow" className="text-xl font-semibold text-white scroll-mt-32">Follow System</h3>
+              <p className="text-gray-300">
+                Authenticated users can follow creators: <code className="text-[#c0c0c0]">POST /api/creators/:username/follow</code> and <code className="text-[#c0c0c0]">DELETE /api/creators/:username/follow</code>. Follow state is returned in the profile as <code className="text-[#c0c0c0]">isFollowing</code> when the request is authenticated.
+              </p>
+              <h3 id="creator-profiles-marketplace" className="text-xl font-semibold text-white scroll-mt-32">Marketplace Integration</h3>
+              <p className="text-gray-300">
+                Agent marketplace, workflow marketplace, and template marketplace responses include <code className="text-[#c0c0c0]">authorUsername</code> when the author has a creator profile. Use it to link to <code className="text-[#c0c0c0]">/app/creators/:username</code> from marketplace cards.
+              </p>
+            </motion.section>
+
+            {/* Creator Monetization */}
+            <motion.section id="creator-monetization-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Creator Monetization</h2>
+              <p className="text-gray-300 leading-relaxed">
+                Monetization allows creators to sell marketplace items (agents, workflows, templates, apps) and receive payouts via Stripe Connect.
+              </p>
+              <h3 id="creator-monetization-pricing" className="text-xl font-semibold text-white scroll-mt-32">Pricing Model</h3>
+              <p className="text-gray-300">
+                Marketplace listings can include <code className="text-[#c0c0c0]">price</code>, <code className="text-[#c0c0c0]">billingType</code> (<code className="text-[#c0c0c0]">one-time</code> or <code className="text-[#c0c0c0]">monthly</code>), and <code className="text-[#c0c0c0]">currency</code> (e.g. <code className="text-[#c0c0c0]">usd</code>). Free items use <code className="text-[#c0c0c0]">price = 0</code>.
+              </p>
+              <h3 id="creator-monetization-purchase" className="text-xl font-semibold text-white scroll-mt-32">Purchase API</h3>
+              <p className="text-gray-300">
+                Create a Stripe Checkout session and record a pending purchase:
+                <code className="text-[#c0c0c0]">POST /api/marketplace/:id/purchase</code> (templates),
+                <code className="text-[#c0c0c0]">POST /api/agent-marketplace/:id/purchase</code>,
+                <code className="text-[#c0c0c0]">POST /api/workflow-marketplace/:id/purchase</code>,
+                <code className="text-[#c0c0c0]">POST /api/apps/:id/purchase</code>.
+                On successful payment, Stripe webhooks mark purchases as paid and insert creator earnings records.
+              </p>
+              <h3 id="creator-monetization-split" className="text-xl font-semibold text-white scroll-mt-32">Revenue Split</h3>
+              <p className="text-gray-300">
+                The platform fee is configurable via environment. Default split is 70% creator / 30% platform. Configure with <code className="text-[#c0c0c0]">CREATOR_SHARE</code> (e.g. <code className="text-[#c0c0c0]">0.7</code>).
+              </p>
+              <h3 id="creator-monetization-connect" className="text-xl font-semibold text-white scroll-mt-32">Stripe Connect</h3>
+              <p className="text-gray-300">
+                Creators must connect a Stripe account to receive payouts. Start onboarding with <code className="text-[#c0c0c0]">POST /api/creators/me/connect/onboard</code>.
+              </p>
+              <h3 id="creator-monetization-dashboard" className="text-xl font-semibold text-white scroll-mt-32">Earnings Dashboard</h3>
+              <p className="text-gray-300">
+                View totals, recent sales, and top items at <a href="/app/creator/earnings" className="text-[#c0c0c0] hover:underline">/app/creator/earnings</a>. The UI reads from <code className="text-[#c0c0c0]">GET /api/creator/earnings</code>.
+              </p>
+            </motion.section>
+
+            {/* Community Hub */}
+            <motion.section id="community-hub-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Community Hub</h2>
+              <p className="text-gray-300 leading-relaxed">
+                The Community Hub surfaces trending agents, popular workflows, top creators, new packs, and featured apps in one place.
+                Visit <a href="/app/community" className="text-[#c0c0c0] hover:underline">/app/community</a> inside the app.
+              </p>
+              <h3 id="community-hub-apis" className="text-xl font-semibold text-white scroll-mt-32">Discovery APIs</h3>
+              <p className="text-gray-300">
+                Use the discovery endpoints to power community views:
+                <code className="text-[#c0c0c0]">GET /api/community/trending-agents</code>,
+                <code className="text-[#c0c0c0]">GET /api/community/popular-workflows</code>,
+                <code className="text-[#c0c0c0]">GET /api/community/top-creators</code>,
+                <code className="text-[#c0c0c0]">GET /api/community/new-packs</code>,
+                <code className="text-[#c0c0c0]">GET /api/community/featured-apps</code>.
+                Results are ranked using downloads, ratings, and recency.
+              </p>
+              <h3 id="community-hub-ui" className="text-xl font-semibold text-white scroll-mt-32">UI & Navigation</h3>
+              <p className="text-gray-300">
+                The Community Hub page renders cards for each section and links into the relevant marketplace pages and creator profiles,
+                making it easy for users to discover and install community content.
+              </p>
+            </motion.section>
+
+            {/* Request Timeouts & Fallbacks */}
+            <motion.section id="request-timeouts-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Request Timeouts & Fallbacks</h2>
+              <p className="text-gray-300 leading-relaxed">
+                ALEXZA AI enforces timeouts on HTTP requests, upstream AI provider calls, webhooks, and workflow steps to prevent
+                hanging requests in production and to return clear, structured errors instead of leaving clients waiting indefinitely.
+              </p>
+              <h3 id="request-timeouts-config" className="text-xl font-semibold text-white scroll-mt-32">Configuration</h3>
+              <p className="text-gray-300">
+                The following environment variables control timeout behavior (all values in milliseconds, with safe defaults):
+              </p>
+              <ul className="list-disc list-inside text-gray-300 space-y-1">
+                <li><code className="text-[#c0c0c0]">REQUEST_TIMEOUT_MS</code> – global HTTP request guard for <code className="text-[#c0c0c0]">/v1</code> and <code className="text-[#c0c0c0]">/api</code> routes (default 30000).</li>
+                <li><code className="text-[#c0c0c0]">AI_RUN_TIMEOUT_MS</code> – upstream AI provider timeout for OpenAI / OpenRouter calls (defaults to the existing upstream timeout).</li>
+                <li><code className="text-[#c0c0c0]">WEBHOOK_TIMEOUT_MS</code> – timeout for outbound webhook deliveries and workflow webhook output steps (default 10000).</li>
+                <li><code className="text-[#c0c0c0]">WORKFLOW_STEP_TIMEOUT_MS</code> – per-step timeout for workflow HTTP action steps (default 20000).</li>
+              </ul>
+              <h3 id="request-timeouts-errors" className="text-xl font-semibold text-white scroll-mt-32">Error Responses</h3>
+              <p className="text-gray-300">
+                When a timeout occurs, the API responds with a 504 status code and a structured JSON error such as:
+              </p>
+              <pre className="rounded-lg bg-[#050607] p-4 border border-[rgba(255,255,255,0.08)] text-sm text-gray-200 overflow-x-auto">
+{`{ "error": "request_timeout", "message": "The request took too long to complete." }`}
+              </pre>
+              <p className="text-gray-300">
+                Upstream AI provider timeouts use <code className="text-[#c0c0c0]">"upstream_timeout"</code>, and workflow engine timeouts use
+                <code className="text-[#c0c0c0]">"workflow_step_timeout"</code>. Frontend helpers (like the Playground) detect these codes and
+                show user-friendly messages instead of leaving loading spinners active forever.
+              </p>
+            </motion.section>
+
+            {/* Production Monitoring */}
+            <motion.section id="production-monitoring-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Production Monitoring</h2>
+              <p className="text-gray-300 leading-relaxed">
+                After launch, monitor ALEXZA AI using health endpoints, admin dashboards, and alerts to
+                catch issues early and keep the platform stable.
+              </p>
+              <h3 id="production-monitoring-admin" className="text-xl font-semibold text-white scroll-mt-32">
+                Admin Dashboards
+              </h3>
+              <p className="text-gray-300">
+                The admin-only monitoring pages provide high-level metrics:
+              </p>
+              <ul className="list-disc list-inside text-gray-300 space-y-1">
+                <li>
+                  <code className="text-[#c0c0c0]">/app/admin/launch</code> – soft-launch readiness,
+                  totals, recent activity, and featured content counts.
+                </li>
+                <li>
+                  <code className="text-[#c0c0c0]">/app/admin/monitoring</code> – real-time production
+                  metrics: active users, requests per minute, AI runs per minute, errors, slow requests,
+                  webhook failures.
+                </li>
+              </ul>
+              <p className="text-gray-300">
+                Both dashboards call admin APIs protected by the{" "}
+                <code className="text-[#c0c0c0]">ADMIN_API_KEY</code> and{" "}
+                <code className="text-[#c0c0c0]">x-admin-key</code> header, so only operators with the
+                key can access them.
+              </p>
+              <h3 id="production-monitoring-alerts" className="text-xl font-semibold text-white scroll-mt-32">
+                Alerting & Health Checks
+              </h3>
+              <p className="text-gray-300">
+                Combine the built-in monitoring tools with external uptime checks and Sentry alerts:
+              </p>
+              <ul className="list-disc list-inside text-gray-300 space-y-1">
+                <li>
+                  Monitor <code className="text-[#c0c0c0]">/api/health</code> and{" "}
+                  <code className="text-[#c0c0c0]">/api/health/db</code> from an external uptime
+                  service.
+                </li>
+                <li>
+                  Configure Sentry alerts for error spikes, new issues, and slow requests (see{" "}
+                  <code className="text-[#c0c0c0]">SENTRY_TESTING.md</code>).
+                </li>
+                <li>
+                  Use the production readiness and smoke scripts to validate deployments before and
+                  after release.
+                </li>
+              </ul>
+            </motion.section>
+
+            {/* Production Alerts */}
+            <motion.section id="production-alerts-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Production Alerts</h2>
+              <p className="text-gray-300 leading-relaxed">
+                ALEXZA AI can automatically notify administrators when critical issues occur in production, using
+                Slack, Discord, or email.
+              </p>
+              <h3 id="production-alerts-rules" className="text-xl font-semibold text-white scroll-mt-32">
+                Alert Rules
+              </h3>
+              <p className="text-gray-300">
+                The alert worker evaluates metrics every minute using existing logs and health checks. Out-of-the-box
+                rules include:
+              </p>
+              <ul className="list-disc list-inside text-gray-300 space-y-1">
+                <li>High error volume in the last 5 minutes.</li>
+                <li>Webhook delivery failures over the last 15 minutes.</li>
+                <li>Spikes in slow requests (&gt; 2000ms) over the last 5 minutes.</li>
+                <li>AI run failures (errors or insufficient credits) over the last 5 minutes.</li>
+                <li>System health endpoint failures when <code className="text-[#c0c0c0]">/api/health</code> is not OK.</li>
+              </ul>
+              <p className="text-gray-300">
+                Alerts are generated by a background worker process that runs every minute (via BullMQ) and reads from
+                <code className="text-[#c0c0c0]">usage_logs</code>, <code className="text-[#c0c0c0]">run_logs</code>,{" "}
+                <code className="text-[#c0c0c0]">webhook_deliveries</code>, and <code className="text-[#c0c0c0]">errors</code>.
+              </p>
+              <h3 id="production-alerts-integrations" className="text-xl font-semibold text-white scroll-mt-32">
+                Integrations & Testing
+              </h3>
+              <p className="text-gray-300">
+                Configure alert destinations via environment variables:
+              </p>
+              <ul className="list-disc list-inside text-gray-300 space-y-1">
+                <li><code className="text-[#c0c0c0]">ALERT_SLACK_WEBHOOK_URL</code> – Slack incoming webhook URL.</li>
+                <li><code className="text-[#c0c0c0]">ALERT_DISCORD_WEBHOOK_URL</code> – Discord webhook URL.</li>
+                <li><code className="text-[#c0c0c0]">ALERT_EMAIL_TO</code> – Email recipient for alerts.</li>
+              </ul>
+              <p className="text-gray-300">
+                Use the admin test endpoint to verify configuration:
+              </p>
+              <pre className="rounded-lg bg-[#050607] p-4 border border-[rgba(255,255,255,0.08)] text-sm text-gray-200 overflow-x-auto">
+{`curl -X POST "/api/admin/alerts/test" \\
+  -H "x-admin-key: YOUR_ADMIN_API_KEY"`}
+              </pre>
+              <p className="text-gray-300">
+                The worker process is started with <code className="text-[#c0c0c0]">pnpm run workers</code> and requires{" "}
+                <code className="text-[#c0c0c0]">REDIS_URL</code> to be configured.
+              </p>
+            </motion.section>
+
+            {/* Referral Program */}
+            <motion.section id="referral-program-overview" className="space-y-6 scroll-mt-32" variants={itemVariants}>
+              <h2 className="text-3xl font-bold text-white">Referral Program</h2>
+              <p className="text-gray-300 leading-relaxed">
+                Invite others to ALEXZA AI and earn bonus credits when they sign up and start building.
+              </p>
+              <h3 id="referral-program-links" className="text-xl font-semibold text-white scroll-mt-32">
+                Invite Links
+              </h3>
+              <p className="text-gray-300">
+                Each user gets a unique referral code and invite link, visible in the{" "}
+                <code className="text-[#c0c0c0]">/app/referrals</code> dashboard. The link has the form:
+              </p>
+              <pre className="rounded-lg bg-[#050607] p-4 border border-[rgba(255,255,255,0.08)] text-sm text-gray-200 overflow-x-auto">
+{`https://your-domain.com/invite/REFERRAL_CODE`}
+              </pre>
+              <p className="text-gray-300">
+                When someone opens this link, they are redirected to the signup page with the referral code
+                attached so that their new account is attributed properly.
+              </p>
+              <h3 id="referral-program-rewards" className="text-xl font-semibold text-white scroll-mt-32">
+                Rewards & Limits
+              </h3>
+              <p className="text-gray-300">
+                When a referred user completes signup:
+              </p>
+              <ul className="list-disc list-inside text-gray-300 space-y-1">
+                <li>Both the referrer and the new user receive bonus credits.</li>
+                <li>The amount is controlled via <code className="text-[#c0c0c0]">REFERRAL_REWARD_CREDITS</code>.</li>
+                <li>Self-referrals are ignored, and a per-account cap (via{" "}
+                  <code className="text-[#c0c0c0]">REFERRAL_MAX_REWARDS</code>) limits abuse.</li>
+              </ul>
+              <p className="text-gray-300">
+                All referral events are recorded in the <code className="text-[#c0c0c0]">referrals</code> collection
+                with the referrer, referred user, reward amount, and timestamp for later analysis.
+              </p>
+            </motion.section>
+
             {/* Project Export / Import */}
             <motion.section id="project-export-import" className="space-y-6 scroll-mt-32" variants={itemVariants}>
               <h2 className="text-3xl font-bold text-white">Project Export / Import</h2>
@@ -623,6 +1231,89 @@ const response = await client.chat.completions.create({
                 >
                   Open API Docs →
                 </Button>
+              </motion.div>
+
+              {/* AI Model Routing */}
+              <motion.div
+                id="ai-model-routing"
+                className="showcase-card p-6 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.12)] space-y-4 scroll-mt-32"
+                variants={itemVariants}
+              >
+                <h3 className="text-2xl font-bold text-white">AI Model Routing</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  ALEXZA automatically selects the best upstream model for each action based on task type, routing mode, and
+                  model availability. The router prefers cheaper models for tasks like summarization and extraction, and
+                  higher-capability models for reasoning and creative writing.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Default task mapping:
+                  <br />
+                  <code className="text-[#c0c0c0]">
+                    summarization → gpt-4o-mini,&nbsp; translation → gpt-4o-mini,&nbsp; extraction → gpt-4o-mini,&nbsp;
+                    reasoning → gpt-4.1,&nbsp; creative_writing → gpt-4.1
+                  </code>
+                </p>
+                <p className="text-sm text-gray-400">
+                  For each request, the router builds a primary model and a fallback chain and executes via a hidden gateway using{" "}
+                  <code className="text-[#c0c0c0]">runWithFallback</code>. If the primary model fails with a transient error
+                  (e.g. timeout or 5xx), the next model in the chain is tried automatically. Logs include the selected model,
+                  whether a fallback was used, and token usage.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Admins can override the mapping via the{" "}
+                  <code className="text-[#c0c0c0]">MODEL_ROUTER_OVERRIDES</code> environment variable (JSON), for example:
+                </p>
+                <pre className="rounded-lg bg-[#050607] p-4 text-xs font-mono text-gray-300 overflow-x-auto">
+{`MODEL_ROUTER_OVERRIDES='{
+  "summarization": { "primary": "gpt-4o-mini", "fallbacks": ["gpt-4o"] },
+  "reasoning": { "primary": "gpt-4.1", "fallbacks": ["gpt-4o"] }
+}'`}
+                </pre>
+              </motion.div>
+
+              {/* AI Evaluation System */}
+              <motion.div
+                id="ai-evaluation-system"
+                className="showcase-card p-6 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.12)] space-y-4 scroll-mt-32"
+                variants={itemVariants}
+              >
+                <h3 className="text-2xl font-bold text-white">AI Evaluation System</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  ALEXZA automatically records lightweight evaluation metrics for every AI action run. Each evaluation logs
+                  the action, prompt version, model, quality score, latency, token usage, and estimated upstream cost.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Quality scores are heuristic-based (response length, completion success, latency) and are designed to
+                  help you spot regressions when changing prompts or routing — not as a ground-truth label.
+                </p>
+                <p className="text-sm text-gray-400">
+                  View evaluation data in the dashboard at{" "}
+                  <code className="text-[#c0c0c0]">/app/ai-evaluations</code> to analyze trends in quality, latency, and token
+                  usage over time across your actions.
+                </p>
+              </motion.div>
+
+              {/* AI Safety Guard */}
+              <motion.div
+                id="ai-safety-guard"
+                className="showcase-card p-6 rounded-xl bg-[#0b0e12] border border-[rgba(255,255,255,0.12)] space-y-4 scroll-mt-32"
+                variants={itemVariants}
+              >
+                <h3 className="text-2xl font-bold text-white">AI Safety Guard</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  AI Safety Guard protects your runtime from prompt injection, unsafe content, and obvious malicious usage.
+                  All action and agent requests are checked before execution, and responses are scanned before being returned
+                  to clients.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Input checks flag prompt injection attempts, hate / violent content, malware instructions, and data
+                  exfiltration patterns. Depending on internal rules, requests may be allowed, warned (logged), or blocked.
+                  Output checks can also sanitize unsafe content before it leaves the platform.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Safety events are stored in <code className="text-[#c0c0c0]">ai_safety_events</code> and logged with structured
+                  pino logs so you can audit and tune policies as needed.
+                </p>
               </motion.div>
 
               <motion.div

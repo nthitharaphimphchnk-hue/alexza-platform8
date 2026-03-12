@@ -2,7 +2,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import AppNotFound from "@/pages/AppNotFound";
 import { Route, Switch, Redirect } from "wouter";
-import * as Sentry from "@sentry/react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { CreditsProvider } from "./contexts/CreditsContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -35,11 +34,13 @@ import Playground from "./pages/Playground";
 import PublicPlayground from "./pages/PublicPlayground";
 import Usage from "./pages/Usage";
 import Analytics from "./pages/Analytics";
+import AiEvaluationsPage from "./pages/AiEvaluations";
 import Credits from "./pages/Credits";
 import Wallet from "./pages/Wallet";
 import Billing from "./pages/Billing";
 import BillingPlans from "./pages/BillingPlans";
 import BillingDashboard from "./pages/BillingDashboard";
+import BillingGuardsPage from "./pages/BillingGuards";
 import Settings from "./pages/Settings";
 import SettingsSso from "./pages/SettingsSso";
 import LoginSso from "./pages/LoginSso";
@@ -48,6 +49,11 @@ import WebhookDeliveries from "./pages/WebhookDeliveries";
 import Requests from "./pages/Requests";
 import Templates from "./pages/Templates";
 import Marketplace from "./pages/Marketplace";
+import AgentMarketplace from "./pages/AgentMarketplace";
+import WorkflowMarketplace from "./pages/WorkflowMarketplace";
+import Creators from "./pages/Creators";
+import CreatorEarnings from "./pages/CreatorEarnings";
+import Community from "./pages/Community";
 import AppStore from "./pages/AppStore";
 import Packs from "./pages/Packs";
 import Agents from "./pages/Agents";
@@ -55,16 +61,26 @@ import AuditLogs from "./pages/AuditLogs";
 import RequestDetail from "./pages/RequestDetail";
 import AdminTools from "./pages/AdminTools";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminBillingAnalytics from "./pages/AdminBillingAnalytics";
+import AdminMonitoring from "./pages/AdminMonitoring";
+import AdminLaunch from "./pages/AdminLaunch";
+import AdminFeedback from "./pages/AdminFeedback";
 import Workspaces from "./pages/Workspaces";
 import WorkspaceMembers from "./pages/WorkspaceMembers";
 import WorkspaceInviteAccept from "./pages/WorkspaceInviteAccept";
 import Workflows from "./pages/Workflows";
 import WorkflowEdit from "./pages/WorkflowEdit";
+import Onboarding from "./pages/Onboarding";
+import InviteLanding from "./pages/InviteLanding";
+import PublicTemplates from "./pages/PublicTemplates";
+import Leaderboard from "./pages/Leaderboard";
+import Referrals from "./pages/Referrals";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { logApiBaseUrlOnce } from "./lib/api";
 import CosmicBackground from "./components/CosmicBackground";
 import DotGridBackground from "./components/DotGridBackground";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function ApiKeysRoute() {
   return <ApiKeys />;
@@ -91,15 +107,23 @@ function Router() {
       <Route path={"/docs/sdk"} component={DocsSdk} />
       <Route path={"/docs/cli"} component={DocsCli} />
       <Route path={"/docs"} component={Docs} />
+      <Route path={"/templates"} component={PublicTemplates} />
+      <Route path={"/leaderboard"} component={Leaderboard} />
       <Route path={"/playground"} component={PublicPlayground} />
       <Route path={"/login"} component={Login} />
       <Route path={"/login/sso"} component={LoginSso} />
       <Route path={"/signup"} component={Signup} />
+      <Route path={"/invite/:code"} component={InviteLanding} />
 
       {/* Protected App Routes - explicit full paths */}
       <Route path={"/app/dashboard"}>
         <AppLayout>
           <Dashboard />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/onboarding"}>
+        <AppLayout>
+          <Onboarding />
         </AppLayout>
       </Route>
       <Route path={"/app/projects/:id/ai"}>
@@ -192,6 +216,36 @@ function Router() {
           <Marketplace />
         </AppLayout>
       </Route>
+      <Route path={"/app/agent-marketplace"}>
+        <AppLayout>
+          <AgentMarketplace />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/workflow-marketplace"}>
+        <AppLayout>
+          <WorkflowMarketplace />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/community"}>
+        <AppLayout>
+          <Community />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/creator/earnings"}>
+        <AppLayout>
+          <CreatorEarnings />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/creators/:username"}>
+        <AppLayout>
+          <Creators />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/creators"}>
+        <AppLayout>
+          <Creators />
+        </AppLayout>
+      </Route>
       <Route path={"/app/store"}>
         <AppLayout>
           <AppStore />
@@ -207,6 +261,11 @@ function Router() {
           <Agents />
         </AppLayout>
       </Route>
+      <Route path={"/app/referrals"}>
+        <AppLayout>
+          <Referrals />
+        </AppLayout>
+      </Route>
       <Route path={"/app/audit-logs"}>
         <AppLayout>
           <AuditLogs />
@@ -215,6 +274,11 @@ function Router() {
       <Route path={"/app/analytics"}>
         <AppLayout>
           <Analytics />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/ai-evaluations"}>
+        <AppLayout>
+          <AiEvaluationsPage />
         </AppLayout>
       </Route>
       <Route path={"/app/billing"}>
@@ -230,6 +294,11 @@ function Router() {
       <Route path={"/app/billing/plans"}>
         <AppLayout>
           <BillingPlans />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/billing/guards"}>
+        <AppLayout>
+          <BillingGuardsPage />
         </AppLayout>
       </Route>
       <Route path={"/app/settings"}>
@@ -262,9 +331,29 @@ function Router() {
           <AdminAnalytics />
         </AppLayout>
       </Route>
+      <Route path={"/app/admin/monitoring"}>
+        <AppLayout>
+          <AdminMonitoring />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/admin/feedback"}>
+        <AppLayout>
+          <AdminFeedback />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/admin/billing"}>
+        <AppLayout>
+          <AdminBillingAnalytics />
+        </AppLayout>
+      </Route>
       <Route path={"/app/admin/tools"}>
         <AppLayout>
           <AdminTools />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/admin/launch"}>
+        <AppLayout>
+          <AdminLaunch />
         </AppLayout>
       </Route>
       <Route path={"/app/chatbuilder"}>
@@ -341,30 +430,20 @@ function App() {
     logApiBaseUrlOnce();
   }, []);
   useEffect(() => {
-    if (typeof Sentry.addBreadcrumb === "function") {
-      Sentry.addBreadcrumb({ category: "navigation", message: location, level: "info" });
+    // Keep navigation breadcrumb for Sentry if initialized
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Sentry = require("@sentry/react") as typeof import("@sentry/react");
+      if (typeof Sentry.addBreadcrumb === "function") {
+        Sentry.addBreadcrumb({ category: "navigation", message: location, level: "info" });
+      }
+    } catch {
+      // Sentry not available in this environment
     }
   }, [location]);
 
-  const ErrorFallback = ({ error, resetError }: { error: unknown; resetError: () => void }) => (
-    <div className="flex items-center justify-center min-h-screen p-8 bg-background">
-      <div className="flex flex-col items-center w-full max-w-2xl p-8">
-        <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
-        <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-          <pre className="text-sm text-muted-foreground whitespace-break-spaces">{error instanceof Error ? error.stack : String(error)}</pre>
-        </div>
-        <button
-          onClick={resetError}
-          className="flex gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 cursor-pointer"
-        >
-          Try again
-        </button>
-      </div>
-    </div>
-  );
-
   return (
-    <Sentry.ErrorBoundary fallback={ErrorFallback}>
+    <ErrorBoundary>
       <ThemeProvider defaultTheme="dark" switchable>
         <AuthProvider>
           <WorkspaceProvider>
@@ -395,7 +474,7 @@ function App() {
           </WorkspaceProvider>
         </AuthProvider>
       </ThemeProvider>
-    </Sentry.ErrorBoundary>
+    </ErrorBoundary>
   );
 }
 

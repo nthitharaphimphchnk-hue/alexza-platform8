@@ -3,7 +3,7 @@
  */
 
 import OpenAI from "openai";
-import { UPSTREAM_TIMEOUT_MS } from "../config";
+import { AI_RUN_TIMEOUT_MS } from "../config";
 
 let cachedClient: OpenAI | null = null;
 
@@ -13,7 +13,7 @@ function getClient(): OpenAI {
     throw new Error("OPENAI_API_KEY is not configured");
   }
   if (!cachedClient) {
-    cachedClient = new OpenAI({ apiKey, timeout: UPSTREAM_TIMEOUT_MS });
+    cachedClient = new OpenAI({ apiKey, timeout: AI_RUN_TIMEOUT_MS });
   }
   return cachedClient;
 }
@@ -47,7 +47,7 @@ export async function runOpenAI(params: OpenAIRunParams): Promise<OpenAIRunRespo
       temperature: params.temperature ?? 0.7,
       max_tokens: params.maxTokens ?? 2048,
     },
-    { timeout: UPSTREAM_TIMEOUT_MS }
+    { timeout: AI_RUN_TIMEOUT_MS }
   );
 
   const choice = response.choices?.[0];

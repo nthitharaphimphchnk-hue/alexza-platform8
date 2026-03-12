@@ -9,6 +9,7 @@ import { requireAuth } from "../middleware/requireAuth";
 import { getWorkspaceIdsForUser } from "../workspaces/projectAccess";
 import { runAgent } from "./engine";
 import { logger } from "../utils/logger";
+import { requestTimeout } from "../middleware/request-timeout";
 import type { AgentDoc, AgentTool } from "../models/agent";
 
 const router = Router();
@@ -240,7 +241,7 @@ router.delete("/agents/:id", requireAuth, async (req, res, next) => {
 });
 
 // POST /api/agents/run
-router.post("/agents/run", requireAuth, async (req, res, next) => {
+router.post("/agents/run", requireAuth, requestTimeout("ai_run"), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
 

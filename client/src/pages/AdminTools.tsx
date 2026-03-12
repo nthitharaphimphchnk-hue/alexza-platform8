@@ -117,12 +117,18 @@ export default function AdminTools() {
         { label: "Tools" },
       ]}
     >
-      <div className="mb-6">
+      <div className="mb-6 flex gap-4">
         <a
           href="/app/admin/analytics"
           className="inline-flex items-center gap-2 text-sm text-[#c0c0c0] hover:text-white transition"
         >
           Platform Analytics →
+        </a>
+        <a
+          href="/app/admin/billing"
+          className="inline-flex items-center gap-2 text-sm text-[#c0c0c0] hover:text-white transition"
+        >
+          Billing Analytics →
         </a>
       </div>
       <section className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-6">

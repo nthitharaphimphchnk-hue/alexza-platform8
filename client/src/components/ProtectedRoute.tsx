@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
  * Preserves intended destination in ?next= for post-login redirect.
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
   const currentPath = typeof window !== "undefined" ? window.location.pathname : "/app/dashboard";
 
@@ -21,8 +21,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!isLoading && !isAuthenticated) {
       const nextUrl = encodeURIComponent(currentPath);
       setLocation(`/login?next=${nextUrl}`);
+      return;
     }
-  }, [isLoading, isAuthenticated, currentPath, setLocation]);
+    if (
+      !isLoading &&
+      isAuthenticated &&
+      user &&
+      currentPath.startsWith("/app") &&
+      !currentPath.startsWith("/app/onboarding") &&
+      user.onboardingCompleted === false
+    ) {
+      setLocation("/app/onboarding");
+    }
+  }, [isLoading, isAuthenticated, currentPath, setLocation, user]);
 
   if (isLoading) {
     return (

@@ -5,6 +5,7 @@ import ApiKeysWidget from "@/components/dashboard/ApiKeysWidget";
 import OnboardingChecklist from "@/components/dashboard/OnboardingChecklist";
 import StatusWidget from "@/components/dashboard/StatusWidget";
 import UsageAnalyticsWidget from "@/components/dashboard/UsageAnalyticsWidget";
+import SystemHealthBanner from "@/components/SystemHealthBanner";
 import { Button } from "@/components/ui/button";
 import { useWalletBalance } from "@/hooks/useWallet";
 import { Activity, Gauge, Plus, Server, TriangleAlert } from "lucide-react";
@@ -51,6 +52,7 @@ export default function Dashboard() {
         </div>
       }
     >
+      <SystemHealthBanner />
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, idx) => (

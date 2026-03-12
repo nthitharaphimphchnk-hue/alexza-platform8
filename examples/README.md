@@ -13,6 +13,8 @@ Ready-to-use example projects demonstrating how to build AI APIs, agents, and au
 | Example | Description |
 |---------|-------------|
 | [ai-blog-api](./ai-blog-api) | Generate full blog posts from topics and key points |
+| [ai-blog-generator](./ai-blog-generator) | Generate full blog posts from topic and key points (`example.json`) |
+| [ai-email-writer](./ai-email-writer) | Generate professional emails from brief and recipient (`example.json`) |
 | [ai-support-agent](./ai-support-agent) | Customer support response generator |
 | [ai-lead-extractor](./ai-lead-extractor) | Extract lead info from unstructured text |
 | [ai-email-generator](./ai-email-generator) | Generate email campaigns and follow-ups |
@@ -33,12 +35,12 @@ Ready-to-use example projects demonstrating how to build AI APIs, agents, and au
 
 ## How to Import
 
-Each example includes `actions.json` with action definitions. To import:
+Each example includes `actions.json` or `example.json` with action definitions. To import:
 
 ### Option 1: Via Dashboard (Recommended)
 
 1. Open your project in the ALEXZA Dashboard.
-2. For each action in `actions.json`, click **Add Action** and paste:
+2. For each action in `actions.json` or `example.json`, click **Add Action** and paste:
    - **Action name** → `actionName`
    - **Description** → `description`
    - **Prompt** → `promptTemplate`

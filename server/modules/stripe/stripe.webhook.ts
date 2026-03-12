@@ -10,6 +10,7 @@ import { addCreditsToWallet } from "./stripe.service";
 import { getDb } from "../../db";
 import { logger } from "../../utils/logger";
 import { ObjectId } from "mongodb";
+import type { MarketplacePurchaseDoc, CreatorEarningDoc } from "../../models/monetization";
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 const STRIPE_EVENTS_COLLECTION = "stripe_events";
@@ -108,23 +109,78 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
   const currency = session.currency;
   const metadata = session.metadata;
 
-  if (!amountTotal || currency !== "usd") {
-    logger.warn({ sessionId }, "[Stripe] Invalid session: amount_total or currency");
-    res.status(200).json({ received: true });
-    return;
-  }
-
-  const userIdRaw = metadata?.userId;
-  if (typeof userIdRaw !== "string" || !ObjectId.isValid(userIdRaw)) {
-    logger.warn({ sessionId }, "[Stripe] Invalid metadata userId");
-    res.status(200).json({ received: true });
-    return;
-  }
-
-  const amountUsd = amountTotal / 100;
-  const userId = new ObjectId(userIdRaw);
-
   try {
+    // Marketplace purchase flow
+    if (metadata?.kind === "marketplace_purchase") {
+      const db = await getDb();
+      const purchasesCol = db.collection<MarketplacePurchaseDoc>("marketplace_purchases");
+      const earningsCol = db.collection<CreatorEarningDoc>("creator_earnings");
+
+      const purchase = await purchasesCol.findOne({ stripeSessionId: sessionId });
+      if (!purchase) {
+        logger.warn({ sessionId }, "[Stripe] No purchase found for session");
+        res.status(200).json({ received: true });
+        return;
+      }
+      if (purchase.status === "paid") {
+        res.status(200).json({ received: true });
+        return;
+      }
+      if (!amountTotal) {
+        logger.warn({ sessionId }, "[Stripe] Missing amount_total for purchase");
+        res.status(200).json({ received: true });
+        return;
+      }
+
+      const now = new Date();
+      const subscriptionId = typeof session.subscription === "string" ? session.subscription : undefined;
+
+      await purchasesCol.updateOne(
+        { stripeSessionId: sessionId },
+        { $set: { status: "paid", stripeSubscriptionId: subscriptionId, updatedAt: now } }
+      );
+
+      // Insert earning (idempotent: unique index on purchaseId)
+      try {
+        await earningsCol.insertOne({
+          creatorId: purchase.creatorId,
+          creatorUserId: purchase.creatorUserId,
+          itemType: purchase.itemType,
+          itemId: purchase.itemId,
+          purchaseId: (purchase as unknown as { _id: ObjectId })._id,
+          revenue: purchase.revenue,
+          platformFee: purchase.platformFee,
+          payoutAmount: purchase.payoutAmount,
+          currency: purchase.currency,
+          createdAt: now,
+        } as CreatorEarningDoc);
+      } catch (err: unknown) {
+        const code = (err as { code?: number })?.code;
+        if (code !== 11000) throw err;
+      }
+
+      logger.info({ sessionId, purchaseId: (purchase as unknown as { _id: ObjectId })._id.toString() }, "[Stripe] Marketplace purchase processed");
+      res.status(200).json({ received: true });
+      return;
+    }
+
+    // Wallet top-up flow (existing)
+    if (!amountTotal || currency !== "usd") {
+      logger.warn({ sessionId }, "[Stripe] Invalid session: amount_total or currency");
+      res.status(200).json({ received: true });
+      return;
+    }
+
+    const userIdRaw = metadata?.userId;
+    if (typeof userIdRaw !== "string" || !ObjectId.isValid(userIdRaw)) {
+      logger.warn({ sessionId }, "[Stripe] Invalid metadata userId");
+      res.status(200).json({ received: true });
+      return;
+    }
+
+    const amountUsd = amountTotal / 100;
+    const userId = new ObjectId(userIdRaw);
+
     const result = await addCreditsToWallet({
       userId,
       amountUsd,

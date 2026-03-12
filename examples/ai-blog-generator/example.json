@@ -1,0 +1,30 @@
+[
+  {
+    "actionName": "generate_blog",
+    "description": "Generate a full blog post from a topic and key points.",
+    "promptTemplate": "Write a comprehensive blog post (800-1200 words) on: {{topic}}\n\nKey points to cover: {{keyPoints}}\n\nInclude: engaging intro, well-structured sections with headers, conclusion, and call-to-action. Use a conversational yet professional tone.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string", "description": "Blog topic" },
+        "keyPoints": { "type": "string", "description": "Key points to cover" }
+      },
+      "required": ["topic"]
+    }
+  }
+]
+[
+  {
+    "actionName": "generate_blog",
+    "description": "Generate a full blog post from a topic and key points.",
+    "promptTemplate": "Write a comprehensive blog post (800-1200 words) on: {{topic}}\n\nKey points to cover: {{keyPoints}}\n\nInclude: engaging intro, well-structured sections with headers, conclusion, and call-to-action. Use a conversational yet professional tone.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string", "description": "Blog topic" },
+        "keyPoints": { "type": "string", "description": "Key points to cover" }
+      },
+      "required": ["topic"]
+    }
+  }
+]

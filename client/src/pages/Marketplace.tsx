@@ -26,9 +26,13 @@ interface MarketplaceTemplate {
   name: string;
   description: string;
   author: string;
+  authorUsername?: string;
   templateId: string;
   category?: string;
   tags: string[];
+  price?: number;
+  billingType?: "one-time" | "monthly";
+  currency?: string;
   downloads: number;
   rating: number;
   ratingCount: number;
@@ -81,11 +85,15 @@ function TemplateCard({
   t,
   onInstall,
   onRate,
+  onPurchase,
 }: {
   t: MarketplaceTemplate;
   onInstall: (t: MarketplaceTemplate) => void;
   onRate?: (id: string, rating: number) => void;
+  onPurchase?: (t: MarketplaceTemplate) => void;
 }) {
+  const price = typeof t.price === "number" ? t.price : 0;
+  const billing = t.billingType === "monthly" ? "monthly" : "one-time";
   return (
     <div className="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 p-5 hover:border-[rgba(192,192,192,0.3)] transition-all">
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -106,8 +114,19 @@ function TemplateCard({
       <p className="text-sm text-gray-400 line-clamp-2 mb-2">{t.description}</p>
       <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
         <User size={12} />
-        {t.author}
+        {t.authorUsername ? (
+          <a href={`/app/creators/${t.authorUsername}`} className="text-[#c0c0c0] hover:underline">
+            {t.author}
+          </a>
+        ) : (
+          t.author
+        )}
       </div>
+      {price > 0 && (
+        <div className="mb-3 text-sm text-white">
+          ${price.toFixed(2)}{billing === "monthly" ? " / mo" : ""}
+        </div>
+      )}
       <div className="mb-3">
         <StarRating
           rating={t.rating}
@@ -131,10 +150,10 @@ function TemplateCard({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => onInstall(t)}
+        onClick={() => (price > 0 ? onPurchase?.(t) : onInstall(t))}
         className="w-full border-[rgba(192,192,192,0.3)] text-white hover:bg-[rgba(192,192,192,0.1)]"
       >
-        Install
+        {price > 0 ? `Purchase $${price.toFixed(2)}` : "Install"}
       </Button>
     </div>
   );
@@ -291,6 +310,23 @@ export default function Marketplace() {
     }
   };
 
+  const handlePurchase = async (tmpl: MarketplaceTemplate) => {
+    try {
+      const res = await apiRequest<{ ok: boolean; url: string | null }>(`/api/marketplace/${tmpl.id}/purchase`, { method: "POST" });
+      if (res.url) {
+        window.location.href = res.url;
+        return;
+      }
+      showErrorToast("Purchase failed", "No checkout URL returned");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+      showErrorToast("Purchase failed", error instanceof Error ? error.message : "Unknown error");
+    }
+  };
+
   const handleRate = async (id: string, rating: number) => {
     try {
       await apiRequest<{ ok: boolean; rating: number; ratingCount: number }>(
@@ -405,6 +441,7 @@ export default function Marketplace() {
                     t={tmpl}
                     onInstall={openInstallDrawer}
                     onRate={handleRate}
+                    onPurchase={handlePurchase}
                   />
                 ))}
               </div>
@@ -425,6 +462,7 @@ export default function Marketplace() {
                       t={tmpl}
                       onInstall={openInstallDrawer}
                       onRate={handleRate}
+                      onPurchase={handlePurchase}
                     />
                   ))}
                 </div>
@@ -444,6 +482,7 @@ export default function Marketplace() {
                       t={tmpl}
                       onInstall={openInstallDrawer}
                       onRate={handleRate}
+                      onPurchase={handlePurchase}
                     />
                   ))}
                 </div>
@@ -463,6 +502,7 @@ export default function Marketplace() {
                       t={tmpl}
                       onInstall={openInstallDrawer}
                       onRate={handleRate}
+                      onPurchase={handlePurchase}
                     />
                   ))}
                 </div>

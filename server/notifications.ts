@@ -124,7 +124,7 @@ function shouldSendLowCreditsEmail(user: UserNotificationDoc, now: Date): boolea
   return true;
 }
 
-async function sendLowCreditsEmailForUser(
+export async function sendLowCreditsEmailForUser(
   userId: ObjectId,
   options?: { toOverride?: string }
 ): Promise<{ sent: boolean; skippedReason?: string; balance?: number }> {
@@ -243,13 +243,25 @@ router.post("/admin/notifications/cron/low-credits-scan", async (req, res, next)
       .project({ _id: 1 })
       .toArray();
 
+    const { isQueueEnabled } = await import("../queue/config");
+    const { enqueueEmailJob } = await import("../queue/enqueue");
+    const useQueue = isQueueEnabled();
+
     let sent = 0;
     let skipped = 0;
     for (const candidate of candidates) {
       try {
-        const result = await sendLowCreditsEmailForUser(candidate._id);
-        if (result.sent) sent += 1;
-        else skipped += 1;
+        if (useQueue) {
+          await enqueueEmailJob({
+            type: "low_credits",
+            userId: candidate._id.toString(),
+          });
+          sent += 1; // enqueued for worker to process
+        } else {
+          const result = await sendLowCreditsEmailForUser(candidate._id);
+          if (result.sent) sent += 1;
+          else skipped += 1;
+        }
       } catch {
         skipped += 1;
       }
@@ -260,6 +272,7 @@ router.post("/admin/notifications/cron/low-credits-scan", async (req, res, next)
       scanned: candidates.length,
       sent,
       skipped,
+      ...(useQueue && { note: "Jobs enqueued; worker will process" }),
     });
   } catch (error) {
     return next(error);

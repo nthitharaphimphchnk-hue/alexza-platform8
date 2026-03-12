@@ -37,6 +37,10 @@ interface UserDoc {
   lowCreditsEmailSuppressed?: boolean;
   lowCreditsEmailLastBalance?: number;
   createdAt: Date;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  referralCode?: string;
+  referredBy?: ObjectId;
 }
 
 interface SessionDoc {
@@ -50,11 +54,27 @@ interface AuthBody {
   email?: unknown;
   password?: unknown;
   name?: unknown;
+  referralCode?: unknown;
 }
 
 const router = Router();
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 let authCollectionsReady: Promise<void> | null = null;
+
+const REFERRAL_REWARD_CREDITS =
+  Number.parseInt(process.env.REFERRAL_REWARD_CREDITS ?? "100", 10) || 100;
+const REFERRAL_MAX_REWARDS =
+  Number.parseInt(process.env.REFERRAL_MAX_REWARDS ?? "20", 10) || 20;
+
+function generateReferralCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 8; i += 1) {
+    const idx = Math.floor(Math.random() * alphabet.length);
+    out += alphabet[idx];
+  }
+  return out;
+}
 
 function validationError(message: string) {
   return { ok: false, error: "VALIDATION_ERROR", message } as const;
@@ -110,6 +130,7 @@ export async function ensureAuthCollections() {
       await sessions.createIndex({ tokenHash: 1 }, { unique: true });
       await sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
       await sessions.createIndex({ userId: 1 });
+      await users.createIndex({ referralCode: 1 }, { unique: true, sparse: true });
     })();
   }
   return authCollectionsReady;
@@ -121,6 +142,8 @@ function buildUserResponse(user: WithId<UserDoc>) {
     email: user.email,
     name: user.name,
     lowCreditsEmailSuppressed: user.lowCreditsEmailSuppressed ?? false,
+    onboardingCompleted: user.onboardingCompleted ?? false,
+    onboardingStep: typeof user.onboardingStep === "number" ? user.onboardingStep : 0,
   };
 }
 
@@ -151,7 +174,8 @@ export async function createSessionAndSetCookie(userId: ObjectId, res: Response)
 router.post("/auth/signup", async (req, res, next) => {
   try {
     await ensureAuthCollections();
-    const payload = validateSignup(req.body as AuthBody);
+    const body = req.body as AuthBody;
+    const payload = validateSignup(body);
 
     if (!payload.valid) {
       return res.status(400).json(validationError(payload.message));
@@ -163,6 +187,16 @@ router.post("/auth/signup", async (req, res, next) => {
     const existing = await users.findOne({ email: payload.email });
     if (existing) {
       return res.status(409).json({ ok: false, error: "EMAIL_EXISTS" });
+    }
+
+    const referralCodeRaw =
+      typeof body.referralCode === "string" ? body.referralCode.trim().toUpperCase() : "";
+    let referrerId: ObjectId | null = null;
+    if (referralCodeRaw) {
+      const referrer = await users.findOne({ referralCode: referralCodeRaw });
+      if (referrer && referrer.email !== payload.email) {
+        referrerId = referrer._id;
+      }
     }
 
     const passwordHash = await hashPassword(payload.password);
@@ -180,6 +214,9 @@ router.post("/auth/signup", async (req, res, next) => {
       billingCycleAnchor: createdAt,
       lowCreditsEmailSuppressed: false,
       createdAt,
+      onboardingCompleted: false,
+      onboardingStep: 0,
+      referredBy: referrerId ?? undefined,
     });
 
     try {
@@ -194,6 +231,21 @@ router.post("/auth/signup", async (req, res, next) => {
       throw txErr;
     }
 
+    // Generate referral code for new user
+    let referralCode = "";
+    for (let i = 0; i < 5; i += 1) {
+      const code = generateReferralCode();
+      const clash = await users.findOne({ referralCode: code });
+      if (!clash) {
+        referralCode = code;
+        await users.updateOne(
+          { _id: insertResult.insertedId },
+          { $set: { referralCode: code } }
+        );
+        break;
+      }
+    }
+
     const user = (await users.findOne({ _id: insertResult.insertedId })) as WithId<UserDoc> | null;
     if (!user) {
       throw new Error("Failed to load newly created user");
@@ -201,6 +253,62 @@ router.post("/auth/signup", async (req, res, next) => {
 
     const { ensurePersonalWorkspace } = await import("./workspaces/migration");
     await ensurePersonalWorkspace(insertResult.insertedId);
+
+    // Referral rewards
+    if (referrerId) {
+      try {
+        const referralsCol = db.collection<{
+          userId: ObjectId;
+          referredUserId: ObjectId;
+          rewardCredits: number;
+          createdAt: Date;
+        }>("referrals");
+
+        const existingRewardCount = await referralsCol.countDocuments({ userId: referrerId });
+        if (existingRewardCount < REFERRAL_MAX_REWARDS) {
+          const reward = REFERRAL_REWARD_CREDITS;
+          const now = new Date();
+
+          await referralsCol.insertOne({
+            userId: referrerId,
+            referredUserId: insertResult.insertedId,
+            rewardCredits: reward,
+            createdAt: now,
+          });
+
+          await Promise.all([
+            writeWalletTransaction({
+              userId: referrerId,
+              type: "grant",
+              credits: reward,
+              meta: { reason: "Referral reward", referredUserId: insertResult.insertedId.toString() },
+            }),
+            writeWalletTransaction({
+              userId: insertResult.insertedId,
+              type: "grant",
+              credits: reward,
+              meta: { reason: "Referral signup bonus", referrerUserId: referrerId.toString() },
+            }),
+            users.updateOne(
+              { _id: referrerId },
+              {
+                $inc: { walletBalanceCredits: reward },
+                $set: { walletUpdatedAt: now },
+              }
+            ),
+            users.updateOne(
+              { _id: insertResult.insertedId },
+              {
+                $inc: { walletBalanceCredits: reward },
+                $set: { walletUpdatedAt: now },
+              }
+            ),
+          ]);
+        }
+      } catch (refErr) {
+        logger.warn({ err: refErr }, "[Referral] Failed to grant referral reward");
+      }
+    }
 
     await createSessionAndSetCookie(insertResult.insertedId, res);
     const { getAuditContext } = await import("./audit/auditContext");

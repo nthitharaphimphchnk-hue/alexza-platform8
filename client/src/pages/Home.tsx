@@ -16,13 +16,27 @@ import DeveloperFeaturesSection from "@/components/landing/DeveloperFeaturesSect
 
 type CodeTab = 'node' | 'python' | 'curl';
 
+const GITHUB_REPO_URL = "https://github.com/nthitharaphimphchnk-hue/alexza-platform8";
+
 export default function Home() {
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [codeTab, setCodeTab] = useState<CodeTab>('node');
+  const [githubError, setGithubError] = useState(false);
   const containerRef = useRef(null);
   const { scrollY } = useScroll();
   const parallaxY = useTransform(scrollY, [0, 500], [0, 150]);
+
+  const handleGitHubClick = (event?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
+    if (event) {
+      event.preventDefault();
+    }
+    console.log("Opening GitHub repo:", GITHUB_REPO_URL);
+    const win = window.open(GITHUB_REPO_URL, "_blank", "noopener,noreferrer");
+    if (!win) {
+      setGithubError(true);
+    }
+  };
 
   return (
     <div className="min-h-screen text-foreground overflow-hidden" ref={containerRef}>
@@ -140,6 +154,18 @@ export default function Home() {
                 <Button variant="outline" className="bg-transparent border-2 border-white/30 text-white hover:bg-white/5 h-12 px-8 text-base font-semibold flex items-center gap-2 w-full sm:w-auto justify-center rounded-lg" onClick={() => (window.location.href = "/playground")}>
                   {t("home.cta2")} <ArrowRight size={18} />
                 </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <a 
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleGitHubClick}
+                  className="github-button inline-flex items-center gap-2 h-12 px-8 text-base font-semibold rounded-lg border-2 border-[rgba(255,255,255,0.2)] text-gray-300 hover:text-white hover:border-white/40 hover:bg-white/5 transition-colors"
+                >
+                  <Github size={18} />
+                  View on GitHub
+                </a>
               </motion.div>
             </div>
           </motion.div>
@@ -342,6 +368,65 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </div>
+      </section>
+
+      {/* Built for Developers */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-10 items-start"
+          variants={scrollFadeInVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <div className="space-y-6">
+            <h2 className="text-4xl font-bold text-white">Built for Developers</h2>
+            <p className="text-lg text-gray-300">
+              Ship AI features with production-grade primitives: REST APIs, webhooks, workflows, and agents that fit into your stack.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {[
+                "REST API",
+                "Webhooks",
+                "Automation Workflows",
+                "AI Agents",
+                "SDK Support",
+              ].map((label) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[rgba(255,255,255,0.16)] bg-[#0b0e12] text-sm text-gray-200"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#c0c0c0]" />
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="code-block-border-glow w-full">
+            <div className="rounded-xl border border-[rgba(255,255,255,0.12)] overflow-hidden bg-[#050607]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.12)] bg-[#0a0a0a]">
+                <div className="flex items-center gap-2 text-xs font-mono text-gray-400">
+                  <span className="px-2 py-0.5 rounded-md bg-green-500/10 text-green-400 border border-green-500/40">
+                    POST
+                  </span>
+                  <code>/v1/projects/:projectId/run/:actionName</code>
+                </div>
+              </div>
+              <pre className="p-4 text-xs sm:text-sm font-mono text-gray-300 overflow-x-auto leading-relaxed">
+{`curl -X POST "https://api.alexza.ai/v1/projects/PROJECT_ID/run/generate_blog" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -d '{
+    "input": {
+      "topic": "The Future of Remote Work",
+      "keyPoints": "hybrid models, async communication, work-life balance"
+    }
+  }'`}
+              </pre>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Integrate - Resend-style API code block + Live Preview */}
@@ -571,6 +656,110 @@ export default function Home() {
       {/* About Us - Founder Spotlight */}
       <FounderSpotlight />
 
+      {/* Open Source Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <motion.div
+          className="max-w-4xl mx-auto text-center"
+          variants={scrollFadeInVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <h2 className="text-4xl font-bold text-white mb-4">Open Source</h2>
+          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+            Explore the source code and examples behind the ALEXZA AI automation platform.
+          </p>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <a 
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleGitHubClick}
+              className="github-button inline-flex items-center gap-2 h-12 px-8 text-base font-semibold rounded-lg bg-[#24292f] hover:bg-[#2d333b] text-white border border-[rgba(255,255,255,0.1)] transition-colors"
+            >
+              <Github size={20} />
+              View on GitHub
+            </a>
+          </motion.div>
+          <p className="mt-6 text-sm text-gray-500">
+            Backend API · Frontend React · Workflows · Agents · Webhooks · Billing · AI Builder
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Open Source Fallback Section */}
+      {githubError && (
+        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#050607] border-t border-b border-[rgba(255,255,255,0.1)]">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            <h2 className="text-3xl font-bold text-white">Open Source</h2>
+            <p className="text-lg text-gray-300">
+              Explore the source code behind ALEXZA AI automation platform.
+            </p>
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleGitHubClick}
+              className="github-button inline-flex items-center gap-2 h-11 px-6 text-sm font-semibold rounded-full bg-[#24292f] hover:bg-[#2d333b] text-white border border-[rgba(255,255,255,0.18)] transition-colors"
+            >
+              <Github size={18} />
+              View Source on GitHub
+            </a>
+          </div>
+        </section>
+      )}
+
+      {/* Developer CTA Section below Open Source */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <h2 className="text-3xl font-bold text-white">Build AI workflows with one API call</h2>
+          <p className="text-lg text-gray-300">
+            Define actions once in ALEXZA, then trigger complete AI workflows from your backend with a single HTTP request.
+          </p>
+          <div className="mt-4 rounded-xl border border-[rgba(255,255,255,0.16)] bg-[#050607] text-left overflow-hidden">
+            <div className="px-4 py-2 border-b border-[rgba(255,255,255,0.16)] bg-[#0a0a0a] flex items-center gap-2 text-xs font-mono text-gray-400">
+              <span className="px-2 py-0.5 rounded-md bg-green-500/10 text-green-400 border border-green-500/40">
+                POST
+              </span>
+              <code>/v1/projects/:projectId/run/:actionName</code>
+            </div>
+            <pre className="p-4 text-xs sm:text-sm font-mono text-gray-300 overflow-x-auto leading-relaxed">
+{`curl -X POST "https://api.alexza.ai/v1/projects/PROJECT_ID/run/blog-generator" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: YOUR_API_KEY"`}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* GitHub Star Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#050607] border-t border-b border-[rgba(255,255,255,0.08)]">
+        <motion.div
+          className="max-w-3xl mx-auto text-center space-y-4"
+          variants={scrollFadeInVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <h2 className="text-3xl font-bold text-white">Star us on GitHub</h2>
+          <p className="text-lg text-gray-300">
+            If you like ALEXZA, consider giving the project a star on GitHub.
+          </p>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleGitHubClick}
+              className="github-button inline-flex items-center gap-2 h-11 px-6 text-sm font-semibold rounded-full bg-[#24292f] hover:bg-[#2d333b] text-white border border-[rgba(255,255,255,0.18)] transition-colors"
+            >
+              <Github size={18} />
+              Star ALEXZA on GitHub
+            </a>
+          </motion.div>
+        </motion.div>
+      </section>
+
       {/* CTA Section - Resend-style box */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <motion.div 
@@ -620,8 +809,8 @@ export default function Home() {
               </div>
               <div className="flex gap-2">
                 {[
-                  { Icon: X, href: '#', label: 'X' },
-                  { Icon: Github, href: '#', label: 'GitHub' },
+                  { Icon: X, href: 'https://x.com/ALEXZAAIGateway', label: 'X' },
+                  { Icon: Github, href: GITHUB_REPO_URL, label: 'GitHub' },
                   { Icon: Linkedin, href: '#', label: 'LinkedIn' },
                   { Icon: Youtube, href: '#', label: 'YouTube' },
                 ].map(({ Icon, href, label }) => (
@@ -629,6 +818,9 @@ export default function Home() {
                     key={label}
                     href={href}
                     aria-label={label}
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    onClick={label === 'GitHub' ? (e) => handleGitHubClick(e) : undefined}
                     className="w-9 h-9 rounded-full border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-gray-400 hover:text-white hover:border-[rgba(255,255,255,0.3)] transition-colors"
                   >
                     <Icon className="w-4 h-4" />

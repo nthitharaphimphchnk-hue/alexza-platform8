@@ -5,16 +5,17 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "../db";
 import { logger } from "../utils/logger";
+import { getCurrentRegionId } from "../config/regions";
 import { computeWebhookSignature } from "./signature";
+import { WEBHOOK_TIMEOUT_MS } from "../config";
 import type { WebhookEventType, WebhookEndpointDoc, DeliveryStatus } from "./types";
 
-const REQUEST_TIMEOUT_MS = 10_000;
 const RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000]; // 1m, 5m, 30m
 const MAX_ATTEMPTS = 1 + RETRY_DELAYS_MS.length;
 
 let collectionsReady: Promise<void> | null = null;
 
-async function ensureCollections(): Promise<void> {
+export async function ensureWebhookCollections(): Promise<void> {
   if (!collectionsReady) {
     collectionsReady = (async () => {
       const db = await getDb();
@@ -77,7 +78,7 @@ async function createDelivery(
   return result.insertedId;
 }
 
-async function updateDelivery(
+export async function updateDelivery(
   deliveryId: ObjectId,
   status: DeliveryStatus,
   attemptCount: number,
@@ -99,29 +100,34 @@ async function updateDelivery(
   await db.collection("webhook_deliveries").updateOne({ _id: deliveryId }, { $set: set });
 }
 
-async function sendRequest(
+export async function sendWebhookRequest(
   url: string,
   event: WebhookEventType,
   payload: Record<string, unknown>,
   secret: string
 ): Promise<{ statusCode: number; ok: boolean; error?: string; latencyMs: number }> {
+  const regionId = getCurrentRegionId();
+  const payloadWithRegion = regionId ? { ...payload, region: regionId } : payload;
   const timestamp = String(Date.now());
-  const rawBody = JSON.stringify(payload);
+  const rawBody = JSON.stringify(payloadWithRegion);
   const signature = computeWebhookSignature(secret, timestamp, rawBody);
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
   const startMs = Date.now();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Alexza-Event": event,
+    "X-Alexza-Timestamp": timestamp,
+    "X-Alexza-Signature": signature,
+  };
+  if (regionId) headers["X-Alexza-Region"] = regionId;
 
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Alexza-Event": event,
-        "X-Alexza-Timestamp": timestamp,
-        "X-Alexza-Signature": signature,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });
@@ -149,7 +155,7 @@ export async function dispatchWebhookEvent(params: {
   ownerUserId: ObjectId;
   projectId?: ObjectId | null;
 }): Promise<void> {
-  await ensureCollections();
+  await ensureWebhookCollections();
 
   const endpoints = await fetchEndpointsForEvent(
     params.event,
@@ -172,7 +178,7 @@ export async function dispatchWebhookEvent(params: {
     );
 
     const attempt = async (attemptCount: number): Promise<void> => {
-      const result = await sendRequest(ep.url, params.event, params.payload, ep.secret);
+      const result = await sendWebhookRequest(ep.url, params.event, params.payload, ep.secret);
 
       if (result.ok) {
         await updateDelivery(deliveryId, "success", attemptCount, result.statusCode, undefined, undefined, result.latencyMs);
@@ -234,7 +240,7 @@ export async function retryWebhookDelivery(params: {
   | { ok: true; deliveryId: string; status: string; statusCode?: number; latencyMs?: number }
   | { ok: false; error: string; statusCode: number }
 > {
-  await ensureCollections();
+  await ensureWebhookCollections();
 
   const db = await getDb();
   const epCol = db.collection<WebhookEndpointDoc>("webhook_endpoints");
@@ -254,7 +260,7 @@ export async function retryWebhookDelivery(params: {
 
   const payload = (delivery.payload as Record<string, unknown>) || {};
   const event = delivery.event as WebhookEventType;
-  const result = await sendRequest(endpoint.url, event, payload, endpoint.secret);
+  const result = await sendWebhookRequest(endpoint.url, event, payload, endpoint.secret);
 
   const attemptCount = (delivery.attemptCount as number) + 1;
   if (result.ok) {

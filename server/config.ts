@@ -50,6 +50,21 @@ export const RATE_LIMIT_IP_PER_MIN = readPositiveIntFromEnv("RATE_LIMIT_IP_PER_M
 
 /** Upstream provider timeout (ms) */
 export const UPSTREAM_TIMEOUT_MS = readPositiveIntFromEnv("UPSTREAM_TIMEOUT_MS", 30_000);
+
+/** Global HTTP request timeout (ms) - protects /v1 and /api endpoints. */
+export const REQUEST_TIMEOUT_MS = readPositiveIntFromEnv("REQUEST_TIMEOUT_MS", 30_000);
+
+/**
+ * AI run timeout (ms) for upstream model providers.
+ * Defaults to UPSTREAM_TIMEOUT_MS for backward compatibility.
+ */
+export const AI_RUN_TIMEOUT_MS = readPositiveIntFromEnv("AI_RUN_TIMEOUT_MS", UPSTREAM_TIMEOUT_MS);
+
+/** Outbound webhook delivery timeout (ms). */
+export const WEBHOOK_TIMEOUT_MS = readPositiveIntFromEnv("WEBHOOK_TIMEOUT_MS", 10_000);
+
+/** Per-step timeout (ms) for workflow engine HTTP calls. */
+export const WORKFLOW_STEP_TIMEOUT_MS = readPositiveIntFromEnv("WORKFLOW_STEP_TIMEOUT_MS", 20_000);
 export const MAX_INPUT_CHARS = readPositiveIntFromEnv("MAX_INPUT_CHARS", 12000);
 export const MAX_ESTIMATED_TOKENS = readPositiveIntFromEnv("MAX_ESTIMATED_TOKENS", 8000);
 export const MAX_CREDITS_PER_REQUEST = readPositiveIntFromEnv("MAX_CREDITS_PER_REQUEST", 50);

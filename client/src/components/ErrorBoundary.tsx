@@ -1,54 +1,48 @@
-import { cn } from "@/lib/utils";
-import { AlertTriangle, RotateCcw } from "lucide-react";
-import { Component, ReactNode } from "react";
+import * as React from "react";
+import * as Sentry from "@sentry/react";
 
-interface Props {
-  children: ReactNode;
-}
+type ErrorBoundaryProps = {
+  children: React.ReactNode;
+};
 
-interface State {
+type ErrorBoundaryState = {
   hasError: boolean;
-  error: Error | null;
-}
+};
 
-class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
+    this.handleReload = this.handleReload.bind(this);
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, errorInfo: React.ErrorInfo) {
+    if (typeof Sentry.captureException === "function") {
+      Sentry.captureException(error, { extra: errorInfo });
+    }
+  }
+
+  handleReload() {
+    window.location.reload();
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex items-center justify-center min-h-screen p-8 bg-background">
-          <div className="flex flex-col items-center w-full max-w-2xl p-8">
-            <AlertTriangle
-              size={48}
-              className="text-destructive mb-6 flex-shrink-0"
-            />
-
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
-
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
-            </div>
-
+        <div className="flex min-h-screen items-center justify-center bg-[#050607] px-4">
+          <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-8 text-center shadow-lg">
+            <h1 className="mb-3 text-xl font-semibold text-white">Something went wrong.</h1>
+            <p className="mb-6 text-sm text-gray-400">Please reload the page. If the problem persists, contact support.</p>
             <button
-              onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
-              )}
+              type="button"
+              onClick={this.handleReload}
+              className="inline-flex items-center justify-center rounded-lg bg-[#c0c0c0] px-4 py-2 text-sm font-medium text-black hover:bg-[#a8a8a8] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0b0e12] focus:ring-[#c0c0c0]"
             >
-              <RotateCcw size={16} />
-              Reload Page
+              Reload
             </button>
           </div>
         </div>

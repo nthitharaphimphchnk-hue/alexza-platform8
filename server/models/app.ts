@@ -17,6 +17,8 @@ export const APP_PERMISSIONS: AppPermission[] = [
   "manage:workflows",
 ];
 
+export type MarketplaceBillingType = "one-time" | "monthly";
+
 export interface AppDoc {
   _id: ObjectId;
   name: string;
@@ -26,6 +28,9 @@ export interface AppDoc {
   permissions: AppPermission[];
   category?: string;
   tags: string[];
+  price: number; // in major units (e.g. 9.99)
+  billingType: MarketplaceBillingType;
+  currency: string; // e.g. "usd"
   downloads: number;
   rating: number;
   ratingCount: number;

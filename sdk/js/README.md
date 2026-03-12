@@ -34,6 +34,18 @@ console.log(result.usage?.tokens);
 - `apiKey` - Your API key (required)
 - `options.baseUrl` - API base URL (default: `https://api.alexza.ai`)
 
+### `discoverBestRegion(discoveryBaseUrl?)`
+
+Probes all regions and returns the one with lowest latency. Use for multi-region routing:
+
+```javascript
+import { Alexza, discoverBestRegion } from "@alexza-ai/sdk";
+
+const best = await discoverBestRegion();
+const client = new Alexza("axza_xxx", { baseUrl: best.apiBaseUrl });
+await client.run({ project, action, input });
+```
+
 ### `client.run(options)`
 
 - `options.project` - Project ID

@@ -121,6 +121,7 @@ export async function runWithFallback(
   }
 
   let lastError: unknown = null;
+  let lastErrorWasTimeout = false;
   for (const model of models) {
     try {
       const result = await runProvider({
@@ -137,6 +138,10 @@ export async function runWithFallback(
       return result;
     } catch (err) {
       lastError = err;
+      const isTimeout = err instanceof Error && ((err as Error & { isTimeout?: boolean }).isTimeout || err.message.toLowerCase().includes("timeout") || err.message.toLowerCase().includes("abort"));
+      if (isTimeout) {
+        lastErrorWasTimeout = true;
+      }
       if (process.env.NODE_ENV !== "production" || process.env.ADMIN_API_KEY) {
         const reason = err instanceof Error ? err.message : String(err);
         console.log(`[Providers] runWithFallback failure (internal): ${reason}`);
@@ -148,8 +153,16 @@ export async function runWithFallback(
         }
         continue;
       }
-      throw new Error("Request failed");
+      const finalErr = new Error(lastErrorWasTimeout ? "Upstream timeout" : "Request failed");
+      if (lastErrorWasTimeout) {
+        (finalErr as Error & { isTimeout?: boolean }).isTimeout = true;
+      }
+      throw finalErr;
     }
   }
-  throw new Error("Request failed");
+  const finalErr = new Error(lastErrorWasTimeout ? "Upstream timeout" : "Request failed");
+  if (lastErrorWasTimeout) {
+    (finalErr as Error & { isTimeout?: boolean }).isTimeout = true;
+  }
+  throw finalErr;
 }

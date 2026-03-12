@@ -7,7 +7,9 @@ import { Router, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import { runWithFallback } from "./providers";
 import { QUALITY_MODELS, QUALITY_MODELS_OPENAI } from "./modelRegistry";
-import type { ProviderType } from "./models/types";
+import type { ProviderType, ProjectActionDoc } from "./models/types";
+import { selectModelsForAction } from "./ai/model-router";
+import type { RoutingMode } from "./modelRegistry";
 
 const router = Router();
 
@@ -134,10 +136,27 @@ router.post(
 
     try {
       const provider = getExecutionProvider();
-      const models = getModels(provider);
+
+      // Use model router heuristics by synthesizing a pseudo action doc
+      const fakeAction: ProjectActionDoc = {
+        // values not persisted; only used for routing heuristics
+        userId: {} as any,
+        projectId: {} as any,
+        actionName: action,
+        description: spec.label,
+        inputSchema: {},
+        promptTemplate: prompt,
+        provider,
+        model: provider === "openrouter" ? QUALITY_MODELS[0] : QUALITY_MODELS_OPENAI[0],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const routingMode: RoutingMode = "quality";
+      const decision = selectModelsForAction({ action: fakeAction, routingMode, provider });
+
       const result = await runWithFallback({
         provider,
-        models,
+        models: decision.models,
         prompt,
         temperature: 0.7,
         maxTokens: 2048,

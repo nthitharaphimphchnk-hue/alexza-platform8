@@ -62,6 +62,9 @@ function toPublicApp(doc: AppDoc) {
     category: doc.category,
     tags: doc.tags ?? [],
     version: (doc as AppDoc & { version?: string }).version ?? "1.0.0",
+    price: doc.price ?? 0,
+    billingType: doc.billingType ?? "one-time",
+    currency: doc.currency ?? "usd",
     downloads: doc.downloads ?? 0,
     rating: doc.rating ?? 0,
     ratingCount: doc.ratingCount ?? 0,
@@ -85,6 +88,9 @@ router.post("/apps/publish", requireAuth, async (req, res, next) => {
       tags?: string[];
       visibility?: string;
       version?: string;
+      price?: number;
+      billingType?: string;
+      currency?: string;
     };
 
     const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -108,6 +114,9 @@ router.post("/apps/publish", requireAuth, async (req, res, next) => {
       ? body.visibility
       : "public";
     const version = typeof body.version === "string" ? body.version.trim() || "1.0.0" : "1.0.0";
+    const price = typeof body.price === "number" && Number.isFinite(body.price) && body.price >= 0 ? Math.round(body.price * 100) / 100 : 0;
+    const billingType = body.billingType === "monthly" ? "monthly" : "one-time";
+    const currency = typeof body.currency === "string" && body.currency.trim() ? body.currency.trim().toLowerCase() : "usd";
 
     const db = await getDb();
     const usersCol = db.collection<{ _id: ObjectId; name?: string; email: string }>("users");
@@ -123,6 +132,9 @@ router.post("/apps/publish", requireAuth, async (req, res, next) => {
       permissions,
       category,
       tags,
+      price,
+      billingType,
+      currency,
       downloads: 0,
       rating: 0,
       ratingCount: 0,
@@ -317,6 +329,17 @@ router.post("/apps/:id/install", requireAuth, async (req, res, next) => {
     const app = await db.collection<AppDoc>("apps").findOne({ _id: appId });
     if (!app) return res.status(404).json({ ok: false, error: "NOT_FOUND", message: "App not found" });
     if (app.visibility !== "public") return res.status(404).json({ ok: false, error: "NOT_FOUND" });
+    if ((app.price ?? 0) > 0) {
+      const purchase = await db.collection("marketplace_purchases").findOne({
+        buyerUserId: req.user._id,
+        itemType: "app",
+        itemId: appId,
+        status: "paid",
+      });
+      if (!purchase) {
+        return res.status(402).json({ ok: false, error: "PAYMENT_REQUIRED", message: "Purchase required to install this app" });
+      }
+    }
 
     const installsCol = db.collection<AppInstallDoc>("app_installs");
     const existing = await installsCol.findOne({ workspaceId, appId });

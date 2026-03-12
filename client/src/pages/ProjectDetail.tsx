@@ -5,11 +5,11 @@ import ApiKeys from "@/pages/ApiKeys";
 import UsageSummaryPanel from "@/components/usage/UsageSummaryPanel";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Modal from "@/components/Modal";
-import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle, MessageSquare, RefreshCw, Download, Upload } from "lucide-react";
+import { ArrowLeft, AlertCircle, Pencil, Play, Trash2, Copy, Terminal, PlayCircle, MessageSquare, RefreshCw, Download, Upload, History } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ApiError, apiRequest, API_BASE_URL } from "@/lib/api";
-import { listActions, deleteAction, runAction } from "@/lib/alexzaApi";
+import { listActions, deleteAction, runAction, listPromptVersions, rollbackPromptVersion, type PromptVersion } from "@/lib/alexzaApi";
 import { generateSamplePayload, validatePayloadLight } from "@/lib/payloadFromSchema";
 import type { PublicAction } from "@/lib/alexzaApi";
 import { showErrorToast, showProjectDeletedToast, showSuccessToast, showCopyToClipboardToast } from "@/lib/toast";
@@ -62,6 +62,10 @@ export default function ProjectDetail() {
   const [validateError, setValidateError] = useState<string | null>(null);
   const [deleteActionName, setDeleteActionName] = useState<string | null>(null);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
+  const [historyAction, setHistoryAction] = useState<PublicAction | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyVersions, setHistoryVersions] = useState<PromptVersion[]>([]);
+  const [rollbackLoading, setRollbackLoading] = useState(false);
   const [routingModeSaving, setRoutingModeSaving] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -293,6 +297,38 @@ export default function ProjectDetail() {
       showErrorToast("Failed to delete action");
     } finally {
       setIsDeletingAction(false);
+    }
+  };
+
+  const openHistoryModal = async (action: PublicAction) => {
+    setHistoryAction(action);
+    setHistoryVersions([]);
+    setHistoryLoading(true);
+    try {
+      const versions = await listPromptVersions(action.id);
+      setHistoryVersions(versions);
+    } catch (e) {
+      showErrorToast("Failed to load prompt history");
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleRollbackVersion = async (version: number) => {
+    if (!historyAction) return;
+    setRollbackLoading(true);
+    try {
+      const updated = await rollbackPromptVersion(historyAction.id, version);
+      showSuccessToast("Prompt rolled back", `${historyAction.actionName} → v${version}`);
+      // Update actions list with new updatedAt
+      setActions((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+      // Reload versions to reflect new snapshot
+      const versions = await listPromptVersions(historyAction.id);
+      setHistoryVersions(versions);
+    } catch (e) {
+      showErrorToast("Failed to rollback prompt");
+    } finally {
+      setRollbackLoading(false);
     }
   };
 
@@ -705,6 +741,14 @@ const data = await res.json();`;
                                   variant="outline"
                                   size="sm"
                                   className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                                  onClick={() => void openHistoryModal(action)}
+                                >
+                                  <History size={14} className="mr-1" /> Prompt history
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[rgba(255,255,255,0.12)] text-white hover:bg-[rgba(255,255,255,0.06)]"
                                   onClick={() => copyEndpoint(action.actionName)}
                                 >
                                   <Copy size={14} className="mr-1" /> {t("projectDetail.copyEndpoint")}
@@ -896,6 +940,76 @@ const data = await res.json();`;
                 </pre>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Prompt Version History Modal */}
+      <Modal
+        open={!!historyAction}
+        onOpenChange={(open) => {
+          if (!open) {
+            setHistoryAction(null);
+            setHistoryVersions([]);
+          }
+        }}
+        title={
+          historyAction
+            ? `Prompt versions: ${historyAction.actionName}`
+            : "Prompt versions"
+        }
+        description="View and rollback previous versions of this action's prompt."
+        size="lg"
+        footer={
+          <Button
+            variant="outline"
+            onClick={() => {
+              setHistoryAction(null);
+              setHistoryVersions([]);
+            }}
+            className="border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.08)]"
+          >
+            {t("common.close")}
+          </Button>
+        }
+      >
+        {historyLoading ? (
+          <p className="text-sm text-gray-400">Loading prompt history...</p>
+        ) : historyVersions.length === 0 ? (
+          <p className="text-sm text-gray-400">
+            No prompt versions found yet. Versions are created when the prompt is updated.
+          </p>
+        ) : (
+          <div className="space-y-3 max-h-[360px] overflow-y-auto">
+            {historyVersions.map((v) => (
+              <div
+                key={v.version}
+                className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12] p-3 space-y-1"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-gray-200">
+                      Version {v.version}
+                    </span>
+                    <span className="text-[11px] text-gray-500">
+                      {new Date(v.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={rollbackLoading}
+                    className="border-[rgba(255,255,255,0.12)] text-gray-300 hover:bg-[rgba(255,255,255,0.06)]"
+                    onClick={() => void handleRollbackVersion(v.version)}
+                  >
+                    Rollback{rollbackLoading ? "..." : ""}
+                  </Button>
+                </div>
+                <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words font-mono mt-2">
+                  {v.prompt}
+                </pre>
+              </div>
+            ))}
           </div>
         )}
       </Modal>

@@ -2,7 +2,7 @@
  * OpenRouter provider - Execution Gateway
  */
 
-import { UPSTREAM_TIMEOUT_MS } from "../config";
+import { AI_RUN_TIMEOUT_MS } from "../config";
 
 export interface OpenRouterRunParams {
   model: string;
@@ -29,7 +29,7 @@ export async function runOpenRouter(params: OpenRouterRunParams): Promise<OpenRo
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), AI_RUN_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${baseUrl}/chat/completions`, {

@@ -1,0 +1,32 @@
+[
+  {
+    "actionName": "write_email",
+    "description": "Generate a professional email from a brief and recipient context.",
+    "promptTemplate": "Write a professional email based on the following:\n\nBrief: {{brief}}\nRecipient: {{recipient}}\nTone: {{tone}}\n\nKeep it concise, clear, and appropriate for the tone. Include a subject line suggestion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "brief": { "type": "string", "description": "What the email should convey" },
+        "recipient": { "type": "string", "description": "Recipient context (name, role, company)" },
+        "tone": { "type": "string", "description": "Tone of the email", "enum": ["formal", "friendly", "casual"] }
+      },
+      "required": ["brief", "recipient"]
+    }
+  }
+]
+[
+  {
+    "actionName": "write_email",
+    "description": "Generate a professional email from a brief and recipient context.",
+    "promptTemplate": "Write a professional email based on the following:\n\nBrief: {{brief}}\nRecipient: {{recipient}}\nTone: {{tone}}\n\nKeep it concise, clear, and appropriate for the tone. Include a subject line suggestion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "brief": { "type": "string", "description": "What the email should convey" },
+        "recipient": { "type": "string", "description": "Recipient context (name, role, company)" },
+        "tone": { "type": "string", "description": "Tone: formal, friendly, or casual", "enum": ["formal", "friendly", "casual"] }
+      },
+      "required": ["brief", "recipient"]
+    }
+  }
+]

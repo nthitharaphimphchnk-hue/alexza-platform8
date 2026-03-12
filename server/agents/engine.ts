@@ -8,6 +8,7 @@ import { runProvider } from "../providers";
 import { runWorkflowAction } from "../workflows/runAction";
 import { executeWorkflow } from "../workflows/engine";
 import { logger } from "../utils/logger";
+import { runInputSafetyCheck, runOutputSafetyCheck, recordSafetyEvent } from "../ai/safety-guard";
 import { QUALITY_MODELS, QUALITY_MODELS_OPENAI } from "../modelRegistry";
 import type { AgentDoc, AgentTool } from "../models/agent";
 
@@ -90,6 +91,29 @@ export async function runAgent(params: RunAgentParams): Promise<RunAgentResult> 
       .slice(-MAX_MEMORY_MESSAGES);
   }
 
+  // Safety guard on agent input
+  try {
+    const inputCheck = await runInputSafetyCheck({
+      text: input,
+      direction: "input",
+      userId: ownerUserId,
+      projectId: null,
+      actionId: null,
+    });
+    if (inputCheck.ruleTriggered) {
+      await recordSafetyEvent({
+        ctx: { text: input, direction: "input", userId: ownerUserId, projectId: null, actionId: null },
+        ruleTriggered: inputCheck.ruleTriggered,
+        decision: inputCheck.decision,
+      });
+    }
+    if (inputCheck.decision === "block") {
+      throw new Error("Agent input blocked by safety guard");
+    }
+  } catch {
+    // If safety guard fails, continue; agents should still run.
+  }
+
   const toolsDesc = agent.tools.length > 0 ? buildToolsDescription(agent.tools) : "No tools available.";
   const toolCallFormat = agent.tools.length > 0 ? buildToolCallFormat(agent.tools) : "";
 
@@ -154,6 +178,32 @@ Always output either TOOL_CALL: or RESPOND: as the first line.`;
       { agentId, sessionId, role: "user", content: input, createdAt: new Date() },
       { agentId, sessionId, role: "assistant", content: output, createdAt: new Date() },
     ]);
+  }
+
+  // Safety guard on agent output
+  try {
+    const outputCheck = await runOutputSafetyCheck({
+      text: output,
+      direction: "output",
+      userId: ownerUserId,
+      projectId: null,
+      actionId: null,
+    });
+    if (outputCheck.ruleTriggered) {
+      await recordSafetyEvent({
+        ctx: { text: output, direction: "output", userId: ownerUserId, projectId: null, actionId: null },
+        ruleTriggered: outputCheck.ruleTriggered,
+        decision: outputCheck.decision,
+      });
+    }
+    if (outputCheck.decision === "block") {
+      throw new Error("Agent output blocked by safety guard");
+    }
+    if (outputCheck.decision === "sanitize" && outputCheck.sanitizedText) {
+      output = outputCheck.sanitizedText;
+    }
+  } catch {
+    // Ignore safety guard failures for agents.
   }
 
   return {

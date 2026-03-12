@@ -231,6 +231,21 @@ router.post("/run", deprecationHeaders, requireApiKey, requireApiScope("run:acti
       totalTokens,
     });
 
+    const { recordBillingLedger } = await import("./billing/ledger");
+    await recordBillingLedger({
+      requestId: runId,
+      userId: req.apiKey.ownerUserId,
+      projectId: req.apiKey.projectId,
+      apiKeyId: req.apiKey._id,
+      actionName: "/v1/run",
+      provider,
+      model,
+      inputTokens: usage?.input_tokens ?? 0,
+      outputTokens: usage?.output_tokens ?? 0,
+      totalTokens: totalTokens ?? 0,
+      creditsCharged,
+    }).catch(() => {});
+
     const latencyMs = Date.now() - startMs;
     return res.json({
       ok: true,
@@ -243,7 +258,19 @@ router.post("/run", deprecationHeaders, requireApiKey, requireApiScope("run:acti
       latencyMs,
     });
   } catch (error) {
-    await safeLogUsage({ statusCode: 502, status: "error" });
+    const isTimeout =
+      error instanceof Error &&
+      ((error as Error & { isTimeout?: boolean }).isTimeout ||
+        error.message.toLowerCase().includes("timeout") ||
+        error.message.toLowerCase().includes("abort"));
+    const statusCode = isTimeout ? 504 : 502;
+    await safeLogUsage({ statusCode, status: "error" });
+    if (isTimeout) {
+      return res.status(504).json({
+        error: "upstream_timeout",
+        message: "The upstream AI provider took too long to respond.",
+      });
+    }
     return runError(res, 502, "RUNTIME_ERROR", "Request failed");
   }
 });

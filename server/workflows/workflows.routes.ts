@@ -351,6 +351,15 @@ router.post("/workflows/:id/execute", requireAuth, async (req, res, next) => {
     });
   } catch (error) {
     logger.error({ err: error }, "[Workflows] execute error");
+    const isTimeout =
+      error instanceof Error &&
+      error.message.toLowerCase().includes("timeout");
+    if (isTimeout) {
+      return res.status(504).json({
+        error: "workflow_step_timeout",
+        message: "A workflow step took too long to complete.",
+      });
+    }
     return res.status(500).json({
       ok: false,
       error: "EXECUTION_FAILED",
@@ -379,6 +388,15 @@ router.post("/workflows/trigger/:workflowId", async (req, res, next) => {
     });
   } catch (error) {
     logger.error({ err: error }, "[Workflows] webhook trigger error");
+    const isTimeout =
+      error instanceof Error &&
+      error.message.toLowerCase().includes("timeout");
+    if (isTimeout) {
+      return res.status(504).json({
+        error: "workflow_step_timeout",
+        message: "A workflow step took too long to complete.",
+      });
+    }
     return res.status(500).json({
       ok: false,
       error: "EXECUTION_FAILED",

@@ -21,7 +21,10 @@ import {
   Search,
   Settings,
   Store,
+  ShoppingCart,
   Bot,
+  User,
+  Users,
   Zap,
   ListChecks,
   Play,
@@ -41,6 +44,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Logo from "@/components/Logo";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import InAppFeedbackWidget from "@/components/feedback/InAppFeedbackWidget";
 
 type Mode = "Production" | "Test";
 
@@ -70,6 +74,10 @@ const navKeys = [
   { key: "navigation.requests", href: "/app/requests", icon: ListChecks },
   { key: "navigation.templates", href: "/app/templates", icon: LayoutTemplate },
   { key: "navigation.marketplace", href: "/app/marketplace", icon: Store },
+  { key: "navigation.agentMarketplace", href: "/app/agent-marketplace", icon: ShoppingCart },
+  { key: "navigation.workflowMarketplace", href: "/app/workflow-marketplace", icon: GitBranch },
+  { key: "navigation.community", href: "/app/community", icon: Users },
+  { key: "navigation.creators", href: "/app/creators", icon: User },
   { key: "navigation.store", href: "/app/store", icon: Package },
   { key: "navigation.packs", href: "/app/packs", icon: Layers },
   { key: "navigation.agents", href: "/app/agents", icon: Bot },
@@ -77,6 +85,7 @@ const navKeys = [
   { key: "navigation.auditLogs", href: "/app/audit-logs", icon: ClipboardList },
   { key: "navigation.playground", href: "/app/playground", icon: Play },
   { key: "navigation.analytics", href: "/app/analytics", icon: BarChart3 },
+  { key: "navigation.aiEvaluations", href: "/app/ai-evaluations", icon: BarChart3 },
   { key: "navigation.billingDashboard", href: "/app/billing", icon: CreditCard },
   { key: "navigation.credits", href: "/app/billing/credits", icon: Zap },
   { key: "navigation.billing", href: "/app/billing/plans", icon: CreditCard },
@@ -373,6 +382,7 @@ export default function AppShell({
                     <DropdownMenuItem onClick={() => setLocation("/app/billing/plans")}>{t("navigation.billing")}</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLocation("/app/admin/tools")}>{t("appShell.adminTools")}</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLocation("/app/admin/analytics")}>Platform Analytics</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/app/admin/billing")}>Billing Analytics</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => void handleSignOut()}>{t("appShell.signOut")}</DropdownMenuItem>
                   </DropdownMenuContent>
@@ -453,6 +463,7 @@ export default function AppShell({
           )}
         </div>
       </div>
+      <InAppFeedbackWidget />
     </div>
   );
 }

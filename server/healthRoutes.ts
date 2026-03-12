@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from "express";
 import { pingDb } from "./db";
+import { getCurrentRegionId } from "./config/regions";
 import { getStripe } from "./modules/stripe/stripe.client";
 import { logger } from "./utils/logger";
 
@@ -25,15 +26,17 @@ function measureLatency(fn: () => Promise<void>): Promise<number> {
 
 const router = Router();
 
-/** GET /health - Basic API health */
+/** GET /health - Basic API health. Includes region when multi-region. */
 router.get("/health", (_req: Request, res: Response) => {
   const start = performance.now();
   const latency = Math.round(performance.now() - start);
+  const regionId = getCurrentRegionId();
   res.json({
     status: "operational" as HealthStatus,
     latency,
     timestamp: new Date().toISOString(),
-  } satisfies HealthResponse);
+    ...(regionId && { region: regionId }),
+  } satisfies HealthResponse & { region?: string });
 });
 
 /** GET /health/db - Database connectivity */

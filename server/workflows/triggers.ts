@@ -67,10 +67,21 @@ export async function refreshScheduleTriggers(): Promise<void> {
     if (!workflow) continue;
 
     const key = workflow._id.toString();
-    const task = cron.schedule(cronExpr, () => {
-      executeWorkflow(workflow._id, { timestamp: new Date().toISOString() }).catch((err) => {
+    const task = cron.schedule(cronExpr, async () => {
+      try {
+        const { isQueueEnabled } = await import("../queue/config");
+        const { getWorkflowJobsQueue } = await import("../queue/queues");
+        if (isQueueEnabled()) {
+          await getWorkflowJobsQueue().add("execute", {
+            workflowId: key,
+            triggerPayload: { timestamp: new Date().toISOString() },
+          });
+        } else {
+          await executeWorkflow(workflow._id, { timestamp: new Date().toISOString() });
+        }
+      } catch (err) {
         logger.warn({ err: String(err), workflowId: key }, "[Workflows] schedule trigger failed");
-      });
+      }
     });
     scheduledTasks.set(key, task);
   }

@@ -84,3 +84,41 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return unauthorized(res);
   }
 }
+
+/** Sets req.user when session is valid; does not 401 when missing/invalid. */
+export async function optionalAuth(req: Request, _res: Response, next: NextFunction) {
+  try {
+    const token = req.cookies?.[getSessionCookieName()];
+    if (!token || typeof token !== "string") {
+      return next();
+    }
+
+    const db = await getDb();
+    const sessions = db.collection<SessionDoc>("sessions");
+    const users = db.collection<UserDoc>("users");
+    const tokenHash = hashSessionToken(token);
+
+    const session = await sessions.findOne({
+      tokenHash,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!session) return next();
+
+    const user = (await users.findOne({
+      _id: session.userId,
+    })) as WithId<UserDoc> | null;
+
+    if (!user) return next();
+
+    req.user = {
+      _id: user._id,
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+    };
+    next();
+  } catch {
+    next();
+  }
+}
