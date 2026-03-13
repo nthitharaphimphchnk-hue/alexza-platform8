@@ -26,6 +26,7 @@ export default function Docs() {
       title: t("docs.gettingStarted"),
       subsections: [
         { label: t("docs.introduction"), id: "introduction" },
+        { label: "Getting Started (Onboarding)", id: "getting-started" },
         { label: t("docs.authentication"), id: "authentication" },
         { label: t("docs.apiKeys"), id: "api-keys" },
         { label: t("docs.rateLimits"), id: "rate-limits" },
@@ -178,19 +179,19 @@ export default function Docs() {
       ],
     },
     {
-      title: "Feedback Collection",
-      subsections: [
-        { label: "Overview", id: "feedback-collection-overview" },
-        { label: "In-App Widget", id: "feedback-collection-widget" },
-        { label: "Admin Inbox", id: "feedback-collection-admin" },
-      ],
-    },
-    {
       title: "Usage Limits",
       subsections: [
         { label: "Overview", id: "usage-limits-overview" },
         { label: "Warning Thresholds", id: "usage-limits-warnings" },
         { label: "Hard Limits", id: "usage-limits-hard-limits" },
+      ],
+    },
+    {
+      title: "Feedback Collection",
+      subsections: [
+        { label: "Overview", id: "feedback-collection-overview" },
+        { label: "Submit Feedback", id: "feedback-collection-submit" },
+        { label: "Admin List", id: "feedback-collection-admin" },
       ],
     },
     {
@@ -424,21 +425,32 @@ const response = await client.chat.completions.create({
                   </li>
                 </ul>
               </div>
-              <div className="space-y-3 scroll-mt-32">
-                <h3 className="text-xl font-semibold text-white">First-time Onboarding</h3>
+              <div id="getting-started" className="space-y-4 scroll-mt-32">
+                <h3 className="text-xl font-semibold text-white">Getting Started</h3>
                 <p className="text-gray-300">
-                  When a new user signs in for the first time, ALEXZA AI guides them through an in-app
-                  onboarding wizard at <code className="text-[#c0c0c0]">/app/onboarding</code>:
+                  New users are guided through a short <strong className="text-white">in-app onboarding wizard</strong> at{" "}
+                  <code className="text-[#c0c0c0]">/app/onboarding</code>. If you are logged in and have not completed
+                  onboarding, you will be automatically redirected there until you finish.
                 </p>
-                <ul className="space-y-1 text-gray-300 list-disc list-inside">
-                  <li>Create their first project.</li>
-                  <li>Pick a starter template (e.g. summarizer, translator, lead extractor, email generator).</li>
-                  <li>Generate an API key for the project.</li>
-                  <li>Run their first AI request end to end.</li>
-                </ul>
+                <h4 className="text-lg font-medium text-white">Wizard steps</h4>
+                <ol className="list-decimal list-inside space-y-2 text-gray-300">
+                  <li><strong className="text-white">Create your first project</strong> — A project groups your AI actions and keys. The wizard creates &quot;My First AI Project&quot; for you.</li>
+                  <li><strong className="text-white">Choose a template</strong> — Pick one of the starter templates: <em>Text summarizer</em>, <em>Translator</em>, <em>Lead extractor</em>, or <em>Email generator</em>. This adds your first action to the project.</li>
+                  <li><strong className="text-white">Generate an API key</strong> — Create a project API key so you can call the runtime. Copy and store it securely; it is shown only once.</li>
+                  <li><strong className="text-white">Run your first AI request</strong> — The wizard sends a test request to your new action. When it succeeds, onboarding is marked complete and you are redirected to the dashboard.</li>
+                </ol>
                 <p className="text-gray-300">
-                  After completing the wizard, the user is redirected to the dashboard and the onboarding
-                  state is marked as complete so they won&apos;t see it again.
+                  After completion, <code className="text-[#c0c0c0]">onboardingCompleted</code> is set to <code className="text-[#c0c0c0]">true</code> and you can use the dashboard, playground, and API as usual.
+                </p>
+              </div>
+              <div className="space-y-3 scroll-mt-32">
+                <h3 className="text-xl font-semibold text-white">First-time Onboarding (summary)</h3>
+                <p className="text-gray-300">
+                  When a new user signs in for the first time, ALEXZA AI guides them through the in-app
+                  onboarding wizard at <code className="text-[#c0c0c0]">/app/onboarding</code>: create first project,
+                  choose a starter template (Text summarizer, Translator, Lead extractor, Email generator), generate an
+                  API key, and run their first AI request. After completing the wizard, the user is redirected to the
+                  dashboard and onboarding state is marked complete.
                 </p>
               </div>
               <div id="rate-limits" className="space-y-2 scroll-mt-32">
@@ -451,51 +463,6 @@ const response = await client.chat.completions.create({
                 </ul>
                 <p className="text-gray-300 text-sm">Responses include X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset. When exceeded: HTTP 429 with {"{ \"error\": \"rate_limit_exceeded\" }"}.</p>
               </div>
-            </motion.section>
-
-            {/* Feedback Collection */}
-            <motion.section
-              id="feedback-collection-overview"
-              className="space-y-6 scroll-mt-32"
-              variants={itemVariants}
-            >
-              <h2 className="text-3xl font-bold text-white">Feedback Collection</h2>
-              <p className="text-gray-300 leading-relaxed">
-                During soft launch, ALEXZA AI collects feedback directly inside the product via an
-                in-app widget. This makes it easy for builders to report bugs, suggest features, and
-                flag UX issues without leaving the app.
-              </p>
-              <h3
-                id="feedback-collection-widget"
-                className="text-xl font-semibold text-white scroll-mt-32"
-              >
-                In-App Feedback Widget
-              </h3>
-              <p className="text-gray-300">
-                A persistent <strong className="text-white">Send Feedback</strong> button appears in
-                the bottom-right corner of the authenticated app shell. Clicking it opens a modal
-                where users can choose a type (
-                <code className="text-[#c0c0c0]">bug</code>,{" "}
-                <code className="text-[#c0c0c0]">feature request</code>,{" "}
-                <code className="text-[#c0c0c0]">UX issue</code>,{" "}
-                <code className="text-[#c0c0c0]">general feedback</code>), enter a message, and
-                optionally provide an email (prefilled when logged in). The widget automatically
-                attaches the current route, workspace, and browser info.
-              </p>
-              <h3
-                id="feedback-collection-admin"
-                className="text-xl font-semibold text-white scroll-mt-32"
-              >
-                Admin Feedback Inbox
-              </h3>
-              <p className="text-gray-300">
-                Feedback is stored in a <code className="text-[#c0c0c0]">feedback</code> collection
-                and surfaced via the admin page at{" "}
-                <code className="text-[#c0c0c0]">/app/admin/feedback</code>, which calls{" "}
-                <code className="text-[#c0c0c0]">GET /api/admin/feedback</code> (protected by{" "}
-                <code className="text-[#c0c0c0]">ADMIN_API_KEY</code>). Operators can filter by type,
-                status, and date to triage issues and requests coming from real users.
-              </p>
             </motion.section>
 
             {/* Usage Limits */}
@@ -536,6 +503,40 @@ const response = await client.chat.completions.create({
                 estimated credits for the requested run. If this projected usage exceeds{" "}
                 <code className="text-[#c0c0c0]">monthlyUsageLimit</code>, the request is blocked with a{" "}
                 <code className="text-[#c0c0c0]">USAGE_LIMIT_REACHED</code> error code and no upstream AI call is made.
+              </p>
+            </motion.section>
+
+            {/* Feedback Collection */}
+            <motion.section
+              id="feedback-collection-overview"
+              className="space-y-6 scroll-mt-32"
+              variants={itemVariants}
+            >
+              <h2 className="text-3xl font-bold text-white">Feedback Collection</h2>
+              <p className="text-gray-300 leading-relaxed">
+                During soft launch, users can submit feedback, bug reports, and feature requests directly from the app.
+                A persistent &quot;Send Feedback&quot; button in the app shell opens a modal where users choose a type,
+                write a message, and optionally provide their email. Submissions are stored with context (route, user, workspace, user agent, timestamp) for triage.
+              </p>
+              <h3
+                id="feedback-collection-submit"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Submit Feedback
+              </h3>
+              <p className="text-gray-300">
+                Use the <strong className="text-white">Send Feedback</strong> button (bottom-right of the app) to open the modal. Choose a type:{" "}
+                <code className="text-[#c0c0c0]">bug</code>, <code className="text-[#c0c0c0]">feature_request</code>,{" "}
+                <code className="text-[#c0c0c0]">ux_issue</code>, or <code className="text-[#c0c0c0]">general</code>. Enter your message and optionally your email (prefilled when logged in). The client sends the current route, workspace ID, and user agent; the server adds user ID when authenticated and stores the submission in the <code className="text-[#c0c0c0]">feedback</code> collection with status <code className="text-[#c0c0c0]">new</code>.
+              </p>
+              <h3
+                id="feedback-collection-admin"
+                className="text-xl font-semibold text-white scroll-mt-32"
+              >
+                Admin List
+              </h3>
+              <p className="text-gray-300">
+                Admins can view all feedback at <a href="/app/admin/feedback" className="text-[#c0c0c0] hover:underline">/app/admin/feedback</a>. The list supports filters by <strong className="text-white">type</strong>, <strong className="text-white">status</strong> (new, reviewed, closed), and <strong className="text-white">date</strong>. The API <code className="text-[#c0c0c0]">GET /api/admin/feedback</code> requires the <code className="text-[#c0c0c0]">x-admin-key</code> header. Set <code className="text-[#c0c0c0]">VITE_ADMIN_API_KEY</code> in your environment to load the list from the in-app admin page.
               </p>
             </motion.section>
 

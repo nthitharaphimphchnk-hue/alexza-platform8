@@ -34,6 +34,7 @@ import { apiRequest, ApiError } from "@/lib/api";
 import { useWalletBalance } from "@/hooks/useWallet";
 import { LOW_CREDITS_THRESHOLD } from "@/lib/creditsConfig";
 import LowCreditsBanner from "@/components/LowCreditsBanner";
+import FeedbackWidget from "@/components/FeedbackWidget";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +45,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Logo from "@/components/Logo";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import InAppFeedbackWidget from "@/components/feedback/InAppFeedbackWidget";
 
 type Mode = "Production" | "Test";
 
@@ -62,6 +62,10 @@ type AppShellProps = {
   breadcrumbs: BreadcrumbItem[];
   backHref?: string;
   backLabel?: string;
+  /** When set, the back button calls this instead of navigating via backHref/history. Use for custom actions (e.g. onboarding Skip). */
+  onBackClick?: () => void | Promise<void>;
+  /** When true, the back button is disabled (e.g. while a custom onBackClick action is in progress). */
+  backDisabled?: boolean;
   actions?: ReactNode;
   children: ReactNode;
   titleClassName?: string;
@@ -142,6 +146,8 @@ export default function AppShell({
   breadcrumbs,
   backHref = "/app/dashboard",
   backLabel = "Back",
+  onBackClick,
+  backDisabled = false,
   actions,
   children,
   titleClassName,
@@ -200,6 +206,10 @@ export default function AppShell({
   };
 
   const handleBack = () => {
+    if (onBackClick) {
+      void onBackClick();
+      return;
+    }
     if (window.history.length > 1) {
       window.history.back();
       return;
@@ -416,8 +426,10 @@ export default function AppShell({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <button
+                    type="button"
                     onClick={handleBack}
-                    className="mb-3 inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-sm text-gray-200 transition-all duration-200 hover:border-[rgba(192,192,192,0.4)] hover:text-white hover:shadow-[0_0_12px_rgba(255,255,255,0.04)]"
+                    disabled={backDisabled}
+                    className="mb-3 inline-flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0b0e12]/70 px-3 py-1.5 text-sm text-gray-200 transition-all duration-200 hover:border-[rgba(192,192,192,0.4)] hover:text-white hover:shadow-[0_0_12px_rgba(255,255,255,0.04)] disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <span aria-hidden>←</span>
                     {backLabel || t("common.back")}
@@ -450,6 +462,7 @@ export default function AppShell({
             </div>
           </motion.main>
 
+          <FeedbackWidget />
           {import.meta.env.MODE !== "production" && (
             <button
               type="button"
@@ -463,7 +476,6 @@ export default function AppShell({
           )}
         </div>
       </div>
-      <InAppFeedbackWidget />
     </div>
   );
 }

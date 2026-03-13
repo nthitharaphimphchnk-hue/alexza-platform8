@@ -11,6 +11,10 @@ interface ProtectedRouteProps {
  * Wraps app routes. Redirects to /login if not authenticated.
  * Shows loading while /api/me is pending; never renders NotFound.
  * Preserves intended destination in ?next= for post-login redirect.
+ *
+ * Onboarding redirect: only when authenticated, user exists, path is under /app,
+ * path is NOT /app/onboarding (avoid loop), and user.onboardingCompleted === false.
+ * Completion is persisted via POST /api/onboarding/complete and refetch; Skip uses the same.
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -26,7 +30,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (
       !isLoading &&
       isAuthenticated &&
-      user &&
+      user != null &&
       currentPath.startsWith("/app") &&
       !currentPath.startsWith("/app/onboarding") &&
       user.onboardingCompleted === false

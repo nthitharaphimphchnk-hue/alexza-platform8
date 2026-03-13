@@ -1,6 +1,6 @@
 import AppShell from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
-import { apiRequest, ApiError, API_BASE_URL } from "@/lib/api";
+import { apiRequest, ApiError } from "@/lib/api";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -12,6 +12,8 @@ interface TemplateSummary {
   name: string;
   description: string;
   category?: string;
+  /** Starter label from onboarding API (e.g. "Text summarizer", "Translator") */
+  label?: string;
 }
 
 type Step = 1 | 2 | 3 | 4;
@@ -22,6 +24,7 @@ export default function Onboarding() {
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -44,6 +47,24 @@ export default function Onboarding() {
       await refetch();
     } catch {
       // Non-fatal
+    }
+  };
+
+  /** Skip onboarding: mark complete on backend, refetch user, then navigate to dashboard. Prevents redirect loop. */
+  const handleSkip = async () => {
+    if (isSkipping) return;
+    setIsSkipping(true);
+    try {
+      await apiRequest("/api/onboarding/complete", { method: "POST" });
+      await refetch();
+      setLocation("/app/dashboard");
+    } catch (err) {
+      showErrorToast(
+        "Could not skip onboarding",
+        err instanceof Error ? err.message : "Unknown error"
+      );
+    } finally {
+      setIsSkipping(false);
     }
   };
 
@@ -79,6 +100,15 @@ export default function Onboarding() {
   const loadTemplates = async () => {
     setIsLoading(true);
     try {
+      const onboardingRes = await apiRequest<{
+        ok: boolean;
+        templates: Array<{ id: string; name: string; description: string; category?: string; label?: string }>;
+      }>("/api/onboarding/templates").catch(() => null);
+      if (onboardingRes?.ok && Array.isArray(onboardingRes.templates) && onboardingRes.templates.length > 0) {
+        setTemplates(onboardingRes.templates);
+        setSelectedTemplateId(onboardingRes.templates[0].id);
+        return;
+      }
       const res = await apiRequest<{
         ok: boolean;
         templates: Array<{ id: string; name: string; description: string; category?: string }>;
@@ -183,14 +213,16 @@ export default function Onboarding() {
     }
   };
 
-  const progress = ((currentStep - 1) / 4) * 100;
+  const progress = (currentStep / 4) * 100;
 
   return (
     <AppShell
       title="Welcome to ALEXZA AI"
       subtitle="Let's create your first AI project in a few guided steps."
       backHref="/app/dashboard"
-      backLabel="Skip"
+      backLabel={isSkipping ? "Skipping..." : "Skip"}
+      onBackClick={handleSkip}
+      backDisabled={isSkipping}
       breadcrumbs={[
         { label: "Dashboard", href: "/app/dashboard" },
         { label: "Onboarding" },
@@ -236,7 +268,10 @@ export default function Onboarding() {
                           : "border-[rgba(255,255,255,0.06)] bg-[#050607] text-gray-200 hover:border-cyan-500/60"
                       }`}
                     >
-                      <div className="font-medium">{tpl.name}</div>
+                      <div className="font-medium">{tpl.label ?? tpl.name}</div>
+                      {tpl.label && tpl.name !== tpl.label && (
+                        <div className="text-xs text-gray-500 mt-0.5">{tpl.name}</div>
+                      )}
                       <div className="text-xs text-gray-400 mt-1">{tpl.description}</div>
                     </button>
                   ))}
@@ -322,10 +357,12 @@ export default function Onboarding() {
             </div>
 
             <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050607] p-4 text-sm text-gray-300 space-y-2">
-              <h3 className="text-sm font-semibold text-white mb-1">Starter use cases</h3>
+              <h3 className="text-sm font-semibold text-white mb-1">Starter templates</h3>
               <p>
-                You&apos;ll see templates such as a text summarizer, translator, lead extractor, and email
-                generator if they are available in your workspace.
+                Choose one of: <strong className="text-white">Text summarizer</strong>,{" "}
+                <strong className="text-white">Translator</strong>,{" "}
+                <strong className="text-white">Lead extractor</strong>, or{" "}
+                <strong className="text-white">Email generator</strong> to add your first action.
               </p>
               <p className="text-xs text-gray-500">
                 You can always explore more advanced templates, workflows, and agents from the Dashboard

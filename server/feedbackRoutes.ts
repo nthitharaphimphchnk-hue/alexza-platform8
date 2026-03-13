@@ -1,94 +1,51 @@
+/**
+ * Feedback API - collect in-app feedback, bug reports, feature requests.
+ * POST /api/feedback (optional auth), GET /api/admin/feedback (admin only).
+ */
+
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
-import { requireAuth } from "./middleware/requireAuth";
 import { logger } from "./utils/logger";
+import { requireAuth, optionalAuth } from "./middleware/requireAuth";
 
-export type FeedbackType = "bug" | "feature" | "ux" | "general";
-export type FeedbackStatus = "new" | "triaged" | "in_progress" | "resolved" | "closed";
-export type FeedbackPriority = "low" | "medium" | "high" | "critical";
+export type FeedbackType = "bug" | "feature_request" | "ux_issue" | "general";
+export type FeedbackStatus = "new" | "reviewed" | "closed";
 
 export interface FeedbackDoc {
   _id: ObjectId;
   type: FeedbackType;
   message: string;
   email?: string;
-  userId?: ObjectId | null;
-  workspaceId?: ObjectId | null;
-  route?: string;
-  userAgent?: string;
+  userId?: ObjectId;
+  workspaceId?: ObjectId;
+  route: string;
+  userAgent: string;
   createdAt: Date;
   status: FeedbackStatus;
-  priority?: FeedbackPriority;
-  assigneeUserId?: ObjectId | null;
-  internalNotes?: string;
 }
 
-const feedbackRouter = Router();
+const router = Router();
 
-async function ensureFeedbackIndexes() {
-  const db = await getDb();
-  const col = db.collection<FeedbackDoc>("feedback");
-  await Promise.all([
-    col.createIndex({ createdAt: -1 }),
-    col.createIndex({ type: 1, status: 1, createdAt: -1 }),
-    col.createIndex({ userId: 1, createdAt: -1 }),
-    col.createIndex({ priority: 1, status: 1, createdAt: -1 }),
-    col.createIndex({ assigneeUserId: 1, status: 1, createdAt: -1 }),
-  ]);
-}
-
-function normalizeType(raw: unknown): FeedbackType | null {
-  if (raw === "bug") return "bug";
-  if (raw === "feature" || raw === "feature_request") return "feature";
-  if (raw === "ux" || raw === "ux_issue") return "ux";
-  if (raw === "general") return "general";
-  return null;
-}
-
-function normalizeStatus(raw: unknown): FeedbackStatus | null {
-  if (raw === "new") return "new";
-  if (raw === "triaged") return "triaged";
-  if (raw === "in_progress") return "in_progress";
-  if (raw === "resolved") return "resolved";
-  if (raw === "closed") return "closed";
-  // Backward compatibility for old values
-  if (raw === "reviewed") return "triaged";
-  return null;
-}
-
-function normalizePriority(raw: unknown): FeedbackPriority | null {
-  if (raw === "low") return "low";
-  if (raw === "medium") return "medium";
-  if (raw === "high") return "high";
-  if (raw === "critical") return "critical";
-  return null;
-}
+const FEEDBACK_TYPES: FeedbackType[] = ["bug", "feature_request", "ux_issue", "general"];
+const FEEDBACK_STATUSES: FeedbackStatus[] = ["new", "reviewed", "closed"];
 
 function requireAdminKey(req: Request, res: Response, next: NextFunction) {
   const configured = process.env.ADMIN_API_KEY?.trim();
   if (!configured) {
-    return res
-      .status(503)
-      .json({ ok: false, error: "ADMIN_NOT_CONFIGURED", message: "Admin API key not configured" });
+    return res.status(503).json({ ok: false, error: "Admin API not configured" });
   }
-  const provided =
-    typeof req.headers["x-admin-key"] === "string" ? req.headers["x-admin-key"].trim() : "";
+  const raw = req.headers["x-admin-key"];
+  const provided = typeof raw === "string" ? raw.trim() : "";
   if (provided !== configured) {
-    return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin key required" });
+    return res.status(403).json({ ok: false, error: "FORBIDDEN", message: "Admin access required" });
   }
   next();
 }
 
-feedbackRouter.post("/feedback", requireAuth, async (req, res, next) => {
+// POST /api/feedback - submit feedback (optional auth)
+router.post("/feedback", optionalAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: "UNAUTHORIZED" });
-    }
-    await ensureFeedbackIndexes();
-    const db = await getDb();
-    const col = db.collection<FeedbackDoc>("feedback");
-
     const body = req.body as {
       type?: unknown;
       message?: unknown;
@@ -97,312 +54,117 @@ feedbackRouter.post("/feedback", requireAuth, async (req, res, next) => {
       workspaceId?: unknown;
     };
 
-    const type = normalizeType(body.type);
-    const message =
-      typeof body.message === "string" ? body.message.trim() : "";
-    const email =
-      typeof body.email === "string" ? body.email.trim() : undefined;
-    const route =
-      typeof body.route === "string" ? body.route.trim() : undefined;
-
-    if (!type) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "VALIDATION_ERROR", message: "Invalid feedback type" });
-    }
+    const typeRaw = typeof body.type === "string" ? body.type.trim() : "";
+    const type = FEEDBACK_TYPES.includes(typeRaw as FeedbackType) ? (typeRaw as FeedbackType) : "general";
+    const message = typeof body.message === "string" ? body.message.trim() : "";
     if (!message) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "VALIDATION_ERROR", message: "Message is required" });
+      return res.status(400).json({ ok: false, error: "VALIDATION_ERROR", message: "message is required" });
     }
 
-    let workspaceId: ObjectId | null = null;
-    if (typeof body.workspaceId === "string" && ObjectId.isValid(body.workspaceId)) {
-      workspaceId = new ObjectId(body.workspaceId);
-    }
-
-    const userAgent =
-      typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : undefined;
+    const email = typeof body.email === "string" ? body.email.trim() || undefined : undefined;
+    const route = typeof body.route === "string" ? body.route.trim() : "";
+    const workspaceIdRaw = body.workspaceId;
+    const workspaceId =
+      typeof workspaceIdRaw === "string" && ObjectId.isValid(workspaceIdRaw)
+        ? new ObjectId(workspaceIdRaw)
+        : undefined;
+    const userAgent = typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : "";
 
     const doc: Omit<FeedbackDoc, "_id"> = {
       type,
       message,
       email,
-      userId: req.user._id,
+      userId: req.user?._id,
       workspaceId,
       route,
       userAgent,
       createdAt: new Date(),
       status: "new",
-      priority: "medium",
-      assigneeUserId: null,
-      internalNotes: "",
     };
 
+    const db = await getDb();
+    const col = db.collection<FeedbackDoc>("feedback");
     const result = await col.insertOne(doc as FeedbackDoc);
 
     logger.info(
       {
         feedbackId: result.insertedId.toString(),
-        type,
-        userId: req.user._id.toString(),
-        workspaceId: workspaceId?.toString(),
-        route,
+        type: doc.type,
+        userId: doc.userId?.toString(),
+        route: doc.route,
       },
-      "[Feedback] New feedback received"
+      "[Feedback] Submitted"
     );
 
-    return res.json({ ok: true, id: result.insertedId.toString() });
-  } catch (error) {
-    logger.error({ err: error }, "[Feedback] Failed to submit feedback");
-    return next(error);
+    return res.status(201).json({
+      ok: true,
+      id: result.insertedId.toString(),
+    });
+  } catch (err) {
+    logger.error({ err }, "[Feedback] Submit error");
+    return next(err);
   }
 });
 
-feedbackRouter.get("/admin/feedback", requireAdminKey, async (req, res, next) => {
+// GET /api/admin/feedback - list feedback (admin only)
+router.get("/admin/feedback", requireAdminKey, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await ensureFeedbackIndexes();
+    const type = typeof req.query.type === "string" ? req.query.type.trim() : "";
+    const status = typeof req.query.status === "string" ? req.query.status.trim() : "";
+    const dateFrom = typeof req.query.dateFrom === "string" ? req.query.dateFrom.trim() : "";
+    const dateTo = typeof req.query.dateTo === "string" ? req.query.dateTo.trim() : "";
+    const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? "50"), 10) || 50));
+    const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10) || 1);
+    const skip = (page - 1) * limit;
+
     const db = await getDb();
     const col = db.collection<FeedbackDoc>("feedback");
-
-    const typeRaw = typeof req.query.type === "string" ? req.query.type.trim() : "";
-    const statusRaw = typeof req.query.status === "string" ? req.query.status.trim() : "";
-    const priorityRaw = typeof req.query.priority === "string" ? req.query.priority.trim() : "";
-    const assigneeRaw = typeof req.query.assignee === "string" ? req.query.assignee.trim() : "";
-    const dateFromRaw = typeof req.query.dateFrom === "string" ? req.query.dateFrom.trim() : "";
-    const dateToRaw = typeof req.query.dateTo === "string" ? req.query.dateTo.trim() : "";
 
     const filter: Record<string, unknown> = {};
-
-    const type = normalizeType(typeRaw || undefined);
-    if (type) {
-      filter.type = type;
-    }
-
-    const normalizedStatus = normalizeStatus(statusRaw || undefined);
-    if (normalizedStatus) {
-      filter.status = normalizedStatus;
-    }
-
-    const priority = normalizePriority(priorityRaw || undefined);
-    if (priority) {
-      filter.priority = priority;
-    }
-
-    if (assigneeRaw === "assigned") {
-      filter.assigneeUserId = { $ne: null };
-    } else if (assigneeRaw === "unassigned") {
-      filter.$or = [{ assigneeUserId: null }, { assigneeUserId: { $exists: false } }];
-    }
-
-    if (dateFromRaw || dateToRaw) {
-      const createdAt: Record<string, Date> = {};
-      if (dateFromRaw) {
-        const from = new Date(dateFromRaw);
-        if (!Number.isNaN(from.getTime())) {
-          createdAt.$gte = from;
-        }
+    if (type && FEEDBACK_TYPES.includes(type as FeedbackType)) filter.type = type;
+    if (status && FEEDBACK_STATUSES.includes(status as FeedbackStatus)) filter.status = status;
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (!Number.isNaN(from.getTime())) (filter.createdAt as Record<string, Date>).$gte = from;
       }
-      if (dateToRaw) {
-        const to = new Date(dateToRaw);
-        if (!Number.isNaN(to.getTime())) {
-          createdAt.$lte = to;
-        }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        if (!Number.isNaN(to.getTime())) (filter.createdAt as Record<string, Date>).$lte = to;
       }
-      if (Object.keys(createdAt).length > 0) {
-        filter.createdAt = createdAt;
-      }
+      if (Object.keys(filter.createdAt as object).length === 0) delete filter.createdAt;
     }
 
-    const items = await col
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .limit(200)
-      .toArray();
-
-    return res.json({
-      ok: true,
-      items: items.map((doc) => ({
-        id: doc._id.toString(),
-        type: doc.type,
-        message: doc.message,
-        email: doc.email,
-        userId: doc.userId ? doc.userId.toString() : null,
-        workspaceId: doc.workspaceId ? doc.workspaceId.toString() : null,
-        route: doc.route,
-        userAgent: doc.userAgent,
-        createdAt: doc.createdAt,
-        status: normalizeStatus(doc.status) ?? "new",
-        priority: normalizePriority(doc.priority) ?? "medium",
-        assigneeUserId: doc.assigneeUserId ? doc.assigneeUserId.toString() : null,
-        internalNotes: doc.internalNotes ?? "",
-      })),
-    });
-  } catch (error) {
-    logger.error({ err: error }, "[Feedback] Failed to list feedback");
-    return next(error);
-  }
-});
-
-feedbackRouter.patch("/admin/feedback/:id", requireAdminKey, async (req, res, next) => {
-  try {
-    const rawId = req.params.id?.trim();
-    if (!rawId || !ObjectId.isValid(rawId)) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "VALIDATION_ERROR", message: "Invalid feedback id" });
-    }
-    const id = new ObjectId(rawId);
-
-    const body = req.body as {
-      status?: unknown;
-      priority?: unknown;
-      assigneeUserId?: unknown;
-      internalNotes?: unknown;
-    };
-
-    const update: Record<string, unknown> = {};
-
-    if (body.status !== undefined) {
-      const s = normalizeStatus(body.status);
-      if (!s) {
-        return res
-          .status(400)
-          .json({ ok: false, error: "VALIDATION_ERROR", message: "Invalid status" });
-      }
-      update.status = s;
-    }
-
-    if (body.priority !== undefined) {
-      const p = normalizePriority(body.priority);
-      if (!p) {
-        return res
-          .status(400)
-          .json({ ok: false, error: "VALIDATION_ERROR", message: "Invalid priority" });
-      }
-      update.priority = p;
-    }
-
-    if (body.assigneeUserId !== undefined) {
-      if (body.assigneeUserId === null || body.assigneeUserId === "") {
-        update.assigneeUserId = null;
-      } else if (
-        typeof body.assigneeUserId === "string" &&
-        ObjectId.isValid(body.assigneeUserId)
-      ) {
-        update.assigneeUserId = new ObjectId(body.assigneeUserId);
-      } else {
-        return res
-          .status(400)
-          .json({ ok: false, error: "VALIDATION_ERROR", message: "Invalid assigneeUserId" });
-      }
-    }
-
-    if (body.internalNotes !== undefined) {
-      if (typeof body.internalNotes !== "string") {
-        return res
-          .status(400)
-          .json({ ok: false, error: "VALIDATION_ERROR", message: "Invalid internalNotes" });
-      }
-      update.internalNotes = body.internalNotes.slice(0, 5000);
-    }
-
-    if (Object.keys(update).length === 0) {
-      return res.json({ ok: true, updated: false });
-    }
-
-    const db = await getDb();
-    const col = db.collection<FeedbackDoc>("feedback");
-
-    const result = await col.updateOne({ _id: id }, { $set: update });
-
-    logger.info(
-      {
-        feedbackId: id.toString(),
-        updatedFields: Object.keys(update),
-      },
-      "[Feedback] Admin triage update"
-    );
-
-    return res.json({ ok: true, updated: result.matchedCount > 0 });
-  } catch (error) {
-    logger.error({ err: error }, "[Feedback] Failed to update feedback");
-    return next(error);
-  }
-});
-
-feedbackRouter.get("/admin/feedback/stats", requireAdminKey, async (_req, res, next) => {
-  try {
-    await ensureFeedbackIndexes();
-    const db = await getDb();
-    const col = db.collection<FeedbackDoc>("feedback");
-
-    const [byStatus, byPriority, byType] = await Promise.all([
-      col
-        .aggregate<{ _id: FeedbackStatus | null; count: number }>([
-          {
-            $group: {
-              _id: "$status",
-              count: { $sum: 1 },
-            },
-          },
-        ])
-        .toArray(),
-      col
-        .aggregate<{ _id: FeedbackPriority | null; count: number }>([
-          {
-            $group: {
-              _id: "$priority",
-              count: { $sum: 1 },
-            },
-          },
-        ])
-        .toArray(),
-      col
-        .aggregate<{ _id: FeedbackType | null; count: number }>([
-          {
-            $group: {
-              _id: "$type",
-              count: { $sum: 1 },
-            },
-          },
-        ])
-        .toArray(),
+    const [items, total] = await Promise.all([
+      col.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
+      col.countDocuments(filter),
     ]);
 
+    const list = items.map((d) => ({
+      id: d._id.toString(),
+      type: d.type,
+      message: d.message,
+      email: d.email,
+      userId: d.userId?.toString(),
+      workspaceId: d.workspaceId?.toString(),
+      route: d.route,
+      userAgent: d.userAgent,
+      createdAt: d.createdAt,
+      status: d.status,
+    }));
+
     return res.json({
       ok: true,
-      byStatus: byStatus.reduce(
-        (acc, row) => {
-          const key = normalizeStatus(row._id ?? "new") ?? "new";
-          acc[key] = row.count;
-          return acc;
-        },
-        {} as Record<FeedbackStatus, number>
-      ),
-      byPriority: byPriority.reduce(
-        (acc, row) => {
-          const key = normalizePriority(row._id ?? "medium") ?? "medium";
-          acc[key] = row.count;
-          return acc;
-        },
-        {} as Record<FeedbackPriority, number>
-      ),
-      byType: byType.reduce(
-        (acc, row) => {
-          const key = (row._id ?? "general") as FeedbackType;
-          acc[key] = row.count;
-          return acc;
-        },
-        {} as Record<FeedbackType, number>
-      ),
+      items: list,
+      total,
+      page,
+      limit,
     });
-  } catch (error) {
-    logger.error({ err: error }, "[Feedback] Failed to load feedback stats");
-    return next(error);
+  } catch (err) {
+    logger.error({ err }, "[Feedback] Admin list error");
+    return next(err);
   }
 });
 
-export { feedbackRouter };
-
-
+export { router as feedbackRouter };

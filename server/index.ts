@@ -22,7 +22,6 @@ import { v2Router } from "./routes/v2";
 import { adminRunLogsRouter } from "./adminRunLogs";
 import { adminAnalyticsRouter } from "./adminAnalytics";
 import { adminAlertsRouter } from "./adminAlerts";
-import { feedbackRouter } from "./feedbackRoutes";
 import { adminMonitoringRouter } from "./adminMonitoring";
 import { billingAnalyticsRouter } from "./billing/billingAnalytics";
 import { builderRouter } from "./builder";
@@ -63,6 +62,7 @@ import { adminLaunchRouter } from "./adminLaunch";
 import { onboardingRouter } from "./onboardingRoutes";
 import { referralRouter } from "./referralRoutes";
 import { leaderboardRouter } from "./leaderboardRoutes";
+import { feedbackRouter } from "./feedbackRoutes";
 import { statusRouter } from "./statusRoutes";
 import playgroundRouter from "./playgroundRoutes";
 import { startStatusMonitor } from "./statusService";
@@ -241,6 +241,27 @@ async function startServer() {
     return res.json({ ok: true, configured: true });
   });
 
+  app.get("/api/health/stripe", async (_req, res) => {
+    const key = process.env.STRIPE_SECRET_KEY?.trim();
+    if (!key) {
+      return res.json({ ok: false, message: "Stripe not configured" });
+    }
+    try {
+      const { getStripe } = await import("./modules/stripe/stripe.client");
+      await getStripe().balance.retrieve();
+      res.json({ ok: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      logger.warn({ err: error }, "[Health] Stripe check failed");
+      res.status(500).json({ ok: false, message });
+    }
+  });
+
+  app.get("/api/health/webhooks", (_req, res) => {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+    res.json({ ok: !!webhookSecret, message: webhookSecret ? undefined : "Webhook secret not configured" });
+  });
+
   /** Public config - safe for unauthenticated clients (pricing display, etc.) */
   app.get("/api/public/config", (_req, res) => {
     const regionId = getCurrentRegionId();
@@ -318,6 +339,7 @@ async function startServer() {
   app.use("/api", onboardingRouter);
   app.use("/api", referralRouter);
   app.use("/api", leaderboardRouter);
+  app.use("/api", feedbackRouter);
   app.use("/api", billingRouter);
   app.use("/api/billing/stripe", stripeRouter);
   app.use("/api", notificationsRouter);
@@ -328,7 +350,6 @@ async function startServer() {
   app.use("/api", adminLaunchRouter);
   app.use("/api", adminAnalyticsRouter);
   app.use("/api", adminAlertsRouter);
-  app.use("/api", feedbackRouter);
   app.use("/api", billingAnalyticsRouter);
 
   // Versioned API: /v1 (stable), /v2 (scaffold)

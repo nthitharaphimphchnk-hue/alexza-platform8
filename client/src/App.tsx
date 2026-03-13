@@ -336,11 +336,6 @@ function Router() {
           <AdminMonitoring />
         </AppLayout>
       </Route>
-      <Route path={"/app/admin/feedback"}>
-        <AppLayout>
-          <AdminFeedback />
-        </AppLayout>
-      </Route>
       <Route path={"/app/admin/billing"}>
         <AppLayout>
           <AdminBillingAnalytics />
@@ -354,6 +349,11 @@ function Router() {
       <Route path={"/app/admin/launch"}>
         <AppLayout>
           <AdminLaunch />
+        </AppLayout>
+      </Route>
+      <Route path={"/app/admin/feedback"}>
+        <AppLayout>
+          <AdminFeedback />
         </AppLayout>
       </Route>
       <Route path={"/app/chatbuilder"}>

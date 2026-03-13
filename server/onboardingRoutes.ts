@@ -1,8 +1,59 @@
 import { Router } from "express";
 import { getDb } from "./db";
 import { requireAuth } from "./middleware/requireAuth";
+import type { ActionTemplateDoc } from "./models/actionTemplate";
 
 const router = Router();
+
+/** GET /api/onboarding/templates - return 4 starter templates for the wizard (no auth required for listing) */
+router.get("/onboarding/templates", async (_req, res, next) => {
+  try {
+    const db = await getDb();
+    const col = db.collection<ActionTemplateDoc>("action_templates");
+    const baseFilter = { visibility: "public" as const };
+
+    const [summarizer, translator, leadExtractor, emailGenerator] = await Promise.all([
+      col.findOne({ ...baseFilter, category: "summarize" }, { sort: { createdAt: -1 } }),
+      col.findOne({ ...baseFilter, category: "translate" }, { sort: { createdAt: -1 } }),
+      col.findOne(
+        {
+          ...baseFilter,
+          $or: [
+            { category: "data_extraction" },
+            { category: "extraction" },
+            { name: { $regex: /lead/i } },
+            { description: { $regex: /lead/i } },
+          ],
+        },
+        { sort: { createdAt: -1 } }
+      ),
+      col.findOne(
+        {
+          ...baseFilter,
+          $or: [
+            { name: { $regex: /email/i } },
+            { description: { $regex: /email/i } },
+          ],
+        },
+        { sort: { createdAt: -1 } }
+      ),
+    ]);
+
+    const toItem = (doc: ActionTemplateDoc | null, label: string) =>
+      doc ? { id: doc._id.toString(), name: doc.name, description: doc.description, category: doc.category, label } : null;
+
+    const templates = [
+      toItem(summarizer, "Text summarizer"),
+      toItem(translator, "Translator"),
+      toItem(leadExtractor, "Lead extractor"),
+      toItem(emailGenerator, "Email generator"),
+    ].filter((t): t is NonNullable<typeof t> => t != null);
+
+    return res.json({ ok: true, templates });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 router.get("/onboarding/state", requireAuth, async (req, res, next) => {
   try {
