@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refetch = useCallback(async () => {
+    setIsLoading(true);
     try {
       const res = await apiRequest<{ ok: true; user: AuthUser }>("/api/me");
       setUser(res.user);

@@ -71,7 +71,7 @@ type AppShellProps = {
   titleClassName?: string;
 };
 
-const navKeys = [
+const navKeys: { key: string; href: string; icon: typeof Home; labelFallback?: string }[] = [
   { key: "navigation.dashboard", href: "/app/dashboard", icon: Home },
   { key: "navigation.workspaces", href: "/app/workspaces", icon: Building2 },
   { key: "navigation.projects", href: "/app/projects", icon: FileText },
@@ -89,7 +89,7 @@ const navKeys = [
   { key: "navigation.auditLogs", href: "/app/audit-logs", icon: ClipboardList },
   { key: "navigation.playground", href: "/app/playground", icon: Play },
   { key: "navigation.analytics", href: "/app/analytics", icon: BarChart3 },
-  { key: "navigation.aiEvaluations", href: "/app/ai-evaluations", icon: BarChart3 },
+  { key: "navigation.aiEvaluations", href: "/app/ai-evaluations", icon: BarChart3, labelFallback: "AI Evaluations" },
   { key: "navigation.billingDashboard", href: "/app/billing", icon: CreditCard },
   { key: "navigation.credits", href: "/app/billing/credits", icon: Zap },
   { key: "navigation.billing", href: "/app/billing/plans", icon: CreditCard },
@@ -284,7 +284,7 @@ export default function AppShell({
                     className="shrink-0 transition-all duration-300"
                     style={{ color: active ? "#c0c0c0" : undefined }}
                   />
-                  <span className="flex-1">{t(item.key)}</span>
+                  <span className="flex-1">{item.labelFallback ? t(item.key, item.labelFallback) : t(item.key)}</span>
                   {item.href === "/app/billing/credits" && isLowCredits ? (
                     <span
                       className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold animate-pulse bg-[rgba(192,192,192,0.2)] text-[#c0c0c0] border border-[rgba(192,192,192,0.3)]"

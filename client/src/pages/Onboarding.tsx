@@ -57,7 +57,10 @@ export default function Onboarding() {
     try {
       await apiRequest("/api/onboarding/complete", { method: "POST" });
       await refetch();
-      setLocation("/app/dashboard");
+      // Delay so AuthContext state is committed before navigation; prevents ProtectedRoute from redirecting back due to stale onboardingCompleted.
+      setTimeout(() => {
+        setLocation("/app/dashboard");
+      }, 350);
     } catch (err) {
       showErrorToast(
         "Could not skip onboarding",

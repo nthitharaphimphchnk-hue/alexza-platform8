@@ -12,29 +12,37 @@ interface ProtectedRouteProps {
  * Shows loading while /api/me is pending; never renders NotFound.
  * Preserves intended destination in ?next= for post-login redirect.
  *
- * Onboarding redirect: only when authenticated, user exists, path is under /app,
- * path is NOT /app/onboarding (avoid loop), and user.onboardingCompleted === false.
+ * Onboarding redirect: only when authenticated, user exists, and user has not completed
+ * onboarding AND is on the "home" entry (/app or /app/dashboard). Other /app/* paths
+ * (requests, templates, etc.) are allowed so sidebar navigation works.
  * Completion is persisted via POST /api/onboarding/complete and refetch; Skip uses the same.
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [, setLocation] = useLocation();
-  const currentPath = typeof window !== "undefined" ? window.location.pathname : "/app/dashboard";
+  const [currentPath, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      const nextUrl = encodeURIComponent(currentPath);
+      const nextUrl = encodeURIComponent(currentPath || "/app/dashboard");
       setLocation(`/login?next=${nextUrl}`);
       return;
     }
+    const isAppHome = currentPath === "/app" || currentPath === "/app/dashboard";
     if (
       !isLoading &&
       isAuthenticated &&
       user != null &&
-      currentPath.startsWith("/app") &&
+      isAppHome &&
       !currentPath.startsWith("/app/onboarding") &&
       user.onboardingCompleted === false
     ) {
+      if (import.meta.env.DEV) {
+        console.log("[ProtectedRoute] Redirecting to onboarding because:", {
+          onboardingCompleted: user.onboardingCompleted,
+          userId: user.id,
+          currentPath,
+        });
+      }
       setLocation("/app/onboarding");
     }
   }, [isLoading, isAuthenticated, currentPath, setLocation, user]);
